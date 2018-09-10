@@ -15,6 +15,7 @@ As of now we've just been doing PCA on the x-coordinates and y-coordinates of ea
 Common sense told us that the x-coordinate components would control the length (distance from shoulder to tip), whereas the major y-coordinate components would control width (mean distance from each shoulder to both sides of the tip). Additional components would likely reflect more subtle root features.
 
 The general pipeline for our analyses (as of September 9, 2018) is as follows:
+
 	Scott:
 		- Collect color and black-and-white (bw)  images of carrot roots laid on black backgrounds
 		- Cut off the head and leave a small gap from the edge of the window
@@ -34,13 +35,15 @@ The general pipeline for our analyses (as of September 9, 2018) is as follows:
 
 ## Getting Started
 ### Dependencies
-- [INSERT REQUIRED MATLAB TOOLBOXES]
+- MATLAB R2017B (recommended)
+- Image Processing Toolbox
+- Statistics and Learning Toolbox
 
 ### Installation
 Clone this repository to your desired location, then simply add carrotsweeper/scripts to your MATLAB search path.
 
 ```
-git clone [insert url]
+git clone https://github.com/jbustamante35/carrotsweeper
 ```
 ## Author
 **Julian Bustamante**, Cellular and Molecular Biology (<jbustamante@wisc.edu>) <br />

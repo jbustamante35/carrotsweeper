@@ -37,7 +37,6 @@ function [SweepData, TableData] = carrotSweeper(varargin)
 %   [swpData, crvTable] = carrotSweeper(dPath, 'ID', 'Curvature', 'SaveData', true);  % Outputs Curvature-Xscores-Yscores and saves table in csv file
 %
 %   *See getToken function below to see which ID tags you can use
-%
 
 %% Parse Inputs
 args = parseInputs(varargin);

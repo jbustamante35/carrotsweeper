@@ -1,6 +1,9 @@
 function cntr = extractContour(bw, max_size)
 %% extractContour: find contour of single image
-% This function blah
+% This function identifies an object of a maximum size defined by the max_size parameter
+% and creates a 2-dimensional contour defining that object. It then stores this data
+% into my custom ContourJB object to process and normalize the x-/y-coordinates. (See 
+% ContourJB for more detail on the normalization method).
 %
 % Usage:
 %   cntr = extractContour(bw, max_size)

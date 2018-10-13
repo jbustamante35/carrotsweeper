@@ -1,4 +1,4 @@
-function midlines = carrotMidlinesPipeline(image_directory, reset_directory)
+function midlines = carrotMidlinesPipeline(image_directory)
 %% carrotMidlines: format midline data from phytoMorph algorithm
 % I'm not sure what this will do just yet. Something along the lines of:
 % _/ Crop binary mask image to push shoulder to edge of image
@@ -12,6 +12,7 @@ function midlines = carrotMidlinesPipeline(image_directory, reset_directory)
 % Input:
 %   image_directory: directory containing binary mask images to compute midlines
 %   reset_directory: boolean to run through pipeline normally (0) or reset directory (1)
+%   [DEPRECATED]
 %
 % Output:
 %   midlines: outputted midline data from phytoMorph algorithm
@@ -22,7 +23,9 @@ function midlines = carrotMidlinesPipeline(image_directory, reset_directory)
 O = imageDatastore(image_directory);
 workDir = sprintf('%s_midlines', image_directory);
 mkdir(workDir);
-copyfile(image_directory, workDir);
+pause(0.5);
+copyfile(image_directory, workDir); 
+pause(0.5);
 cd(workDir);
 I = imageDatastore(workDir);
 
@@ -40,7 +43,8 @@ cd(workDir);
 num_copies = 5;
 cellfun(@(x) copyImage(workDir, ext{1}, x, num_copies), dirNames, 'UniformOutput', 0);
 
-%% RESET OPTION IF SOMETHING SCREWS UP
+%% RESET OPTION IF SOMETHING SCREWS UP [DEPRECATED]
+reset_directory = 0;
 if reset_directory
     cellfun(@(x) resetDir(workDir, x), dirNames, 'UniformOutput', 0);
     for m = 1 : numel(O.Files)
@@ -115,7 +119,8 @@ function replaceOrignalWithCrop(image_name, cropped_image)
 %% replaceOrignalWithCrop: replace original image with cropped variant
 
 try
-    imwrite(cropped_image, image_name);
+    black2white = imcomplement(cropped_image);
+    imwrite(black2white, image_name);
 catch e
     fprintf(2, '%s\n', e.getReport);
 end

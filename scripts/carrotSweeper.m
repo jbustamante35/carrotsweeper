@@ -30,13 +30,14 @@ function [SweepData, TableData] = carrotSweeper(varargin)
 %
 % Example:
 %   sb = '/home/jbustamante/LabData/scott_brainard';
-%   dPath = sprintf('%s/scott_masks/2018_california', sb);
-%
+%   dPath = sprintf('%s/scott_masks/180918/cal2018', sb);
+% 
 %   [swpData, uidTable] = carrotSweeper(dPath);                     % Outputs UID-Xscores-Yscores
 %   [swpData, uidTable] = carrotSweeper(dPath, 'SaveData', true);   % Also outputs table in csv file
 %   [swpData, crvTable] = carrotSweeper(dPath, 'ID', 'Curvature', 'SaveData', true);  % Outputs Curvature-Xscores-Yscores and saves table in csv file
 %
 %   *See getToken function below to see which ID tags you can use
+%
 
 %% Parse Inputs
 args = parseInputs(varargin);
@@ -54,20 +55,28 @@ I      = imageDatastore(dPath, 'IncludeSubfolders', 1, 'FileExtensions', FileExt
 fnames = I.Files;
 
 %% Search through file strings
-try
-    tok  = getToken(ID);
-    expr = sprintf('{%s_(%s)}', ID, tok);
-    ids  = regexpi(fnames, expr, 'tokens');
-    str  = cellfun(@(x) char(x{1}), ids, 'UniformOutput', 0);
-catch
-    % Default to UID if error
-    tok  = getToken('UID');
-    expr = sprintf('{%s_(%s)}', 'UID', tok);
-    ids  = regexpi(fnames, expr, 'tokens');
-    str  = cellfun(@(x) char(x{1}), ids, 'UniformOutput', 0);
-end
+% Fix pattern search to just find the next } instead of the regex pattern
+if ~strcmpi(ID, 'all')
+    try
+        expr = sprintf('%s_(?<id>.*?)}', ID);
+        ids = regexpi(fnames, expr, 'names');
+        str = cellfun(@(x) char(x.id), ids, 'UniformOutput', 0);
+        catchs
+        fprintf(2, 'ID %s not found, defaulting to UID\n', ID);
+    catch
+        ID   = 'UID';
+        expr = sprintf('%s_(?<id>.*?)}', ID);
+        ids  = regexpi(fnames, expr, 'names');
+        str  = cellfun(@(x) char(x.id), ids, 'UniformOutput', 0);
+    end
 
-uid = char(str);
+    uid = char(str);
+else
+    fprintf('TODO: Get all tokens in filename [all {ID_(token)}]\n');
+    SweepData = [];
+    TableData = [];
+    return;
+end
 
 %% Run PCA analysis and PC sweep
 BW        = I.readall;
@@ -78,7 +87,8 @@ pY        = SweepData.pcaY.PCAscores;
 %% Store data as table and save as csv
 stc_data  = struct(ID, uid, 'X_scores', pX, 'Y_scores', pY);
 TableData = struct2table(stc_data);
-tbl_name  = sprintf('%s_%s-PCscores_%droots.csv', datestr(now, 'yymmdd'), ID, length(TableData.UID));
+% tbl_name  = sprintf('%s_%s-PCscores_%droots.csv', datestr(now, 'yymmdd'), ID, length(TableData.UID));
+tbl_name  = sprintf('%s_%s-PCscores_%droots.csv', datestr(now, 'yymmdd'), ID, length(TableData.(ID)));
 
 %% Save table as csv
 if SaveData
@@ -106,7 +116,7 @@ args = p.Results;
 end
 
 function val = getToken(key)
-%% returns regex string for token
+%% returns regex string for token [DEPRECATED]
 % As of now, a full file path string name is as follows:
 % /path/{Row_9599}{Root_10}{UID_186-2018}{Source_B2566A}{Scale_466}{Location_California}{Curvature_168}.png'
 %
@@ -114,8 +124,8 @@ function val = getToken(key)
 % This could be more generalized by setting the keys cell string to all the names found in the
 % filename with the {key_val} structure [do this later]
 
-keys = {'Row', 'Root', 'UID',    'Source',    'Scale', 'Location', 'Curvature'};
-vals = {'\d+', '\d+', '\d+-\d+', '\w+\d+\w+', '\d+',    '\w+',     '\d+'};
+keys = {'Row', 'Root', 'UID',    'Source',    'Scale', 'Location', 'Curvature', 'Photo', 'Genotype'};
+vals = {'\d+', '\d+', '\d+-\d+', '\w+\d+\w+', '\d+',    '\w+',      '\d+',       '\d+',      '*'};
 
 if ismember(key, keys)
     val = vals{cellfun('length', regexp(keys, key)) == 1};

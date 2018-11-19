@@ -8,6 +8,7 @@ function [out] = isolate_carrot_Roots(I,disp,oPath,num)
         I(:,end) = [];
         I = handleFLIP(I,[]);
         
+        I = padarray(I,[0 300],'pre','replicate');
         
         Io = I;
         %{
@@ -94,11 +95,11 @@ function [out] = isolate_carrot_Roots(I,disp,oPath,num)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % find the highest curvature
         KSNIP = 50;
-        SMOOTH_VALUE = 20;
+        SMOOTH_VALUE = 40;
         for e = 1:numel(curve)
             o = cwtK(curve(e).data',{SMOOTH_VALUE});
             [J tipIDX{e}] = min(o.K);
-            o = cwtK(curve(e).data',{20});
+            o = cwtK(curve(e).data',{30});
             [J fine_tipIDX] = min((o.K(tipIDX{e}-KSNIP:tipIDX{e}+KSNIP)));
             tipIDX{e} = tipIDX{e} + (fine_tipIDX - KSNIP - 1);
         end
@@ -152,9 +153,7 @@ function [out] = isolate_carrot_Roots(I,disp,oPath,num)
         end
         out.midlines = midlines;
         out.contours = curve;
-        close all
     catch ME;
         out.ME = ME;
-        close all
     end
 end

@@ -46,7 +46,7 @@ function [curve] = trackFromPointAtGradient_carrot(I,P,initD,maxStep,RHO,RAD,poi
     T.setPosition([x;y]);
     T.setImage(I);
     T.setDirection(initD);
-    stopFunction = @(path) size(path,2) < maxStep & path(1,end) > 20;
+    stopFunction = @(path) size(path,2) < maxStep & path(1,end) > 300;
     %T.walk(maxStep);
     T.walkUntil(stopFunction);
     T.reparameterizeCurve();

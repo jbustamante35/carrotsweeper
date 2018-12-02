@@ -13,6 +13,7 @@ nFileList = gdig(FilePath, nFileList, FileExt, 1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% view some images
+
 for e = 1:10:numel(FileList)
     I = imread(FileList{e});
     imshow(I, []);

@@ -6,7 +6,7 @@ function [out] = isolate_carrot_Roots(I,disp,oPath,num)
             I = rgb2gray(I);
         end
         I(:,end) = [];
-        I = handleFLIP(I,[]);
+        I = handleFLIP(I,[]);1
         
         I = padarray(I,[0 300],'pre','replicate');
         

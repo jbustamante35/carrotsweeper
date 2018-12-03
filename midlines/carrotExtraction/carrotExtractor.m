@@ -1,4 +1,4 @@
-%% local focus
+%% Load file list
 dataDir  = '/home/jbustamante/Dropbox/EdgarSpalding/projects/carrotsweeper';
 dataIn   = 'data/samplenefs_181129/input/';
 FilePath = sprintf('%s/%s', dataDir, dataIn);
@@ -6,13 +6,14 @@ FileList = {};
 FileExt  = {'NEF', 'JPG'};
 FileList = gdig(FilePath, FileList, FileExt, 1);
 
-%% local focus
+%% Backup file list?
 nFileList = {};
 FileExt   = {'NEF'};
 nFileList = gdig(FilePath, nFileList, FileExt, 1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% view some images
+%% View sample images
+
 for e = 1:10:numel(FileList)
     I = imread(FileList{e});
     imshow(I, []);
@@ -20,7 +21,7 @@ for e = 1:10:numel(FileList)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% load some data for gmm
+%% Load data for gmm
 PER      = 0.1;
 toSample = 20000;
 TS       = {};
@@ -87,7 +88,7 @@ for e = 1:NC
     imshow(out,[]);
     title(num2str(e));
     drawnow;
-    waitforbuttonpress;
+%     waitforbuttonpress;
 end
 
 %%

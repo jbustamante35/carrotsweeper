@@ -1,0 +1,17 @@
+universe = vanilla
+executable = main_cropMaizeImage.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = $(FileTransferList)
+request_disk=3000000
+request_memory=4000
+request_cpus=1
+arguments = "'$(argNumber1)' '$(argNumber2)' '$(argNumber3)' '$(argNumber4)' '$(argNumber5)' '$(argNumber6)' '$(argNumber7)'"
+output = logs/stdout/maizeEar.output$(argNumber7)
+error = logs/stderr/maizeEar.output$(argNumber7)
++AccountingGroup = "spalding"
+priority = 9
++Group = "spalding"
++WantFlocking = true
++WantGlideIn = true
+queue

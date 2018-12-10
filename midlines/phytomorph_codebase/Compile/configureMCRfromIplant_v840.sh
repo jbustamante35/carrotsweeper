@@ -1,0 +1,13 @@
+#!/bin/bash
+################################################################################################################
+echo "Create directory for MCR-v840.zip"
+mkdir -p /opt/imagePhenomics/common/
+echo "Start download: MCR-v840.zip"
+wget -O /opt/imagePhenomics/common/v840.zip http://davos.cyverse.org/irods-rest/rest/fileContents/iplant/home/nmiller/publicData/v840.zip?ticket=Ek8bhnxtyt2YRVj
+echo "Done download: MCR-840.zip"
+################################################################################################################
+################################################################################################################
+echo "start unzip: v840.zip"
+mkdir -p /opt/imagePhenomics/common/MATLAB/MATLAB_Compiler_Runtime_R2014b/
+sudo unzip -o -q /opt/imagePhenomics/common/v840.zip -d /opt/imagePhenomics/common/MATLAB/MATLAB_Compiler_Runtime_R2014b/
+echo "Done unzip: v840.zip"

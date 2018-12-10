@@ -1,4 +1,4 @@
-function [DomainS,DomainG] = extendCarrotMidline(mline, dTrans, img, LP)
+function [DomainS, DomainG] = extendCarrotMidline(mline, dTrans, img, LP)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % sub-sample

@@ -1,0 +1,54 @@
+%% gather data from CyVerse
+% this is the RILs only path
+dataPath = '/iplant/home/jgustin/maizeData/coleoptileEmergence%'; 
+%dataPath = '/iplant/home/leakey_cyverse/CharlesPignonData';
+CMD = ['iquest --no-page "select COLL_NAME,DATA_NAME where COLL_NAME like ''' dataPath '''"']; 
+[o,r] = system(CMD);
+[r] = parseRecords(r);
+FileList = {};
+FileExt = {'tiff'};
+for e = 1:numel(r)
+    [p,nm,ext] = fileparts(r(e).DATA_NAME);
+    if any(strcmp(ext(2:end),FileExt))
+        FileList{end+1} = [r(e).COLL_NAME filesep r(e).DATA_NAME];
+    end
+end
+%% find frist images
+for e = 1:numel(FileList)
+    [pth,nm,ext] = fileparts(FileList{e});
+    nm = str2num(nm);
+    if nm == 1
+        kp(e) = true;
+    else
+        kp(e) = false;
+    end
+end
+FileList = FileList(kp);
+%%
+dlP = '/home/nate/Downloads/JEFF/';
+mkdir(dlP);
+cnt = 1;
+for e = 30:numel(FileList)
+    CMD = ['iget ' FileList{e} ' ' dlP num2str(cnt) '.tif'];
+    cnt = cnt + 1;
+    system(CMD)
+    CMD
+end
+%%
+FilePath = 'W:\';
+FilePath = '/home/nate/Downloads/JEFF/';
+FileList = {};
+FileExt = {'tif','TIF'};
+FileList = gdig(FilePath,FileList,FileExt,1)
+%%
+I = {};
+for e = 1:numel(FileList)
+    try
+        I{end+1} = imread(FileList{e});
+        imshow(I{end},[]);
+        drawnow
+    catch
+    end
+    
+end
+%%

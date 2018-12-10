@@ -1,0 +1,11 @@
+resolution:300
+deltaTime:20
+duration:40
+imagepath:/media/spalding/38A80C0DA80BC7F81/imagepath
+routepath:/media/spalding/38A80C0DA80BC7F81/corn_wu
+scannerID4:002_4
+scannerID1:002_1
+scannerID5:002_5
+scannerID6:002_6
+scannerID2:002_2
+scannerID3:002_3

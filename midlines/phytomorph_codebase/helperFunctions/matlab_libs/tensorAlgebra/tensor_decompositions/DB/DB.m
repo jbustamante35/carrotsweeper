@@ -1,0 +1,813 @@
+function [IN] = DB(IN)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % IN.dV:        data
+    % IN.GRP:       data labels (this form is for non-linear binary class)
+    % IN.REDUX:     information about package construction
+        % IN.REDUX.tensor_dims:  for tensor dimension reduction.
+        % IN.REDUX.vector_dims:  for tensor dimension reduction.
+    % IN.NUMbase:   number of groups on base
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % date: 2011.11.28    
+    % construct or use descrimination bundle.
+    % create manifold for data.
+    % generate local linear sub-space for descrimination.
+    % should work for non-linear via curvature/torsion 
+    %   of base manifold.
+    % fiber is discrimination sub-space.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % speed-up notes:
+    % note that all points are classed even if they are not
+    % members. next membership is determined.
+    % speed up would be to determine membership and then 
+    % class
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % make package
+    if IN.op == 0
+        switch IN.type
+            case '0'
+                IN.PACKAGE = constructT0(IN);
+            case '1'
+                IN.PACKAGE = constructT1(IN);
+        end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % use the package
+    elseif IN.op == 1
+        switch IN.type
+            case '0'
+                IN = useT0(IN);
+            case '1'
+                IN = useT1(IN);
+        end
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% case 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [P] = constructT0(IN)
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % reduce the data
+    PACKAGE = local_reduce(IN);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % get the boundary and margin plane
+    [dB0,dB1] = sB(PACKAGE.sC,IN.GRP,IN.LEVELS);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % points which make up boundary and labels
+    margin_dB_pts = [dB0.v-.5*dB0.dv;dB1.v-.5*dB1.dv];
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % points which go into decision 
+    dB_pts = [dB0.v;dB1.v;PACKAGE.sC(IN.GRP==1,:)];
+    dB_lab = [0*ones(size(dB0.v,1),1);1*ones(size(dB1.v,1),1);1*ones(sum(IN.GRP==1),1)];
+    [dB_pts idx] = unique(dB_pts,'rows');
+    dB_lab = dB_lab(idx);
+    dB_pts = PACKAGE.sC;
+    dB_lab = IN.GRP;
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % group on base space
+    [kidx baseP] = kmeans(margin_dB_pts,IN.NUMbase(1));
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % modify package
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    PACKAGE.REDUX.LDAdim = IN.REDUX.LDAdim;
+    PACKAGE.STORE.WHOLE_sC = PACKAGE.sC;
+    PACKAGE.STORE.GRP = IN.GRP;
+    PACKAGE.sC = dB_pts;
+    PACKAGE.GRP = dB_lab;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % snap points to base space
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % snap to nearest- rule for '0' class
+    % top 10 for base class 1
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % find index for classes
+    idx1 = find(IN.GRP==1);
+    idx0 = find(IN.GRP==0);
+    % distace to baseP
+    dis = [];
+    for g = 1:size(baseP,1)
+        for pt = 1:size(PACKAGE.sC,1)
+            tmp = PACKAGE.sC(pt,:) - baseP(g,:);
+            dis(pt,g) = norm(tmp);
+        end
+    end
+    % segment into classes
+    for g = 1:size(baseP,1)
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        [J didx] = min(dis(idx0,:),[],2);    
+        subIDX{g}.idx0 = find(idx0(didx==g));
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        selT = 10;
+        for k = 1:size(baseP,1)        
+            [J sidx] = sort(dis(idx1,k),'descend');
+            subIDX{g}.idx1 = idx1(sidx(1:selT));
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        subIDX{g}.idxT = [subIDX{g}.idx0;subIDX{g}.idx1];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+    
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % make package for each postion in base space
+    c = 1;
+    UQ = unique(didx);
+    gNUM = size(UQ,1);
+    
+    
+    for g = 1:gNUM
+        %%%
+        % NOTE
+        % here is the default fibration for the zero class
+        % only have sub-space separate the 1's if the map to the baseB on
+        % 0's
+        %{
+        % find the class of the points which "snap" to baseP
+        grp = PACKAGE.GRP(didx==g);
+        midx = find(didx==g);
+        % find the "0"'s in group g
+        idx0 = find(grp==0);
+        idx1 = find(grp==1);
+        subIDX = [midx(idx0);midx(idx1)];
+        
+        % clac prior - prob that a point will be in the class g
+        PRIOR = [sum(grp==0)/sum(didx==g) sum(grp==1)/sum(didx==g)];
+        PACKAGE.stage3.prior = PRIOR;
+        
+        %}
+        %%%
+        % assign
+        TOT = size(subIDX{g}.idx0,1) + size(subIDX{g}.idx1,1);
+        PRIOR = [size(subIDX{g}.idx0,1)/TOT size(subIDX{g}.idx1,1)/TOT];
+        PACKAGE.stage3.prior = PRIOR;
+        PACKAGE.stage2.baseP = baseP(g,:);
+        
+        %P{c} = gen_subSpace(IN,PACKAGE,subIDX);
+        P{c} = gen_subSpace(PACKAGE,subIDX{g});
+        c = c + 1;
+        
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if IN.disp
+        % figure one
+        vDIMS = [1 2 size(PACKAGE.sC,2)];        
+        figure;
+        hold on
+        plot3(PACKAGE.STORE.sC(PACKAGE.STORE.GRP==0,vDIMS(1)),PACKAGE.STORE.sC(PACKAGE.STORE.GRP==0,vDIMS(2)),PACKAGE.STORE.sC(PACKAGE.STORE.GRP==0,vDIMS(3)),['bo']);
+        plot3(PACKAGE.STORE.sC(PACKAGE.STORE.GRP==1,vDIMS(1)),PACKAGE.STORE.sC(PACKAGE.STORE.GRP==1,vDIMS(2)),PACKAGE.STORE.sC(PACKAGE.STORE.GRP==1,vDIMS(3)),['ro']);
+        
+        plot3(dB0.v(:,vDIMS(1)),dB0.v(:,vDIMS(2)),dB0.v(:,vDIMS(3)),['b*']);
+        quiver3(dB0.v(:,vDIMS(1)),dB0.v(:,vDIMS(2)),dB0.v(:,vDIMS(3)),-dB0.dv(:,vDIMS(1)),-dB0.dv(:,vDIMS(2)),-dB0.dv(:,vDIMS(3)),0,'c');
+        
+        plot3(dB1.v(:,vDIMS(1)),dB1.v(:,vDIMS(2)),dB1.v(:,vDIMS(3)),['r*']);
+        quiver3(dB1.v(:,vDIMS(1)),dB1.v(:,vDIMS(2)),dB1.v(:,vDIMS(3)),-dB1.dv(:,vDIMS(1)),-dB1.dv(:,vDIMS(2)),-dB1.dv(:,vDIMS(3)),0,'m');
+        
+        plot3(dB0.v(:,vDIMS(1))-.5*dB0.dv(:,vDIMS(1)),dB0.v(:,vDIMS(2))-.5*dB0.dv(:,vDIMS(2)),dB0.v(:,vDIMS(3))-.5*dB0.dv(:,vDIMS(3)),['g*']);
+        plot3(dB1.v(:,vDIMS(1))-.5*dB1.dv(:,vDIMS(1)),dB1.v(:,vDIMS(2))-.5*dB1.dv(:,vDIMS(2)),dB1.v(:,vDIMS(3))-.5*dB1.dv(:,vDIMS(3)),['g*']);
+        
+        
+        % figure ALPHA
+        CL = {'m' 'c' 'g' 'b' 'r'};
+        vDIMS = [1 2 size(PACKAGE.sC,2)];
+        %vDIMS = [1 2 3];
+        figure;
+        hold on
+        
+        plot3(PACKAGE.STORE.WHOLE_sC(PACKAGE.STORE.GRP==0,vDIMS(1)),PACKAGE.STORE.WHOLE_sC(PACKAGE.STORE.GRP==0,vDIMS(2)),PACKAGE.STORE.WHOLE_sC(PACKAGE.STORE.GRP==0,vDIMS(3)),['b.']);
+        plot3(PACKAGE.STORE.WHOLE_sC(PACKAGE.STORE.GRP==1,vDIMS(1)),PACKAGE.STORE.WHOLE_sC(PACKAGE.STORE.GRP==1,vDIMS(2)),PACKAGE.STORE.WHOLE_sC(PACKAGE.STORE.GRP==1,vDIMS(3)),['r.']);
+        plot3(PACKAGE.STORE.WHOLE_sC(find(IN.VW==1),vDIMS(1)),PACKAGE.STORE.WHOLE_sC(find(IN.VW==1),vDIMS(2)),PACKAGE.STORE.WHOLE_sC(find(IN.VW==1),vDIMS(3)),['b.'],'MarkerSize',20);
+        plot3(PACKAGE.STORE.WHOLE_sC(find(IN.VW==2),vDIMS(1)),PACKAGE.STORE.WHOLE_sC(find(IN.VW==2),vDIMS(2)),PACKAGE.STORE.WHOLE_sC(find(IN.VW==2),vDIMS(3)),['c.'],'MarkerSize',20);
+        
+        
+        for pck = 1:size(P,2)
+            plot3(P{pck}.stage2.uC(vDIMS(1)),P{pck}.stage2.uC(vDIMS(2)),P{pck}.stage2.uC(vDIMS(3)),[CL{pck} '*']);
+            
+            plot3(P{pck}.STORE.sC(:,vDIMS(1)),P{pck}.STORE.sC(:,vDIMS(2)),P{pck}.STORE.sC(:,vDIMS(3)),[CL{pck} 'o']);            
+            plot3(P{pck}.STORE.sC(P{pck}.STORE.grp==1,vDIMS(1)),P{pck}.STORE.sC(P{pck}.STORE.grp==1,vDIMS(2)),P{pck}.STORE.sC(P{pck}.STORE.grp==1,vDIMS(3)),'k*');
+            
+            u1 = mean(P{pck}.STORE.sC(P{pck}.STORE.grp==1,:),1);
+            
+            quiver3(P{pck}.stage2.uC(vDIMS(1)),P{pck}.stage2.uC(vDIMS(2)),P{pck}.stage2.uC(vDIMS(3)),P{pck}.STORE.lambda_scale(vDIMS(1)),P{pck}.STORE.lambda_scale(vDIMS(2)),P{pck}.STORE.lambda_scale(vDIMS(3)),CL{pck})
+            quiver3(P{pck}.stage2.uC(vDIMS(1)),P{pck}.stage2.uC(vDIMS(2)),P{pck}.stage2.uC(vDIMS(3)),-P{pck}.STORE.lambda_scale(vDIMS(1)),-P{pck}.STORE.lambda_scale(vDIMS(2)),-P{pck}.STORE.lambda_scale(vDIMS(3)),CL{pck})
+        end
+        
+        % figure two
+        CL = {'m' 'c' 'g' 'b' 'r'};
+        vDIMS = [1 2 size(PACKAGE.sC,2)];
+        %vDIMS = [1 2 3];
+        figure;
+        hold on
+        
+        for pck = 1:size(P,2)
+            plot3(P{pck}.stage2.uC(vDIMS(1)),P{pck}.stage2.uC(vDIMS(2)),P{pck}.stage2.uC(vDIMS(3)),[CL{pck} '*']);
+            
+            plot3(P{pck}.STORE.sC(:,vDIMS(1)),P{pck}.STORE.sC(:,vDIMS(2)),P{pck}.STORE.sC(:,vDIMS(3)),[CL{pck} 'o']);            
+            plot3(P{pck}.STORE.sC(P{pck}.STORE.grp==1,vDIMS(1)),P{pck}.STORE.sC(P{pck}.STORE.grp==1,vDIMS(2)),P{pck}.STORE.sC(P{pck}.STORE.grp==1,vDIMS(3)),'k*');
+            
+            u1 = mean(P{pck}.STORE.sC(P{pck}.STORE.grp==1,:),1);
+            
+            quiver3(P{pck}.stage2.uC(vDIMS(1)),P{pck}.stage2.uC(vDIMS(2)),P{pck}.stage2.uC(vDIMS(3)),P{pck}.STORE.lambda_scale(vDIMS(1)),P{pck}.STORE.lambda_scale(vDIMS(2)),P{pck}.STORE.lambda_scale(vDIMS(3)),CL{pck})
+            quiver3(P{pck}.stage2.uC(vDIMS(1)),P{pck}.stage2.uC(vDIMS(2)),P{pck}.stage2.uC(vDIMS(3)),-P{pck}.STORE.lambda_scale(vDIMS(1)),-P{pck}.STORE.lambda_scale(vDIMS(2)),-P{pck}.STORE.lambda_scale(vDIMS(3)),CL{pck})
+        end
+        
+        
+        
+        
+        
+        % figure three
+        sX = [dB0.v;dB0.v-.5*dB0.dv;dB1.v;dB1.v-.5*dB1.dv];
+        LABS = [0*ones(size(dB0.v,1),1);2*ones(size(dB0.v,1),1);1*ones(size(dB1.v,1),1);2*ones(size(dB1.v,1),1)];
+        D = pdist(sX,'euclidean');
+        [Y,eigvals] = cmdscale(D);
+        
+        
+        figure;
+        hold on
+        plot3(Y(LABS==0,1),Y(LABS==0,2),Y(LABS==0,3),'k.')
+        plot3(Y(LABS==1,1),Y(LABS==1,2),Y(LABS==1,3),'r.')
+        plot3(Y(LABS==2,1),Y(LABS==2,2),Y(LABS==2,3),'g*')
+        
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    
+    
+end
+
+function [PACKAGE] = local_reduce(IN)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % for reduction followed by "linearization"
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % subset the GRP == 1
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    sz = size(IN.dV);
+    sdV = reshape(IN.dV,[prod(sz(1:end-1)) sz(end)]);
+    sdV = sdV(:,find(IN.GRP));
+    sdV = reshape(sdV,[sz(1:end-1) sum(IN.GRP)]);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % GENERATE TENSOR BASIS
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % decompose - TCA
+    IN.D = double(sdV);
+    % construct information for tensor decompostion
+    IN.key.op{2}.NC = IN.REDUX.tensor_dims;
+    for i = 1:numel(IN.REDUX.tensor_dims)
+        if (IN.key.op{2}.NC(i) ~= 0)
+            IN.key.op{2}.toOP(i) = 1;
+            IN.key.op{2}.dualOP(i) = 0;
+            IN.key.op{2}.compOP(i) = 1;
+        else
+            IN.key.op{2}.toOP(i) = 0;
+            IN.key.op{2}.dualOP(i) = 0;
+            IN.key.op{2}.compOP(i) = 0;
+        end
+    end
+    IN.op = 1;
+    IN = stateChange(IN);
+    % remove extra
+    IN.key.op{2}.operAND.U{3} = [];
+    IN.key.op{2}.operAND.BV{3} = [];
+    % decompose - PCA
+    ntSZ = [prod(IN.key.op{2}.NC(1:end-1)) size(IN.D,ndims(IN.D))];        
+    otSZ = size(IN.D);
+    vec = reshape(IN.D,ntSZ)';                      
+    [sS sC sU sBV sL sERR sLAM] = PCA_FIT_FULL(vec,IN.REDUX.vector_dims);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % STORE: THE BASIS
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    PACKAGE.stage1.IN = IN;
+    PACKAGE.stage2.U = sU;
+    PACKAGE.stage2.BV = sBV;         
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % CLEANUP - 0
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % PROJECT TO TENSOR BASIS
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % PROJECT to tensor space
+    PACKAGE.stage1.IN.D = double(IN.dV);
+    PACKAGE.stage1.IN.op = 3;
+    tmp = stateChange(PACKAGE.stage1.IN);
+    tgSZ = size(tmp.D);
+    tgSZ = [prod(tgSZ(1:end-1)) tgSZ(end)];                 
+    % PROJECT to vector space
+    vec = reshape(tmp.D,tgSZ)';
+    sC = PCA_REPROJ(vec,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+    % recompose - PCA
+    tM = PCA_BKPROJ(sC,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+    tM = reshape(tM',tgSZ);
+    % recompose - TCA
+    ntSZ = [PACKAGE.stage1.IN.key.op{2}.NC(1:end-1) size(tM,2)];        
+    PACKAGE.stage1.IN.op = 2;
+    PACKAGE.stage1.IN.D = reshape(tM',ntSZ);
+    PACKAGE.stage1.IN = stateChange(PACKAGE.stage1.IN);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % CLEANUP - 0
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % CLEANUP - 0
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % RECONSTRUCT FOR NORMAL BUNDLE CONSTRUCTION
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % recompose - PCA    
+    M = PCA_BKPROJ(sC,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+    M = reshape(M',[otSZ(1:end-1) size(M,1)]);
+    % recompose - TCA
+    IN.op = 2;
+    IN.D = M;
+    IN = stateChange(IN);
+    % reduce normal bundle to single dim fibre via integration
+    ERR = (IN.dV - IN.D);
+    eSZ = size(ERR);
+    ERR = reshape(ERR,[prod(eSZ(1:end-1)) eSZ(end)]);
+    ERR = sum(ERR.*ERR,1).^.5;    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % CLEANUP - 0
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % STORE: THE components
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    sC = [sC ERR'];
+    uC = mean(sC,1);
+    stdC = std(sC,1,1);    
+    sC = sC - repmat(uC,[size(sC,1) 1]);
+    sC = sC .* repmat(stdC.^-1,[size(sC,1) 1]);
+    PACKAGE.sC = sC;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % STORE: WHITEN PROPERTIES
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    PACKAGE.stage1.uC = uC;
+    PACKAGE.stage1.stdC = stdC;
+end
+
+function [PACKAGE] = gen_subSpace(PACKAGE,subIDX)
+    if ~any(PACKAGE.stage3.prior == 0)
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % WHITEN
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % place on base space, center and whiten        
+        PACKAGE.STORE.sC = PACKAGE.sC(subIDX.idxT,:);
+        uC = mean(PACKAGE.sC(subIDX.idxT,:),1);
+        stdC = std(PACKAGE.sC(subIDX.idxT,:),1,1);    
+        stdC = ones(size(stdC));
+        sC = PACKAGE.sC(subIDX.idxT,:) - repmat(uC,[size(subIDX.idxT,1) 1]);
+        sC = sC .* repmat(stdC.^-1,[size(subIDX.idxT,1) 1]);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % STORE: WHITEN PROPERTIES
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+        PACKAGE.stage2.uC = uC;
+        PACKAGE.stage2.stdC = stdC;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CONSTRUCT DISCRIMINATION SUB-SPACE
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % decompose - LDA
+        lambda = mynLDA(sC,PACKAGE.GRP(subIDX.idxT),1,PACKAGE.REDUX.LDAdim);
+        % project to lambda
+        lam = sC*lambda;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CONSTRUCT DISCRIMINATION
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % decompose - LDA
+        lambda = mean(sC(PACKAGE.GRP(subIDX.idxT)==0,:),1) - mean(sC(PACKAGE.GRP(subIDX.idxT)==1,:),1);
+        lambda = lambda'/norm(lambda);
+        % project to lambda
+        lam = sC*lambda;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
+        
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CONSTRUCT DISCRIMINATION METHOD(S)
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        nb = NaiveBayes.fit(lam,PACKAGE.GRP(subIDX.idxT),'Distribution','normal','prior',PACKAGE.stage3.prior);
+        %nb = NaiveBayes.fit(lam,PACKAGE.GRP(subIDX),'Distribution','kernel','prior',PACKAGE.stage3.prior);
+        %nb = NaiveBayes.fit(lam,GRP,'Distribution','normal');
+        % make package for detection
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % STORE: DISCRIMINATION INFORMATION
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        PACKAGE.stage3.lambda = lambda;
+        %PACKAGE.stage3.nb = [];
+        PACKAGE.stage3.nb = nb;
+        %PACKAGE.STORE.lam = lam;
+        %PACKAGE.STORE.sC = sC(subIDX,:);
+        %PACKAGE.STORE.sC = sC;
+        PACKAGE.STORE.grp = PACKAGE.GRP(subIDX.idxT);
+        PACKAGE.STORE.IDX = subIDX;
+        PACKAGE.STORE.lambda_scale = lambda'/norm(lambda);
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % MODIFY: REMOVE componens
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %PACKAGE.sC = [];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+    
+end
+
+function [post,dis] = actT0(PACKAGE,S)
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % project to a given basis
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % PROJECT-IN-TCA
+        PACKAGE.stage1.IN.D = S;
+        PACKAGE.stage1.IN.op = 3;
+        tmp = stateChange(PACKAGE.stage1.IN);
+        tgSZ = size(tmp.D);
+        tgSZ = [prod(tgSZ(1:end-1)) tgSZ(end)];                     
+        % PROJECT-IN-PCA
+        vec = reshape(tmp.D,tgSZ)';
+        tC = PCA_REPROJ(vec,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+        % PROJECT-OUT-PCA
+        tM = PCA_BKPROJ(tC,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+        tM = reshape(tM',tgSZ);
+        % PROJECT-OUT-TCA
+        ntSZ = [PACKAGE.stage1.IN.key.op{2}.NC(1:end-1) size(tM,2)];        
+        PACKAGE.stage1.IN.op = 2;
+        PACKAGE.stage1.IN.D = reshape(tM',ntSZ);
+        PACKAGE.stage1.IN = stateChange(PACKAGE.stage1.IN);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % ERR ALONG NORMAL BUNDLE
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        ERR = (S -  PACKAGE.stage1.IN.D);
+        eSZ = size(ERR);
+        ERR = reshape(ERR,[prod(eSZ(1:end-1)) eSZ(end)]);
+        ERR = sum(ERR.*ERR,1).^.5;
+        tC = [tC ERR'];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % WHITEN
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        tC = tC - repmat(PACKAGE.stage1.uC,[size(tC,1) 1]);        
+        tC = tC .* repmat(PACKAGE.stage1.stdC.^-1,[size(tC,1) 1]);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % distance to base point P
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        dis = tC - repmat(PACKAGE.stage2.baseP,[size(tC,1) 1]);        
+        dis = sum(dis.*dis,2).^.5;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % if the group has a history of containing 1's
+        % else return 0
+        if ~any(PACKAGE.stage3.prior == 0)
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % WHITEN
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            tC = tC - repmat(PACKAGE.stage2.uC,[size(tC,1) 1]);        
+            tC = tC .* repmat(PACKAGE.stage2.stdC.^-1,[size(tC,1) 1]);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % PROJECT TO DISCRIMINATION SPACE and APPLY DISCRIMINATION
+            % METHOD(S)
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % project to lambda            
+            lam = tC*PACKAGE.stage3.lambda;
+            %post = lam > 0;
+            
+            % make bayes
+            [post,cpre,logp] = posterior(PACKAGE.stage3.nb,lam);
+            post = post(:,2);
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        elseif PACKAGE.stage3.prior(1) == 1
+            post = zeros(size(S,ndims(S)),1);
+        elseif PACKAGE.stage3.prior(2) == 1
+            post = ones(size(S,ndims(S)),1);
+        end
+end
+
+function [dB0,dB1] = sB(X,C,L)
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % note that "0"-manifold could be mod-ed too
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % init cluster the "0"-manifold
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    iC = 3;
+    tidx = find(C==0);
+    [kidx baseP] = kmeans(X(tidx,:),iC);    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % snap points to base space of the "0"-manifold
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    dis = [];
+    for g = 1:size(baseP,1)
+        for pt = 1:size(X,1)
+            tmp = X(pt,:) - baseP(g,:);
+            dis(pt,g) = norm(tmp);
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+    [J kidx] = min(dis,[],2);    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % mod those clusters which 
+    % are "far" internal to "0"-manifold
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    UQ = unique(kidx);
+    gidx = [];
+    for u = 1:size(UQ,1)
+        tidx = find(UQ(u) == kidx);
+        if sum(C(tidx)) > 0
+            gidx = [gidx;tidx];
+            kp(u) = 0;
+        else
+            kp(u) = 1;
+        end
+    end
+    % remove the 1's class
+    gidx0 = setdiff(gidx,find(C==1));
+    gidx1 = find(C==1);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % H-distance
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %[v0,dv0,dis0,idx0] = h1(X(gidx0,:),X(gidx1,:));
+    %[v1,dv1,dis1,idx1] = h1(X(gidx1,:),X(gidx0,:));
+    
+    [dB1] = h0(X(gidx0,:),X(gidx1,:),L(1));
+    [dB0] = h0(X(gidx1,:),X(gidx0,:),L(2));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %{
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % return dB
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    dB.v = [v0;v1];
+    dB.dv = [dv0;dv1];
+    dB.lab = [zeros(size(v1,1),1);ones(size(v1,1),1)];
+    dB.idx = [idx0;idx1];
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %}
+    
+end
+
+function [dB] = h0(X,Y,level)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % dB erosion - topological errosion of the boundary
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    dB.v = [];
+    dB.dv = [];
+    dB.level = [];
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    for l = 1:level
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % H-distance
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        [v,dv,dis,idx] = h1(X,Y);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % return dB
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        dB.v = [dB.v;v];
+        dB.dv = [dB.dv;dv];        
+        dB.level = [dB.level;l*ones(size(v,1),1)];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % peal away Y's boundary
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        Y = setdiff(Y,v,'rows');
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+end
+
+function [vec,dV,dis,idx] = h1(X,Y)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % X selects Y's boundary 
+    % find Y's boundary
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    for i = 1:size(X,1)
+        del = Y - repmat(X(i,:),[size(Y,1) 1]);
+        del = sum(del.*del,2);
+        [dis(i) idx(i)] = min(del);
+        vec(i,:) = Y(idx(i),:);
+        dV(i,:) = vec(i,:) - X(i,:);
+    end
+    [vec sidx] = unique(vec,'rows');
+    dV = dV(sidx,:);
+end
+
+function [IN] = useT0(IN)
+    IN.post = [];
+    IN.dis = [];
+    for p = 1:size(IN.PACKAGE,2)
+        [IN.post(:,p) IN.dis(:,p)] = actT0(IN.PACKAGE{p},IN.D);
+    end
+    [J sidx] = min(IN.dis,[],2);
+    for sel = 1:size(sidx,1)
+        post(sel) = IN.post(sel,sidx(sel));
+    end
+    IN.post = post';
+    IN.grp = sidx;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% case 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% case 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [PACKAGE] = constructT1(IN)
+    alpha = 1;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % reduce via tPCA-vPCA-lda
+    PACKAGE = local_reduce(IN);  
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % obtain kernel
+    fidx = find(IN.GRP);
+    tIN.D = {PACKAGE.sC(fidx,:)};
+    tIN.op = 0;
+    tIN.nor = 0;
+    tIN.P = alpha*ones(1,size(PACKAGE.sC,2))/size(fidx,1);
+    [K tIN] = ker1(tIN);
+    %{
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % analysis of kernel
+    tic
+    [V D] = eigs(K,10);
+    toc
+    %}
+    V = ones(size(K,1),1)/size(K,1);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % obtain the LDA
+    tIN.op = 1;
+    tIN.D{2} = PACKAGE.sC;
+    %{
+    K = ker1(tIN);
+    sC = K*V;
+    lambda = mynLDA(sC,IN.GRP,1,1);
+    lam = sC*lambda;  
+    %nb = NaiveBayes.fit(lam,IN.GRP,'Distribution','normal');
+    %}
+    
+    lambda = 1;
+    nb = [];
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    % prepare to exit
+    tIN.D{2} = [];
+    PACKAGE.IN = tIN;    
+    PACKAGE.lambda = lambda;
+    PACKAGE.nb = nb;
+    PACKAGE.V = V;
+end
+
+function [IN] = useT1(IN)
+    IN.post = actT1(IN.PACKAGE,IN.D);
+    IN.grp = ones(size(IN.post));
+end
+
+function [post] = actT1(PACKAGE,S)
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % project to a given basis
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % PROJECT-IN-TCA
+        PACKAGE.stage1.IN.D = S;
+        PACKAGE.stage1.IN.op = 3;
+        tmp = stateChange(PACKAGE.stage1.IN);
+        tgSZ = size(tmp.D);
+        tgSZ = [prod(tgSZ(1:end-1)) tgSZ(end)];                     
+        % PROJECT-IN-PCA
+        vec = reshape(tmp.D,tgSZ)';
+        tC = PCA_REPROJ(vec,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+        % PROJECT-OUT-PCA
+        tM = PCA_BKPROJ(tC,PACKAGE.stage2.BV,PACKAGE.stage2.U);
+        tM = reshape(tM',tgSZ);
+        % PROJECT-OUT-TCA
+        ntSZ = [PACKAGE.stage1.IN.key.op{2}.NC(1:end-1) size(tM,2)];        
+        PACKAGE.stage1.IN.op = 2;
+        PACKAGE.stage1.IN.D = reshape(tM',ntSZ);
+        PACKAGE.stage1.IN = stateChange(PACKAGE.stage1.IN);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % ERR ALONG NORMAL BUNDLE
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        ERR = (S -  PACKAGE.stage1.IN.D);
+        eSZ = size(ERR);
+        ERR = reshape(ERR,[prod(eSZ(1:end-1)) eSZ(end)]);
+        ERR = sum(ERR.*ERR,1).^.5;
+        tC = [tC ERR'];
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % WHITEN
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        tC = tC - repmat(PACKAGE.stage1.uC,[size(tC,1) 1]);        
+        tC = tC .* repmat(PACKAGE.stage1.stdC.^-1,[size(tC,1) 1]);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % CLEANUP - 0
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        PACKAGE.IN.D{2} = tC;
+        PACKAGE.IN.op = 1;        
+        K = ker1(PACKAGE.IN);
+        sC = K*PACKAGE.V;
+        sC = sC*PACKAGE.lambda;
+        post = sC;
+        %{
+        [post,cpre,logp] = posterior(PACKAGE.nb,sC);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        post = post(:,2);
+        %}
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% case 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -220,7 +220,8 @@ end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % process boxes
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        [cellCrop,sub_kidx,qrData,QRboundingBox,cropLine] = getLeftRightBox(I,cellBoxes,map,gmm,blueClusterNumber,qrClusterLabel);
+        [cellCrop,sub_kidx,qrData,QRboundingBox,cropLine] = ...
+            getLeftRightBox(I,cellBoxes, map, gmm, blueClusterNumber,qrClusterLabel);
 
         rootStack = [];
         carrotImage = {};

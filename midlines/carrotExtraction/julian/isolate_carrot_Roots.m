@@ -6,7 +6,7 @@ try
         I = rgb2gray(I);
     end
     I(:,end) = [];
-    I = handleFLIP(I, []);    
+    I = handleFLIP(I, []);
     I = padarray(I,[0 300],'pre','replicate');
     
     Io = I;

@@ -1,18 +1,15 @@
-function straightMask = sampleStraighten(midline, carrotMask, vis)
-try
-    [DomainS, DomainG] = extendCarrotMidline(midline, [0 0], carrotMask);
+function [vec,vecM] = sampleStraighten(midline,carrotMask,carrotImage)
+
+    [DomainS,DomainG] = extendCarrotMidline(midline,[0 0],carrotMask);
     dsz = size(DomainG);
-    
-    straightMask = ba_interp2(double(carrotMask)/255,DomainS(:,2),DomainS(:,1));
-    straightMask = reshape(straightMask,[dsz(1) dsz(2)]);
-catch e
-    fprintf(2, 'Error straightening mask\n%s\n', e.getReport);
-    straightMask = [];
-end
+    vec = [];
+    for k = 1:size(carrotImage,3)
+        vec(:,k) = ba_interp2(double(carrotImage(:,:,k))/255,DomainS(:,2),DomainS(:,1));
+    end
 
-if vis
-    imshow(straightMask, []);
-    drawnow;
-end
+    vecM = ba_interp2(double(carrotMask)/255,DomainS(:,2),DomainS(:,1));
 
+
+    vec = reshape(vec,[dsz(1) dsz(2) 3]);
+    vecM = reshape(vecM,[dsz(1) dsz(2)]);
 end

@@ -1,0 +1,32 @@
+epkowa
+scanning at resolution: 100 dpi
+scanning at deltaTime of: 60 sec
+scanning at duration of: 79200 sec
+scanning at number of images: 1320
+folder date name: Tue_May__5_09-56-45_CDT_2015
+found scanner at the position: 2
+Making folder: /mnt/snapper/kernelSwellingData/Scott/rawData/Tue_May__5_09-56-45_CDT_2015/2
+Scanning at scanner number 2 : @ image number 1
+
+Scan time @scanner number 2 : 7.56 
+Time left to next scan for scanner number 2 :  53 
+Scanning at scanner number 2 : @ image number 2
+
+Scan time @scanner number 2 : 7.51 
+Time left to next scan for scanner number 2 :  53 
+Scanning at scanner number 2 : @ image number 3
+
+Scan time @scanner number 2 : 7.58 
+Time left to next scan for scanner number 2 :  53 
+Scanning at scanner number 2 : @ image number 4
+
+Scan time @scanner number 2 : 7.58 
+Time left to next scan for scanner number 2 :  53 
+Scanning at scanner number 2 : @ image number 5
+
+Scan time @scanner number 2 : 7.44 
+Time left to next scan for scanner number 2 :  53 
+Scanning at scanner number 2 : @ image number 6
+
+Scan time @scanner number 2 : 7.52 
+Time left to next scan for scanner number 2 :  53 

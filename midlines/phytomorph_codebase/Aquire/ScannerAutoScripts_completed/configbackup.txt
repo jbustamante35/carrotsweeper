@@ -1,0 +1,10 @@
+resolution:1200
+deltaTime:600
+duration:79200
+imagepath:/mnt/snapper/kernelSwellingData/Scott/rawData
+scannerID4:002_4
+scannerID1:001_3
+scannerID5:002_5
+scannerID6:002_6
+scannerID2:002_2
+scannerID3:002_3

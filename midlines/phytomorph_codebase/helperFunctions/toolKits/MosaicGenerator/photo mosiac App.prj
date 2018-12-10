@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration target="target.mlapps" target-name="Package App" name="Photo mosiac App" location="C:\Users\VeronicaS\Downloads\MosaicGenerator" file="C:\Users\VeronicaS\Downloads\MosaicGenerator\Photo mosiac App.prj" build-checksum="2401010366">
+    <param.appname>Photo mosiac App</param.appname>
+    <param.authnamewatermark>Nikolay S.</param.authnamewatermark>
+    <param.email />
+    <param.company />
+    <param.icon />
+    <param.icons />
+    <param.summary>Generates a mosaic of small tile images combined with a large main image</param.summary>
+    <param.description>This functions goal generate a mosaic image based on a single (usually large) main image, and multiple small tile images. A large mosaic image will be randomly generated from the multiple tile images. The resulting mosaic image will be combined with the main image, forming the desired result. The ratio between images “strength” is defined by the Overlay Ratio ranging between [0:1]. Smaller value will make the large main image be dominant, while larger Overlay Ratio will make the mosaic image (formed from tiles images) more obvious, at the expense of the main image. The user can (and should) define regions with different Overlay Ratio values. For example when the main image is a portrait, the Overlay Ratio value around the face should be small (about 0.2), while it can be high (about 0.7) in other less important areas. The user can also resize the final image, sharpen the small images, convert them to color (RGB) or Gray images, if needed.</param.description>
+    <param.screenshot>${PROJECT_ROOT}\metadata\primaryScreenShot.jpg</param.screenshot>
+    <param.version>1.35</param.version>
+    <param.products.name>
+      <item>Image Processing Toolbox</item>
+      <item>MATLAB</item>
+    </param.products.name>
+    <param.products.id>
+      <item>17</item>
+      <item>1</item>
+    </param.products.id>
+    <param.products.version>
+      <item>8.3</item>
+      <item>8.2</item>
+    </param.products.version>
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}\Photo mosiac App.mlappinstall</param.output>
+    <param.guid>751704b2-80ce-4c46-a363-afaffb1ad624</param.guid>
+    <unset>
+      <param.email />
+      <param.company />
+      <param.icon />
+      <param.icons />
+      <param.platforms />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\NS_mosaic_main.m</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\filesFullName.m</file>
+      <file>${PROJECT_ROOT}\filesListFromInput.m</file>
+      <file>${PROJECT_ROOT}\folderFiles.m</file>
+      <file>${PROJECT_ROOT}\folderFullPath.m</file>
+      <file>${PROJECT_ROOT}\folderSubFolders.m</file>
+      <file>${PROJECT_ROOT}\get_mosaic_size.m</file>
+      <file>${PROJECT_ROOT}\permute_mosaic_elements.m</file>
+      <file>${PROJECT_ROOT}\prepare_mosiac_elements.m</file>
+      <file>${PROJECT_ROOT}\waitbarTimeRemaining2.m</file>
+    </fileset.depfun>
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file name="Photo mosiac App.mlappinstall" location="C:\Users\VeronicaS\Downloads\MosaicGenerator" optional="false">C:\Users\VeronicaS\Downloads\MosaicGenerator\Photo mosiac App.mlappinstall</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2013b</root>
+      <toolboxes>
+        <toolbox name="fixedpoint" />
+      </toolboxes>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.1</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
+

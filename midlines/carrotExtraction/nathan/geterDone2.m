@@ -3,25 +3,28 @@ FilePath = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/NEFs/NEFs/';
 FilePath = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickProcess/';
 FilePath = '/mnt/tetra/JulianBustamante/carrots/phenotyping/quickProcess/';
 FileList = {};
-FileExt = {'NEF','JPG'};
+FileExt  = {'NEF','JPG'};
 FileList = gdig(FilePath,FileList,FileExt,1);
+
 %% local focus
-FilePath = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickProcess/NEFs/';
+FilePath  = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickProcess/NEFs/';
 nFileList = {};
-FileExt = {'NEF'};
+FileExt   = {'NEF'};
 nFileList = gdig(FilePath,nFileList,FileExt,1);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% view some images
 for e = 1:10:numel(FileList)
     I = imread(FileList{e});
-    imshow(I,[]);
-    drawnow
+    imshow(I, []);
+    drawnow;
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% load some data for gmm
-PER = .1;
+PER      = 0.1;
 toSample = 20000;
-TS = {};
+TS       = {};
 parfor e = 1:numel(FileList)
     I = imread(FileList{e});
     I = imresize(I,.1);
@@ -31,63 +34,70 @@ parfor e = 1:numel(FileList)
     I = I(randperm(size(I,1)),:);
     TS{e} = I(1:toSample,:);
 end
-%% read for dither
+
+%% read for dither [wtf is dither]
 TILE = [];
 for e = 1:10:numel(FileList)
     I = imread(FileList{e});
     TILE = [TILE ; imresize(I,.07)];
-    e
+    e;
 end
+
+%% 
+[~, map] = rgb2ind(TILE, 2, 'nodither');
+I        = imread(nFileList{1});
+
 %%
-[~,map] = rgb2ind(TILE,2,'nodither');
+close all;
+Ip = rgb2ind(I, map, 'nodither');
+imshow(Ip, []);
+
 %%
-I = imread(nFileList{1});
-%%
-close all
-Ip = rgb2ind(I,map,'nodither');
-imshow(Ip,[]);
-%%
-MS = zeros(toSample*numel(FileList),3);
+MS  = zeros(toSample*numel(FileList),3);
 str = 1;
 for e = 1:numel(TS)
-    stp = str + toSample -1;
+    stp           = str + toSample -1;
     MS(str:stp,:) = TS{e};
-    str = stp + 1;
+    str           = stp + 1;
 end
+
 %% construct GMM
-NC = 7;
+NC      = 7;
 options = statset('Display','iter','MaxIter',400);
-gmm = fitgmdist(MS,NC,'Options',options);
+gmm     = fitgmdist(MS,NC,'Options',options);
+
 %% apply this
-I = imread(FileList{1});
-Io = I;
-osz = size(I);
-I = permute(I,[3 1 2]);
-sz = size(I);
-I = reshape(I,[sz(1) prod(sz(2:3))])';
-I = double(I);
+I    = imread(FileList{1});
+Io   = I;
+osz  = size(I);
+I    = permute(I,[3 1 2]);
+sz   = size(I);
+I    = reshape(I,[sz(1) prod(sz(2:3))])';
+I    = double(I);
 kidx = gmm.cluster(I);
 kidx = reshape(kidx,osz(1:2));
 lRGB = label2rgb(kidx);
 imshow(lRGB,[]);
+
 %% look at overlay of clusters
 NC = 7
 for e = 1:NC
-    out = flattenMaskOverlay(Io,kidx==e);
-    imshow(out,[]);
-    title(num2str(e))
-    drawnow
-    waitforbuttonpress
+    out = flattenMaskOverlay(Io,kidx == e);
+    imshow(out, []);
+    title(num2str(e));
+    drawnow;
+    waitforbuttonpress;
 end
-%%
+
+%% does something
 for k = 1:3
     HI{k} = imhist(MS(:,k)/255);
 end
-%% get cells and sample root colors
-oPath = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickReturn/';
-oPathFrame = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickReturn2/';
 
-oPath = '/mnt/tetra/JulianBustamante/carrots/phenotyping/quickReturn/';
+%% get cells and sample root colors
+oPath      = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickReturn/';
+oPathFrame = '/mnt/tetra/JulianBustamante/ScottBrainard/phenotyping/quickReturn2/';
+oPath      = '/mnt/tetra/JulianBustamante/carrots/phenotyping/quickReturn/';
 oPathFrame = '/mnt/tetra/JulianBustamante/carrots/phenotyping/quickReturn2/';
 mkdir(oPathFrame)
 cellClusterNumber = [0];
@@ -125,10 +135,10 @@ for e = 1:numel(FileList)
         % new JSON string format
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % strip ticket
-        linkTo = stripiTicket(FileList{e});
+        linkTo    = stripiTicket(FileList{e});
         %linkPath = stripiTicket(rPath);
-        [jP,tN] = fileparts(FileList{e});
-        N = 4000;
+        [jP,tN]   = fileparts(FileList{e});
+        N         = 4000;
         for b = 1:numel(qrMSG)
             
             if ~isempty(qrMSG{b})
@@ -150,7 +160,7 @@ for e = 1:numel(FileList)
 
                 % save json document
                 filePushList{end+1} = [oPath qrMSG{b} '{output_json}.json'];
-                fileID = fopen(filePushList{end},'w');
+                fileID              = fopen(filePushList{end},'w');
                 fprintf(fileID,strrep(JSON_string,'\/','\\/'));
                 fclose(fileID);
             end

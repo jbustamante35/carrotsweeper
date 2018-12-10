@@ -1,0 +1,29 @@
+function [options,layers] = autoBuildNetwork(optVars,DISP,MaxE,numClasses)
+
+    options = trainingOptions('sgdm',...
+                'InitialLearnRate',optVars.InitialLearnRate,...
+                'Momentum',optVars.Momentum,...
+                'MaxEpochs',MaxE,...
+                'L2Regularization',optVars.L2Regularization,...
+                'Shuffle','every-epoch',...
+                'Verbose',true,...
+                'ExecutionEnvironment','parallel',...
+                'Plots',DISP,...
+                'CheckpointPath','/mnt/tetra/nate/CNN/');
+
+            imageSize = [41 41 1];
+            initialNumFilters = round(32/4/sqrt(optVars.NetworkDepth));
+            layers = imageInputLayer(imageSize);
+            
+                for e = 1:optVars.NetworkDepth
+                    layers = [layers 
+                                convBlock(optVars.filterSize,initialNumFilters*e,1)
+                                maxPooling2dLayer(2,'Stride',2)];
+                end
+                layers(end) = [];
+                
+            layers = [layers 
+                fullyConnectedLayer(numClasses)
+                softmaxLayer
+                classificationLayer];
+end

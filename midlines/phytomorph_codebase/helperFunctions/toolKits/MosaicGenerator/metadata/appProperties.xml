@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<appProperties xmlns="http://schemas.mathworks.com/matlab/app/2012/appProperties" signature="147442DBB76C8876C793B1EC7B3FE718BEADF517">
+
+  <entryPoint>NS_mosaic_main</entryPoint>
+
+  <name>Mosaic generator</name>
+
+  <version>1.0</version>
+
+  <createdByMATLABRelease>(R2012b)</createdByMATLABRelease>
+
+  <GUID>ddb82748-06c9-401b-be3d-5d30a9890401</GUID>
+
+  <summary>Photo mosaic generator. Choose a tile image, and a directory with images, and see the magic.</summary>
+
+  <description>The program was inspired by this video: http://www.youtube.com/watch?v=c3af_HyhLI4 . After a few attempts via Photoshop I’ve decided to switch to a field where I feel more confident (Matlab), and enjoyed doing it. Later on I’ve seen the other Matlab based implementation, some better than mine, but I believe mine can be useful to someone as well. 
+Have fun! 
+In case of comments I'll try to fix the code. 
+Get the most updated "input to files list" function (submission 34944- http://www.mathworks.com/matlabcentral/fileexchange/34944) for this one.</description>
+
+  <author>
+    <name>NikolayS</name>
+    <contact></contact>
+    <organization></organization>
+  </author>
+
+  <supportedPlatforms/>
+
+  <requiredProducts>
+    <product identifier="17" name="Image Processing Toolbox" version="8.1"/>
+    <product identifier="1" name="MATLAB" version="8.0"/>
+  </requiredProducts>
+
+  <numFiles>6</numFiles>
+
+  <created>2013-02-15T01:50:54Z</created>
+
+  <appEntries>
+    <appFile>/NS_mosaic_main.m</appFile>
+    <appFile>/filesFullName.m</appFile>
+    <appFile>/filesListFromInput.m</appFile>
+    <appFile>/get_mosaic_size.m</appFile>
+    <appFile>/permute_mosaic_elements.m</appFile>
+    <appFile>/prepare_mosiac_elements.m</appFile>
+  </appEntries>
+
+</appProperties>

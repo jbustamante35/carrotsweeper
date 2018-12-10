@@ -37,20 +37,24 @@ subtle root features.
 ### CarrotSweeper Pipeline
 The general pipeline for our analyses (as of September 9, 2018) is as follows:
 
-	Scott:
-		- Collect color and black-and-white (bw) images of carrot roots laid on black backgrounds
-		- Cut off the head and leave a small gap from the edge of the window
-			* This was necessary because the bw image combines the edge of the photo with the contour.
-			* This considerably weakened the accuracy of the data
-		- Generate filenames that contain plenty of identifiable information
-			* Location, Genotype, UID, Curvature, etc.
+Scott:
+- Collect color and black-and-white (bw) images of carrot roots
+  laid on black backgrounds <br />
+- Cut off the head and leave a small gap from the edge of the 
+  window <br />
+    * This was necessary because the bw image combines the 
+      edge of the photo with the contour. <br />
+    * This considerably weakened the accuracy of the data <br />
+- Generate filenames that contain plenty of identifiable 
+  information <br />
+    * Location, Genotype, UID, Curvature, etc. <br />
 
-	Julian:
-		- Read the bw images from the directory/subdirectories
-		- Generate contours and normalize their coordinates (more detail below)
-		- Rasterize x-/y-coordinates and run them through Principal Components Analysis
-		- Iteratively sweep up or down by 1 standard deviation through the resulting PCs
-		- Concatenate the PC scores with each carrot's corresponding UID in a csv table
+Julian:
+- Read the bw images from the directory/subdirectories <br />
+- Generate contours and normalize their coordinates (more detail belowbr />
+- Rasterize x-/y-coordinates and run them through Principal Components Analysis <br />
+- Iteratively sweep up/down by 1 standard deviation through the resulting PCs <br />
+- Concatenate the PC scores with each carrot's corresponding UID in a csv table <br />
 
 [to be continued]
 
@@ -61,9 +65,9 @@ The general pipeline for our analyses (as of September 9, 2018) is as follows:
 - Statistics and Learning Toolbox
 
 This repository uses many functions from my other GitHub repo,
-[HypoQuantyl](https://github.com/jbustamante35/hypoquantyl) (HQ). The full list of
-functions taken from HQ are found in the [dependencies](./dependencies) text file in the main
-directory of this repo.
+[HypoQuantyl](https://github.com/jbustamante35/hypoquantyl) (HQ). The full list
+of functions taken from HQ are found in the [dependencies](./dependencies) text
+file in the main directory of this repo.
 
 ### Installation
 Clone this repository to your desired location, then simply add

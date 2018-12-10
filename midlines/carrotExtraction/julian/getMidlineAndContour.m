@@ -2,7 +2,7 @@ function [mline, cntr] = getMidlineAndContour(msk, vis)
 
 try
     out = isolate_carrot_Roots(msk, vis, [], []);
-%     out = isolateRoots(msk, vis, [], []);
+    %     out = isolateRoots(msk, vis, [], []);
     mline = out(1).midlines.data';
     
     rm = mline(:,1) < 300;

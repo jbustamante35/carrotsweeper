@@ -1,0 +1,7 @@
+function [D] = myGS(D,v)
+    v = v * norm(v)^-1;
+    p = D*v;
+    P = P*v';
+    D = D - P;
+    
+end

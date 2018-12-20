@@ -1,159 +1,169 @@
-function [out] = isolate_carrot_Roots(I,disp,oPath,num)
-    try
-        SNIP = 50;
-        
-        if size(I,3) > 1
-            I = rgb2gray(I);
-        end
-        I(:,end) = [];
-        I = handleFLIP(I,[]);
-        
-        I = padarray(I,[0 300],'pre','replicate');
-        
-        Io = I;
-        %{
-        Is = imresize(I,.25);
-        BK = imclose(Is,strel('disk',41));
-        BK = imfilter(BK,fspecial('disk',21),'replicate');
-        BK = imresize(BK,size(Io));
-        I = I - BK;
-        I = I - min(I(:));
-        I = I / max(I(:));
-        %I = imfilter(I,fspecial('gaussian',21,6),'replicate');
-        
-        %}
-        gI = double(imcomplement(bwdist(I)));
-        gI = imfilter(gI,fspecial('gaussian',[31 31],7));
-        [g1 g2] = gradient(gI);
-        thresh = graythresh(I);
-        skel = I < thresh;
-        skel = bwareaopen(skel,500);
-        
-        saveVec = skel(:,1);
-        
-        skel(:,1) = 0;
-        cB = imclearborder(skel);
-        %skel = skel & ~ cB;
-        cB(:,1) = saveVec;
-        %skel(:,1) = saveVec;
-        skel = cB;
-        skel = imfill(skel,'holes');
-        
-        
-        cB = imclearborder(skel);
-        skel = skel - cB;
-        skel = imclose(skel,strel('disk',21,0));
-        skel = imfill(skel,'holes');
-        
-        
-        %%%%%%%%%%%%%%%
-        %{
-        Io = I;
-        I = [I(:,1:SNIP) I];
-        h = fspecial('gaussian',11,11);
-        I = imfilter(I,h,'replicate');
-        [g1 g2] = gradient(I);
-        d = (g1.^2 + g2.^2).^.5;
-        thresh = graythresh(d);
-        MASK = d > thresh;
-        skel = bwmorph(MASK,'skel',inf);
-        skel = bwmorph(skel,'spur',inf);
-        skel = skel(:,SNIP+1:end);
-        skel(:,1) = 1;
-        skel = imfill(skel,'holes');
-        filler = sum(skel(:,1:2),2) == 2;
-        skel(:,1) = filler;
-        %}
-        %%%%%%%%%%%%%%%
+function out = isolate_carrot_Roots(msk, vis, dOut, idx)
+%% isolate_carrot_Roots: customized version of PhytoMorph's isolate_Roots
+% This function is difficult to understand...
+%
+% Usage:
+%   out = isolate_carrot_Roots(msk, vis, dOut, idx)
+%
+% Input:
+%   msk: binary mask image
+%   vis: boolean to visualize output
+%   dOut: directory to output data
+%   idx: array index of input image
+%
+% Output:
+%   out: output structure containing midline and contour data
+%
 
+%% Constants and Data structure set-up
+% Contstants for finding highest curvature
+KSNIP        = 50;
+SMOOTH_VALUE = 15;
+bint2        = @(g, cX, cY) ba_interp2(g, cX, cY);
 
+% Thresholds for filtering out small sizes of data
+CURV_THRESH = 100;
+SKEL_THRESH = 500;
+MASK_THRESH = 300;
 
+% Constants for tracking point at gradient
+MAX_STEP = 50000;
+RHO      = 20;
+RAD      = pi / 2;
+PDENSITY = [20 200];
+WSIGMA   = 0.3;
 
+% Output data structures
+curve    = struct('level', [], 'data', [], 'length', []);
+midlines = struct('data', []);
+out      = struct('midlines', [], 'contours', []);
 
-
-        
-        C = contourc(double(skel),[1 1]);
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-        % get the curve structure
-        str = 1;
-        c = 1;
-        clear curve
-        while str < size(C,2)
-            ed = str + C(2,str);
-            curve(c).level = C(1,str);
-            curve(c).data = C(:,str+1:ed);
-            curve(c).length = size(curve(c).data,2);
-            c = c + 1;
-            str = ed + 1;
-        end
-
-        ridx = find([curve.length] < 100);
-        curve(ridx) = [];
-
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % find the highest curvature
-        KSNIP = 50;
-        SMOOTH_VALUE = 15;
-        for e = 1:numel(curve)
-            o = cwtK(curve(e).data',{SMOOTH_VALUE});
-            [J tipIDX{e}] = min(o.K);
-            o = cwtK(curve(e).data',{30});
-            [J fine_tipIDX] = min((o.K(tipIDX{e}-KSNIP:tipIDX{e}+KSNIP)));
-            tipIDX{e} = tipIDX{e} + (fine_tipIDX - KSNIP - 1);
-        end
-
-       
-        
-        B = double(bwdist(~skel));
-        g1 = -g1;
-        g2 = -g2;
-        
-        for e = 1:numel(curve)
-            
-            t1 = ba_interp2(g1,curve(e).data(1,tipIDX{e}),curve(e).data(2,tipIDX{e}));
-            t2 = ba_interp2(g2,curve(e).data(1,tipIDX{e}),curve(e).data(2,tipIDX{e}));
-            
-             
-            N = [t2 t1];
-            N = -N / norm(N);
-            T = [N(2) -N(1)];
-            initD = [T;N];
-            
-            %quiver(curve(e).data(1,:),curve(e).data(2,:),d1X1,d1X2)
-            %quiver(curve(e).data(1,:),curve(e).data(2,:),-d1X2,d1X1,'r')
-            
-            midlines(e).data = trackFromPointAtGradient_carrot(B,curve(e).data(:,tipIDX{e}),initD,50000,20,pi/2,[20 200],.3);
-                                
-        end
-
-        if disp
-            hold off
-            %imshow(Io,[]);
-            image(cat(3,double(Io)/max(Io(:)),double(Io)/max(Io(:)),double(Io)/max(Io(:))));
-            colormap('gray')
-            axis off
-            hold on
-            for e = 1:numel(curve)
-                plot(curve(e).data(1,:),curve(e).data(2,:),'r');
-                plot(midlines(e).data(1,:),midlines(e).data(2,:),'g');
-            end
-
-            for e = 1:numel(curve)
-                plot(curve(e).data(1,tipIDX{e}),curve(e).data(2,tipIDX{e}),'g*');
-            end
-            drawnow
-            if nargin == 4
-                if ~isempty(oPath)
-                    mkdir(oPath);
-                    saveas(gca,[oPath num '.tif']);
-                end
-            end
-        end
-        out.midlines = midlines;
-        out.contours = curve;
-    catch ME
-        out.ME = ME;
+try
+    %% Pre-process mask by facing object left-right
+    if size(msk, 3) > 1
+        msk = rgb2gray(msk);
     end
+    
+    msk(:,end) = [];
+    msk        = handleFLIP(msk, []);
+    msk        = padarray(msk, [0 MASK_THRESH], 'pre', 'replicate');
+    Io         = msk;
+    
+    %% Get skeleton structure and store contour
+    % This is where everything goes wrong [ often creates empty data ]
+    % Perhaps playing around with the SKEL_THRESH value will help?
+    gI      = double(imcomplement(bwdist(msk)));
+    gI      = imfilter(gI,fspecial('gaussian', [31 31], 7));
+    [g1, g2] = gradient(gI);
+    thresh  = graythresh(msk);
+    skel    = msk < thresh;
+    skel    = bwareaopen(skel, SKEL_THRESH);
+    
+    %
+    saveVec   = skel(:, 1);
+    skel(:,1) = 0;
+    cB        = imclearborder(skel);
+    cB(:,1)   = saveVec;
+    skel      = cB;
+    skel      = imfill(skel,'holes');
+    
+    %
+    cB   = imclearborder(skel);
+    skel = skel - cB;
+    skel = imclose(skel,strel('disk', 21, 0));
+    skel = imfill(skel, 'holes');
+    
+    C = contourc(double(skel), [1 1]);
+    
+    %% Get the curve structure
+    str       = 1;
+    c         = 1;
+    ttlCurves = size(C, 2);
+    
+    while str < ttlCurves
+        ed              = str + C(2, str);
+        curve(c).level  = C(1, str);
+        curve(c).data   = C(:, str+1:ed);
+        curve(c).length = size(curve(c).data, 2);
+        c               = c + 1;
+        str             = ed + 1;
+    end
+    
+    % Remove curves below threshold
+    curve(curve.length < CURV_THRESH) = [];
+    
+    %% Find the highest curvature
+    numCurves = numel(curve);
+    tipIDX    = cell(1, numCurves);
+    for e = 1 : numCurves
+        o                = cwtK(curve(e).data', {SMOOTH_VALUE});
+        [~, tipIDX{e}]   = min(o.K);
+        o                = cwtK(curve(e).data', {30});
+        [~, fine_tipIDX] = min((o.K(tipIDX{e} - KSNIP : tipIDX{e} + KSNIP)));
+        tipIDX{e}        = tipIDX{e} + (fine_tipIDX - KSNIP - 1);
+    end
+    
+    skelImg = double(bwdist(~skel));
+    g1      = -g1;
+    g2      = -g2;
+    for e = 1: numCurves
+        
+        %
+        crds  = curve(e).data(:, tipIDX{e});
+        crdsX = curve(e).data(1, tipIDX{e});
+        crdsY = curve(e).data(2, tipIDX{e});
+        t1    = bint2(g1, crdsX, crdsY);
+        t2    = bint2(g2, crdsX, crdsY);
+        
+        %
+        N     = [t2 t1];
+        N     = -N / norm(N);
+        T     = [N(2) -N(1)];
+        initD = [T ; N];
+        
+        %
+        %quiver(curve(e).data(1,:),curve(e).data(2,:),d1X1,d1X2)
+        %quiver(curve(e).data(1,:),curve(e).data(2,:),-d1X2,d1X1,'r')
+        
+        midlines(e).data = trackFromPointAtGradient_carrot(skelImg, crds, initD, ...
+            MAX_STEP, RHO, RAD, PDENSITY, WSIGMA);
+        
+    end
+    
+    %% Visualize outputs
+    if vis
+        hold off;
+        image(cat(3,double(Io) / max(Io(:)), double(Io) / max(Io(:)), ...
+            double(Io) / max(Io(:))));
+        colormap('gray')
+        axis off;
+        hold on;
+        
+        for e = 1 : numCurves
+            plot(curve(e).data(1,:),    curve(e).data(2,:),    'r');
+            plot(midlines(e).data(1,:), midlines(e).data(2,:), 'g');
+        end
+        
+        for e = 1 : numCurves
+            plot(curve(e).data(1,tipIDX{e}), curve(e).data(2,tipIDX{e}), 'g*');
+        end
+        
+        drawnow;
+        
+        if nargin == 4
+            if ~isempty(dOut)
+                mkdir(dOut);
+                saveas(gca,[dOut idx '.tif']);
+            end
+        end
+    end
+    
+    out.midlines = midlines;
+    out.contours = curve;
+    
+catch err
+    fprintf('Error isolating root\n%s\n', err.getReport);
+    out.ME = err;
+end
+
 end

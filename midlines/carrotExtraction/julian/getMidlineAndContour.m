@@ -1,32 +1,53 @@
-function [midline,contour] = getMidlineAndContour(carrotMask,ORIN)
-    midline = [];
-    contour = [];
-%     [out] = isolate_carrot_Roots(double(~carrotMask),0,[],[]);
-    out = isolate_carrot_Roots(carrotMask,0,[],[]);
-    midline = out(1).midlines.data';
-    sz = size(carrotMask);
+function [mline, cntr] = getMidlineAndContour(msk, vis)
+%% getMidlineAndContour: extract midline and contour from binary mask image
+% This function runs Nathan's algorithm for extracting a contour and calculating 
+% the midline from a binary mask image. 
+% 
+% Usage:
+%   [mline, cntr] = getMidlineAndContour(msk, vis)
+%
+% Input:
+%   msk: binary mask (black object, white background)
+%   vis: boolean to visualize output
+%
+% Output:
+%   mline: extracted midline data
+%   cntr: extracted countour data
+% 
 
+try
+    %
+    out   = isolate_carrot_Roots(msk, 0, [], []);    
+    
+    %
+    mline       = out(1).midlines.data';    
+    rm          = mline(:,1) < 300;
+    mline(rm,:) = [];
+    mline(:,1)  = mline(:,1) - 300;
+    
+    %
+    cntr       = out(1).contours.data';
+    rm         = cntr(:,1) < 300;
+    cntr(rm,:) = [];
+    cntr(:,1)  = cntr(:,1) - 300;
+    
+    %
+    if ~vis
+        % Show midline data
+        sz         = size(msk);
+        mline(:,1) = mline(:,1) - sz(2)/2;
+        mline(:,1) = -mline(:,1);
+        mline(:,1) = mline(:,1) + sz(2)/2;
+        
+        % Show contour data
+        cntr(:,1) = cntr(:,1) - sz(2)/2;
+        cntr(:,1) = -cntr(:,1);
+        cntr(:,1) = cntr(:,1) + sz(2)/2;
+    end
+catch e
+    fprintf(2, 'Error extracting Midline and Contour\n%s\n', e.getReport);
+    mline = [];
+    cntr  = [];
+end
 
-    
-    
-    rm = midline(:,1) < 300;
-    midline(rm,:) = [];
-    midline(:,1) = midline(:,1) - 300;
-    if ~ORIN
-        midline(:,1) = midline(:,1) - sz(2)/2;
-        midline(:,1) = -midline(:,1);
-        midline(:,1) = midline(:,1) + sz(2)/2;
-    end
-    
-    contour = out(1).contours.data';
-    rm = contour(:,1) < 300;
-    contour(rm,:) = [];
-    contour(:,1) = contour(:,1) - 300;
-    
-    if ~ORIN
-        contour(:,1) = contour(:,1) - sz(2)/2;
-        contour(:,1) = -contour(:,1);
-        contour(:,1) = contour(:,1) + sz(2)/2;
-    end
-    
 end

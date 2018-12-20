@@ -1,56 +1,71 @@
-function [DomainS, DomainG] = extendCarrotMidline(mline, dTrans, img, LP)
+function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, lp)
+%% extendCarrotMidline:
+% This function extends from the midline to the contour boundary
+%
+% Usage:
+%
+%
+% Input:
+%   mline: coordinates of the path along a midline
+%   domainTranslation:
+%   msk: binary mask image for corresponding midline
+%   lp:
+%
+% Output:
+%   domainS:
+%   domainG:
+%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% sub-sample
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% generate curvilinear-domain
+%% Generate curvilinear-domain
 WIDTH_NUMP = 200;
-PCA_RHO = 15;
-WIDTH = 200;
-Domain = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, img);
+PCA_RHO    = 15;
+WIDTH      = 200;
+domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk);
 
-% extension on one side
-dX = -diff(Domain,1,1);
+%% extension on one side
+dX   = -diff(domain, 1, 1);
 SNIP = 50;
-dX = mean(dX(1:SNIP,:,:),1);
-dNOR = sum(dX.^2,3).^-.5;
-dX = bsxfun(@times,dX,dNOR);
+dX   = mean(dX(1:SNIP,:,:), 1);
+dNOR = sum(dX.^2, 3).^-0.5;
+dX   = bsxfun(@times, dX, dNOR);
 
 if nargin == 3
-    LP = mean(sum(diff(mline,1,1).^2,2).^.5);
+    lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
 end
 
-EXT = 20;
-EXT = linspace(0,EXT,EXT/LP);
-addedP = numel(EXT);
-EXT = bsxfun(@times,EXT',dX);
-EXT = bsxfun(@plus,EXT,Domain(1,:,:));
-Domain = cat(1,flipdim(EXT,1),Domain);
-% extension on one side
-Domain = flipdim(Domain,1);
-dX = -diff(Domain,1,1);
-SNIP = 50;
-dX = mean(dX(1:SNIP,:,:),1);
-dNOR = sum(dX.^2,3).^-.5;
-dX = bsxfun(@times,dX,dNOR);
+%%
+EXT    = 20;
+EXT    = linspace(0, EXT, EXT / lp);
+EXT    = bsxfun(@times, EXT', dX);
+EXT    = bsxfun(@plus, EXT, domain(1,:,:));
+domain = cat(1, flip(EXT, 1), domain);
+
+%% extension on one side
+domain = flip(domain, 1);
+dX     = -diff(domain, 1, 1);
+SNIP   = 50;
+dX     = mean(dX(1:SNIP,:,:), 1);
+dNOR   = sum(dX.^2,3).^-.5;
+dX     = bsxfun(@times, dX, dNOR);
 
 if nargin == 3
-    LP = mean(sum(diff(mline,1,1).^2,2).^.5);
+    lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
 end
 
-EXT = 20;
-EXT = linspace(0,EXT,EXT/LP);
-addedP = numel(EXT);
-EXT = bsxfun(@times,EXT',dX);
-EXT = bsxfun(@plus,EXT,Domain(1,:,:));
-Domain = cat(1,flipdim(EXT,1),Domain);
-Domain = flipdim(Domain,1);
+%%
+EXT    = 20;
+EXT    = linspace(0, EXT, EXT / lp);
+EXT    = bsxfun(@times, EXT', dX);
+EXT    = bsxfun(@plus, EXT, domain(1,:,:));
+domain = cat(1, flip(EXT,1), domain);
+domain = flip(domain,1);
 
-% reshape for sub-sampling
-dsz = size(Domain);
-DomainG = Domain;
-DomainG(:,:,1) = DomainG(:,:,1) + dTrans(1);
-DomainG(:,:,2) = DomainG(:,:,2) + dTrans(2);
-DomainS = reshape(Domain,[dsz(1)*dsz(2) dsz(3)]);
-DomainS = bsxfun(@plus,DomainS,dTrans);
+%% Reshape for sub-sampling
+dsz            = size(domain);
+domainG        = domain;
+domainG(:,:,1) = domainG(:,:,1) + domainTranslation(1);
+domainG(:,:,2) = domainG(:,:,2) + domainTranslation(2);
+domainS        = reshape(domain,[dsz(1) * dsz(2) dsz(3)]);
+domainS        = bsxfun(@plus, domainS, domainTranslation);
+
 end

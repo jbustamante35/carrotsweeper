@@ -1,17 +1,18 @@
-function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
+function [mline, cntr, smsk, pmsk] = carrotExtractor(vis, svData, svFigs)
 %% carrotExtractor: midline extraction and straightener
 % This is a detailed description of this script...
 %
 % Note about saving with the svData parameter:
 % When svData is set to true, the output is saved in a .mat file that is placed
-% in the output directory [ see Usage below ]. All 4 output variables are stored 
-% in a single structure called CARROTS. 
+% in the output directory [ see dOut below ]. All of the output variables are
+% stored in a single structure called CARROTS, rather than the 4 individual
+% variables as usual. This allows a bit more ease of management when this data
+% is loaded into the MATLAB workspace.
 %
 % Usage:
-%   [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
+%   [mline, cntr, smsk, pmsk] = carrotExtractor(vis, svData, svFigs)
 %
 % Input:
-%   dataIn: path to directory of binary images
 %   vis: boolean visualize outputs
 %   svData: boolean to save output in .mat file [ see note above ]
 %   svFigs: boolean to save figures of straightened carrots
@@ -23,15 +24,29 @@ function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs
 %   pmsk: cell array of processed mask images
 %
 % Usage (continued):
-% If you want to save the results, the data will automatically be placed in the
-% input directory as a subfolder named output_yymmdd, where 'yymmdd' corresponds 
-% to the year (y), month (m), and today's date (d).
+% Change the first two lines of this file to set the directory to your folder
+% of mask images. If you want to save the results, the data will automatically
+% be placed in this same directory as a subfolder named output_yymmdd, where
+% 'yymmdd' corresponds to the year (y), month (m), and today's date (d).
 %
+% In the future, I'll make it such that you can just use the path to your data
+% as an input parameter to allow for higher throughput.
+%
+% Note: I separeted input data into 2 lines to make managing long path names a
+% bit easier on my part. See the below line to replace this with a single line
+% version where you can just copy-paste the full path to the directory. Remember
+% to comment out or delete the first 3 lines!
+%
+% %fldr   = '/home/jbustamante/Dropbox/EdgarSpalding/projects/carrotsweeper';
+% %din    = 'data/development_181011/mask';
+% %dataIn = sprintf('%s/%s', fldr, din);
 % dataIn = '/path/to/directory/of/masks';
 %
 
 %% Load file list of binary mask images
-% dataIn = '~/Dropbox/EdgarSpalding/projects/carrotsweeper/data/development_181011';
+fldr   = '/home/jbustamante/Dropbox/EdgarSpalding/projects/carrotsweeper';
+din    = 'data/development_181011';
+dataIn = sprintf('%s/%s', fldr, din);
 
 if svData || svFigs
     dOut    = sprintf('output_%s', tdate('s'));
@@ -39,8 +54,8 @@ if svData || svFigs
     mkdir(dataOut);
 end
 
-ext = '.png';
-fin = imageDatastore(dataIn, 'FileExtensions', ext);
+ext  = '.png';
+fin  = imageDatastore(dataIn, 'FileExtensions', ext);
 
 %% Extract Midline, Contour, Straightened Image, Straightened Mask
 tot                       = numel(fin.Files);
@@ -85,7 +100,7 @@ if vis
         
         % Save figures in output directory
         if svFigs
-            fName = getDirName(dataIn);
+            fName = getDirName(din);
             fnm   = sprintf('%s/straightCarrot%d_%s', dataOut, n, fName);
             savefig(fig, fnm);
             saveas(fig, fnm, 'tiffn');
@@ -97,7 +112,7 @@ end
 
 %% Save Data in output directory
 if svData
-    fName   = getDirName(dataIn);
+    fName   = getDirName(din);
     CARROTS = v2struct(mline, cntr, smsk, pmsk);
     nm      = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);

@@ -1,4 +1,4 @@
-function crv = trackFromPointAtGradient_carrot(I, P, initD, maxStep, RHO, RAD, pointDensity, wsigma)
+function crv = old_trackFromPointAtGradient_carrot(I, P, initD, maxStep, RHO, RAD, pointDensity, wsigma)
 x = P(1);
 y = P(2);
 %pointDensity = [30 300];

@@ -1,23 +1,53 @@
 function [mline, cntr] = getMidlineAndContour(msk, vis)
+%% getMidlineAndContour: extract midline and contour from binary mask image
+% This function runs Nathan's algorithm for extracting a contour and calculating 
+% the midline from a binary mask image. 
+% 
+% Usage:
+%   [mline, cntr] = getMidlineAndContour(msk, vis)
+%
+% Input:
+%   msk: binary mask (black object, white background)
+%   vis: boolean to visualize output
+%
+% Output:
+%   mline: extracted midline data
+%   cntr: extracted countour data
+% 
 
 try
-    out = isolate_carrot_Roots(msk, vis, [], []);
-    %     out = isolateRoots(msk, vis, [], []);
-    mline = out(1).midlines.data';
+    %
+    out   = isolate_carrot_Roots(msk, 0, [], []);    
     
-    rm = mline(:,1) < 300;
+    %
+    mline       = out(1).midlines.data';    
+    rm          = mline(:,1) < 300;
     mline(rm,:) = [];
-    mline(:,1) = mline(:,1) - 300;
+    mline(:,1)  = mline(:,1) - 300;
     
-    cntr = out(1).contours.data';
-    rm = cntr(:,1) < 300;
+    %
+    cntr       = out(1).contours.data';
+    rm         = cntr(:,1) < 300;
     cntr(rm,:) = [];
-    cntr(:,1) = cntr(:,1) - 300;
+    cntr(:,1)  = cntr(:,1) - 300;
     
+    %
+    if ~vis
+        % Show midline data
+        sz         = size(msk);
+        mline(:,1) = mline(:,1) - sz(2)/2;
+        mline(:,1) = -mline(:,1);
+        mline(:,1) = mline(:,1) + sz(2)/2;
+        
+        % Show contour data
+        cntr(:,1) = cntr(:,1) - sz(2)/2;
+        cntr(:,1) = -cntr(:,1);
+        cntr(:,1) = cntr(:,1) + sz(2)/2;
+    end
 catch e
     fprintf(2, 'Error extracting Midline and Contour\n%s\n', e.getReport);
     mline = [];
-    cntr = [];
+    cntr  = [];
 end
 
 end

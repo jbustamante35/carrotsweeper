@@ -15,6 +15,7 @@ function [mline, cntr] = getMidlineAndContour(msk, vis)
 %   cntr: extracted countour data
 % 
 
+%%
 try
     %
     out   = isolate_carrot_Roots(msk, 0, [], []);    
@@ -31,7 +32,7 @@ try
     cntr(rm,:) = [];
     cntr(:,1)  = cntr(:,1) - 300;
     
-    %
+    %%
     if ~vis
         % Show midline data
         sz         = size(msk);

@@ -52,12 +52,12 @@ try
     %% Get skeleton structure and store contour
     % This is where everything goes wrong [ often creates empty data ]
     % Perhaps playing around with the SKEL_THRESH value will help?
-    gI      = double(imcomplement(bwdist(msk)));
-    gI      = imfilter(gI,fspecial('gaussian', [31 31], 7));
+    gI       = double(imcomplement(bwdist(msk)));
+    gI       = imfilter(gI,fspecial('gaussian', [31 31], 7));
     [g1, g2] = gradient(gI);
-    thresh  = graythresh(msk);
-    skel    = msk < thresh;
-    skel    = bwareaopen(skel, SKEL_THRESH);
+    thresh   = graythresh(msk);
+    skel     = msk < thresh;
+    skel     = bwareaopen(skel, SKEL_THRESH);
     
     %
     saveVec   = skel(:, 1);

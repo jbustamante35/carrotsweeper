@@ -36,9 +36,9 @@ function [Domain] = genCurvilinearDomain(iCurve,frameRho,WIDTH,nP,I)
             %quiver(iCurve(:,2),iCurve(:,1),qLEN*BV(:,1,2),qLEN*BV(:,2,2),0,'Color','b');
             %quiver(iCurve(:,2),iCurve(:,1),qLEN*-BV(:,1,2),qLEN*-BV(:,2,2),0,'Color','r');
             quiver(iCurve(pt,2),iCurve(pt,1),qLEN*-BV(pt,1,2),qLEN*-BV(pt,2,2),0,'Color','g');
-            hold off;
-            drawnow;
-            waitforbuttonpress;
+            hold off
+            drawnow
+            waitforbuttonpress
         end
         %%%%%%%%%%%%%%%%%%
         %fprintf(['End@' num2str(pt) ':' num2str(size(iCurve,1)) '\n']);

@@ -1,4 +1,4 @@
-classdef goT < matlab.mixin.Copyable
+classdef bak_goT < matlab.mixin.Copyable
     properties
         %%%%%%%%%%
         % stack of position and direction

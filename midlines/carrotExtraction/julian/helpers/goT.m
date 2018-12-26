@@ -177,7 +177,7 @@ classdef goT < matlab.mixin.Copyable
             direction = ([T;N]);
         end
         
-        function [] = walk(obj,steps,stepFunc)
+        function [] = walk(obj, steps, stepFunc)
             %% walk function
             for e = 1:steps
                 %{
@@ -191,7 +191,7 @@ classdef goT < matlab.mixin.Copyable
                     [nP direc] = obj.step();
                 end
                 
-                obj.position(:,end+1) = nP;
+                obj.position(:,end+1)    = nP;
                 obj.direction(:,:,end+1) = direc;
                 %{
                 % plot after step
@@ -204,33 +204,39 @@ classdef goT < matlab.mixin.Copyable
         
         function [] = walkUntil(obj,terminateFunc,stepFunc)
             %% walk function until stop point
-            while terminateFunc(obj.position);
-                %{
+            while terminateFunc(obj.position)
+
                 % plot before step
-                if nargin == 3;
+                if nargin == 3
                     obj.plotCurrentLocation(h);
                 end
-                %}
+
                 if nargin == 2
-                    [nP direc] = obj.step();
+                    [nP , direc] = obj.step();
                 end
-                obj.position(:,end+1) = nP;
-                obj.direction(:,:,end+1) = direc;
-                %{
+                obj.position(:, end+1)     = nP;
+                obj.direction(:, :, end+1) = direc;
+
                 % plot after step
-                if nargin == 3;
+                if nargin == 3
                     obj.plotCurrentLocation(h);
                 end
-                %}
+
             end
         end
         
         
         
-        function [] = plotCurrentLocation(obj,h)
-            plot(obj.position(1,end),obj.position(2,end),'b.');
-            quiver(obj.position(1,end),obj.position(2,end),obj.direction(1,1,end),obj.direction(1,2,end),10,'Color','r');
-            quiver(obj.position(1,end),obj.position(2,end),obj.direction(2,1,end),obj.direction(2,2,end),10,'Color','g');
+        function [] = plotCurrentLocation(obj, h)
+            plot(obj.position(1,end), obj.position(2,end), 'b.');
+            
+            quiver(obj.position(1,end), obj.position(2,end), ...
+                obj.direction(1,1,end), obj.direction(1,2,end), ...
+                10, 'Color', 'r');
+            
+            quiver(obj.position(1,end), obj.position(2,end), ...
+                obj.direction(2,1,end), obj.direction(2,2,end), ...
+                10, 'Color', 'g');
         end
         
         function [] = plotCurrentPath(obj)
@@ -248,19 +254,20 @@ classdef goT < matlab.mixin.Copyable
         function [TB] = generateTangentBundle(curve)
             %% construct bundle
             dT = gradient(curve);
-            dL = sum(dT.*dT,1).^-.5;
-            dT = bsxfun(@times,dL,dT);
+            dL = sum(dT .* dT, 1).^-0.5;
+            dT = bsxfun(@times, dL, dT);
+            
             for e = 1:size(dT,2)
-                TB(:,:,e) = [dT(:,e)';[dT(2,e) -dT(1,e)]];
+                TB(:,:,e) = [dT(:,e)' ; [dT(2,e) -dT(1,e)]];
             end
         end
         
         function [curve] = reparameterize(curve)
-            dT = diff(curve,1,2);
-            dT = sum(dT.*dT,1).^.5;
-            L = cumsum([0 dT]);
-            newL = linspace(0,L(end),round(L(end)));
-            curve = interp1(L,curve',newL)';
+            dT    = diff(curve, 1, 2);
+            dT    = sum(dT .* dT, 1).^0.5;
+            L     = cumsum([0 dT]);
+            newL  = linspace(0, L(end), round(L(end)));
+            curve = interp1(L, curve', newL)';
         end
         
         function [] = viewData(curveData,imageData)

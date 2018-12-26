@@ -4,8 +4,8 @@ function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs
 %
 % Note about saving with the svData parameter:
 % When svData is set to true, the output is saved in a .mat file that is placed
-% in the output directory [ see Usage below ]. All 4 output variables are stored 
-% in a single structure called CARROTS. 
+% in the output directory [ see Usage below ]. All 4 output variables are stored
+% in a single structure called CARROTS.
 %
 % Usage:
 %   [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
@@ -24,7 +24,7 @@ function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs
 %
 % Usage (continued):
 % If you want to save the results, the data will automatically be placed in the
-% input directory as a subfolder named output_yymmdd, where 'yymmdd' corresponds 
+% input directory as a subfolder named output_yymmdd, where 'yymmdd' corresponds
 % to the year (y), month (m), and today's date (d).
 %
 % dataIn = '/path/to/directory/of/masks';
@@ -53,7 +53,7 @@ for n = 1 : tot
         
         % Run processed mask through extraction functions
         [mline{n}, cntr{n}] = getMidlineAndContour(pmsk{n}, vis);
-        smsk{n}             = sampleStraighten(mline{n}, flip(pmsk{n}, 2), vis);
+        smsk{n}             = sampleStraighten(mline{n}, flip(pmsk{n}, 2), pmsk{n});
         
         % Clear figure axis
         if vis && n < tot
@@ -72,14 +72,14 @@ if vis
     set(fig, 'Color', 'w');
     
     for n = 1 : tot
-        try            
-            plotCarrots(n, pmsk{n}, mline{n}, cntr{n}, smsk{n}, psec);
+        try
+            plotCarrots(n, pmsk{n}, mline{n}, cntr{n}, smsk{n}, psec, 0);
             
         catch e
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
-            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], psec);
+            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], psec, 0);
             
         end
         
@@ -106,26 +106,24 @@ end
 
 end
 
-function pad = extendDimension(msk, val)
-%% Extend dimension of mask by defined number of pixels in val
-% The threshold parameter THERSH defines theminimum length of either dimension.
-% If a dimension is lower than the threshold value, it is padded to match the
-% threshold value with the value defined in the val parameter. This function
-% automatically detects which dimension should be padded.
-THRESH = 200;
-chk    = size(msk) - THRESH;
-idx    = chk < 0;
-
-if idx
-    pad = msk;
-else
-    pad = padarray(msk, abs(chk(idx)), val);
-end
-
-end
-
-function plotCarrots(idx, raw_mask, midline, contours, straight_mask, psec)
+function figs = plotCarrots(idx, raw_mask, midline, contours, straight_mask, psec, f)
 %% plotCarrots: plotting function for this script
+% Generate figures if they don't exist
+% Set f to false to overwrite existing figures
+if f
+    figs = [];
+    figs(1) = figure;
+    figs(2) = figure;
+    set(figs,  'Color',  'w');
+else
+    figs = 1:2;
+    cla(figs);
+    clf(figs);
+    set(figs, 'Color', 'w');
+end
+
+set(0, 'CurrentFigure', figs(1));
+
 subplot(211);
 img = handleFLIP(raw_mask, 3);
 imshow(img, []);

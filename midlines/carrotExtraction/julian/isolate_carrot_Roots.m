@@ -17,21 +17,20 @@ function out = isolate_carrot_Roots(msk, vis, dOut, idx)
 
 %% Constants and Data structure set-up
 % Contstants for finding highest curvature
-KSNIP        = 50;
-SMOOTH_VALUE = 15;
-bint2        = @(g, cX, cY) ba_interp2(g, cX, cY);
+KSNIP        = 50; % Original 50
+SMOOTH_VALUE = 15; % Original 15
 
 % Thresholds for filtering out small sizes of data
-CURV_THRESH = 100;
-SKEL_THRESH = 500;
-MASK_THRESH = 300;
+CURV_THRESH = 80;  % Original 80
+SKEL_THRESH = 300; % Original 500
+MASK_THRESH = 300; % Original 300
 
 % Constants for tracking point at gradient
-MAX_STEP = 50000;
-RHO      = 20;
-RAD      = pi / 2;
-PDENSITY = [20 200];
-WSIGMA   = 0.3;
+MAX_STEP = 50000;    % Original 50000
+RHO      = 20;       % Original 20
+RAD      = pi / 2;   % Original pi / 2
+PDENSITY = [20 200]; % Original [20 200]
+WSIGMA   = 0.3;      % Original 0.3
 
 % Output data structures
 curve    = struct('level', [], 'data', [], 'length', []);
@@ -52,6 +51,7 @@ try
     %% Get skeleton structure and store contour
     % This is where everything goes wrong [ often creates empty data ]
     % Perhaps playing around with the SKEL_THRESH value will help?
+    msk      = Io;
     gI       = double(imcomplement(bwdist(msk)));
     gI       = imfilter(gI,fspecial('gaussian', [31 31], 7));
     [g1, g2] = gradient(gI);
@@ -59,18 +59,27 @@ try
     skel     = msk < thresh;
     skel     = bwareaopen(skel, SKEL_THRESH);
     
-    %
-    saveVec   = skel(:, 1);
-    skel(:,1) = 0;
-    cB        = imclearborder(skel);
-    cB(:,1)   = saveVec;
+    % Setting edge with object to 0
+    if sum(~msk(:, end)) > 0
+        % Right side
+        cIdx = size(msk, 2);
+    else
+        % Left sie
+        cIdx = 1;
+    end
+    
+    saveVec       = skel(:, cIdx);
+    skel(:, cIdx) = 0;
+    cB            = imclearborder(skel);
+    cB(:, cIdx)   = saveVec;
+    
     skel      = cB;
-    skel      = imfill(skel,'holes');
+    skel      = imfill(skel, 'holes');
     
     %
     cB   = imclearborder(skel);
     skel = skel - cB;
-    skel = imclose(skel,strel('disk', 21, 0));
+    skel = imclose(skel, strel('disk', 21, 0));
     skel = imfill(skel, 'holes');
     
     C = contourc(double(skel), [1 1]);
@@ -90,42 +99,43 @@ try
     end
     
     % Remove curves below threshold
-    curve(curve.length < CURV_THRESH) = [];
+    %     curve(curve.length < CURV_THRESH) = [];
+    curve(cell2mat(arrayfun(@(x) x.length < CURV_THRESH, ...
+        curve, 'UniformOutput', 0))) = [];
     
     %% Find the highest curvature
     numCurves = numel(curve);
-    tipIDX    = cell(1, numCurves);
-    for e = 1 : numCurves
-        o                = cwtK(curve(e).data', {SMOOTH_VALUE});
-        [~, tipIDX{e}]   = min(o.K);
-        o                = cwtK(curve(e).data', {30});
-        [~, fine_tipIDX] = min((o.K(tipIDX{e} - KSNIP : tipIDX{e} + KSNIP)));
-        tipIDX{e}        = tipIDX{e} + (fine_tipIDX - KSNIP - 1);
+    tipIdx    = cell(1, numCurves);
+    for i = 1 : numCurves
+        o                = cwtK(curve(i).data', {SMOOTH_VALUE});
+        [~, tipIdx{i}]   = min(o.K);
+        o                = cwtK(curve(i).data', {30});
+        [~, fine_tipIDX] = min((o.K(tipIdx{i} - KSNIP : tipIdx{i} + KSNIP)));
+        tipIdx{i}        = tipIdx{i} + (fine_tipIDX - KSNIP - 1);
     end
     
-    skelImg = double(bwdist(~skel));
-    g1      = -g1;
-    g2      = -g2;
-    for e = 1: numCurves
-        
+    img = double(bwdist(~skel));
+    g1  = -g1;
+    g2  = -g2;
+    for i = 1: numCurves
         %
-        crds  = curve(e).data(:, tipIDX{e});
-        crdsX = curve(e).data(1, tipIDX{e});
-        crdsY = curve(e).data(2, tipIDX{e});
-        t1    = bint2(g1, crdsX, crdsY);
-        t2    = bint2(g2, crdsX, crdsY);
+        tipCrds = curve(i).data(:, tipIdx{i});
+        tipX    = curve(i).data(1, tipIdx{i});
+        tipY    = curve(i).data(2, tipIdx{i});
+        t1      = ba_interp2(g1, tipX, tipY);
+        t2      = ba_interp2(g2, tipX, tipY);
         
         %
         N     = [t2 t1];
         N     = -N / norm(N);
         T     = [N(2) -N(1)];
-        initD = [T ; N];
+        iDirc = [T ; N];
         
         %
         %quiver(curve(e).data(1,:),curve(e).data(2,:),d1X1,d1X2)
         %quiver(curve(e).data(1,:),curve(e).data(2,:),-d1X2,d1X1,'r')
         
-        midlines(e).data = trackFromPointAtGradient_carrot(skelImg, crds, initD, ...
+        midlines(i).data = trackFromPointAtGradient_carrot(img, tipCrds, iDirc, ...
             MAX_STEP, RHO, RAD, PDENSITY, WSIGMA);
         
     end
@@ -139,13 +149,13 @@ try
         axis off;
         hold on;
         
-        for e = 1 : numCurves
-            plot(curve(e).data(1,:),    curve(e).data(2,:),    'r');
-            plot(midlines(e).data(1,:), midlines(e).data(2,:), 'g');
+        for i = 1 : numCurves
+            plot(curve(i).data(1,:),    curve(i).data(2,:),    'r');
+            plot(midlines(i).data(1,:), midlines(i).data(2,:), 'g');
         end
         
-        for e = 1 : numCurves
-            plot(curve(e).data(1,tipIDX{e}), curve(e).data(2,tipIDX{e}), 'g*');
+        for i = 1 : numCurves
+            plot(curve(i).data(1,tipIdx{i}), curve(i).data(2,tipIdx{i}), 'g*');
         end
         
         drawnow;
@@ -161,9 +171,9 @@ try
     out.midlines = midlines;
     out.contours = curve;
     
-catch err
-    fprintf('Error isolating root\n%s\n', err.getReport);
-    out.ME = err;
+catch e
+    fprintf(2, 'Error isolating root\n%s\n', e.getReport);
+    out.ME = e;
 end
 
 end

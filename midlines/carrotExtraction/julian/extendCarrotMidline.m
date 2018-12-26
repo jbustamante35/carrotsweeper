@@ -20,7 +20,7 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 WIDTH_NUMP = 200;
 PCA_RHO    = 15;
 WIDTH      = 200;
-domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk);
+domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk, 0);
 
 %% extension on one side
 dX   = -diff(domain, 1, 1);

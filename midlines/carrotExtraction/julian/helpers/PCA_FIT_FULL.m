@@ -1,12 +1,12 @@
 function [S C U E L ERR LAM] = PCA_FIT_FULL(M,COM)
 %%%%%%%%%%%%%%%%
 % INPUTS:   M       : = data matrix
-%           COM     : = number of vectors 
+%           COM     : = number of vectors
 %%%%%%%%%%%%%%%%
 % OUTPUTS:  S       : = simulated signal (reconstruction)
 %           C       : = components ("unique" fingerprint)
 %           U       : = mean of data
-%           E       : = basis vectors 
+%           E       : = basis vectors
 %           L       : = eig values
 %           ERR     : = error in reconstruction
 %           LAM     : = percent explained
@@ -17,46 +17,46 @@ function [S C U E L ERR LAM] = PCA_FIT_FULL(M,COM)
     % decomposition, backprojects to simulate the data and calculates the
     % error
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % INPUTS:   
+    % INPUTS:
     %           M       : = data matrix
-    %           COM     : = number of vectors 
+    %           COM     : = number of vectors
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % OUTPUTS:  
+    % OUTPUTS:
     %           S       : = simulated signal (reconstruction)
     %           C       : = components ("unique" fingerprint)
     %           U       : = mean of data
-    %           E       : = basis vectors 
+    %           E       : = basis vectors
     %           L       : = eig values
     %           ERR     : = error in reconstruction
     %           LAM     : = percent explained
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % take the mean
-    fprintf(['PCA:start:taking off mean \n']);
+    %fprintf(['PCA:start:taking off mean \n']);
     toOpDim = 1;
     U = mean(M,toOpDim);
     M = bsxfun(@minus,M,U);
-    fprintf(['PCA:end:taking off mean \n']);
+    %fprintf(['PCA:end:taking off mean \n']);
     % look at covariance
-    fprintf(['PCA:start:creating COV \n']);
+    %fprintf(['PCA:start:creating COV \n']);
     try
         COV = mtimesx(M,'T',M,'speed');
     catch
         COV = M'*M;
     end
     COV = COV / size(M,toOpDim);
-    fprintf(['PCA:end:creating COV \n']);
+    %fprintf(['PCA:end:creating COV \n']);
     % eig vector decomp
-    fprintf(['PCA:start:decomposing COV \n'])
+    %fprintf(['PCA:start:decomposing COV \n'])
     [E L] = eigs(COV,COM);
-    
-    
+
+
     [J sidx] = sort(diag(L),'descend');
     E = E(:,sidx);
     L = diag(L);
     L = L(sidx);
     L = diag(L);
-    
-    fprintf(['PCA:end:decomposing COV \n'])
+
+    %fprintf(['PCA:end:decomposing COV \n'])
     % return eig values
     LAM = L;
     % calc percent explained
@@ -75,12 +75,12 @@ function [S C U E L ERR LAM] = PCA_FIT_FULL(M,COM)
 
 %{
 % take the mean
-fprintf(['PCA:start:taking off mean \n']);
+%fprintf(['PCA:start:taking off mean \n']);
 U = mean(M,1);
 for i = 1:size(M,1)
     M(i,:) = M(i,:) - U;
 end
-fprintf(['PCA:end:taking off mean \n']);
+%fprintf(['PCA:end:taking off mean \n']);
 % look at covariance
 COV = cov(M);
 % eig vector decomp

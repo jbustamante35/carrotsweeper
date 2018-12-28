@@ -1,6 +1,0 @@
-
-T = myDS;
-%%
-T.put(1,'data',[],[])
-
-query = mksqlite( 'SELECT * FROM flinks' )

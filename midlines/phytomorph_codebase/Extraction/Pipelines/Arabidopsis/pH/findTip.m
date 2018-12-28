@@ -1,3 +1,0 @@
-function [] = findTip(dB)
-
-end

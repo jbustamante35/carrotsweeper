@@ -1,3 +1,0 @@
-function []  = queryImageSets(cur)
-
-end

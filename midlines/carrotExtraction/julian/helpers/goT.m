@@ -1,61 +1,63 @@
+%% goT: class to hold data for tracking curve data
+% 
+
 classdef goT < matlab.mixin.Copyable
     properties
-        %%%%%%%%%%
         % stack of position and direction
-        position;
-        direction;
-        %%%%%%%%%%
+        position
+        direction
         % parameters for nHood
-        stepSize = .2;
-        rho;
-        rad;
-        density;
-        v1;
-        v2;
-        % nHood
-        nHood_car;
-        nHood_rad;
-        W = [];
-        %%%%%%%%%%
-        % image to operate on
-        image;
-        %%%%%%%%%%
-        % weighting function
-        wFunc;
+        stepSize = 0.2
+        rho
+        rad
+        density
+        v1
+        v2
         
+        % nHood
+        nHood_car
+        nHood_rad
+        W = []
+        
+        % image to operate on
+        image
+        
+        % weighting function
+        wFunc
     end
     
-    methods 
+    methods
         function [obj] = goT()
             
         end
         
-        %%%%%%%%%%
-        % set position
+        %% set position
         function [] = setPosition(obj,X)
             obj.position = X;
         end
-        % set direction
+        
+        %% set direction
         function [] = setDirection(obj,X)
             obj.direction = X;
         end
         
-        
-        %%%%%%%%%%
-        % set rho
         function [] = setNhoodRho(obj,rho)
+            %% set rho
             obj.rho = rho;
         end
-        % set rad
+        
         function [] = setNhoodRad(obj,rad)
+            %% set rad
             obj.rad = rad;
         end
-        % set nHood density
+        
         function [] = setNhoodDensity(obj,density)
-            obj.density = density;            
+            %% set nHood density
+            obj.density = density;
         end
-        % generate the nHood
+        
         function [] = generateH(obj)
+            %% generate the nHood
             obj.v1 = linspace(0,obj.rho,obj.density(1));
             obj.v2 = linspace(-obj.rad,obj.rad,obj.density(2));
             [rho rad] = ndgrid(obj.v1,obj.v2);
@@ -64,34 +66,30 @@ classdef goT < matlab.mixin.Copyable
             obj.nHood_rad = [rho(:)';rad(:)'];
             
         end
-        % get nHood rot by direction
+        
         function [rot] = getRot(obj,index)
+            %% get nHood rot by direction
             %rot = obj.direction(:,:,index)'*obj.nHood_car;
             rot = obj.nHood_car*obj.direction(:,:,index);
         end
         
-        %%%%%%%%%%
-        % set Image
         function [] = setImage(obj,I)
+            %% set Image
             obj.image = I;
         end
         
-        %%%%%%%%%%
-        % set weighting function
         function [] = setWfunction(obj,func)
+            %% set weighting function
             obj.wFunc = func;
         end
         
-        %%%%%%%%%%
-        % set Image
         function [] = setStepSize(obj,step)
+            %% set Image
             obj.stepSize = step;
         end
         
-        
-        
-        % sample image at a point along the curve
         function [sam] = sampleImageAtPoint(obj,index)
+            %% sample image at a point along the curve
             if nargin < 2;index = size(obj.position,2);end
             % rotate to last frame
             %tmpH = obj.direction(:,:,index)'*obj.nHood_car;
@@ -103,16 +101,18 @@ classdef goT < matlab.mixin.Copyable
             %sam = ba_interp2(obj.image,tmpH(1,:),tmpH(2,:));
             sam = ba_interp2(obj.image,tmpH(:,1),tmpH(:,2));
         end
-        % sample the iamge over the  curve
+        
         function [sam] = sampleImageAtCurve(obj,index)
+            %% sample the iamge over the  curve
             if nargin == 1;index(1) =1;index(2) = size(obj.position,2);end
             
             for e = index(1):index(2)
                 sam(:,e) = obj.sampleImageAtPoint(e);
             end
         end
-        % sample the curve at point
+        
         function [sam] = sampleCurveAtPoint(obj,rho,index)
+            %% sample the curve at point
             tmpCurve = bsxfun(@minus,obj.position,obj.position(:,index));
             distanceToPoint = sum(tmpCurve.*tmpCurve,1).^.5;
             sidx = find(distanceToPoint < rho);
@@ -122,15 +122,16 @@ classdef goT < matlab.mixin.Copyable
             sam = goT.reparameterize(sam);
             sam = interp1(1:size(sam,2),sam',linspace(1,size(sam,2),rho))';
         end
-        % sample the curve over the curve
+        
         function [sam] = sampleCurveAtCurve(obj,rho)
+            %% sample the curve over the curve
             for e = 1:size(obj.position,2)-rho
                 sam(:,:,e) = obj.sampleCurveAtPoint(rho,e);
             end
         end
         
-        % arclength parameterize curve
         function [] = reparameterizeCurve(obj)
+            %% arclength parameterize curve
             dT = diff(obj.position,1,2);
             dT = sum(dT.*dT,1).^.5;
             L = cumsum([0 dT]);
@@ -147,22 +148,28 @@ classdef goT < matlab.mixin.Copyable
         
         
         function [nextPoint direction] = step(obj)
+            %% step function
             if isempty(obj.W)
                 % eval weight function
                 obj.W = obj.wFunc(obj.nHood_rad(2,:),obj.nHood_rad(1,:),0)';
             end
+            
             % sample the image
             samp = obj.sampleImageAtPoint();
+            
             % multiply
             f = obj.W.*samp;
+            
             % reshape
             f = reshape(f,obj.density);
+            
             % make choice
             H = sum(f,1);
             [J,sidx] = max(H);
             theta = obj.v2(sidx);
             vec = [cos(theta);sin(theta)];
             vec = obj.direction(:,:,end)*vec;
+            
             % get next point and direction
             nextPoint = obj.position(:,end) + obj.stepSize*vec;
             T = [vec]';
@@ -170,7 +177,8 @@ classdef goT < matlab.mixin.Copyable
             direction = ([T;N]);
         end
         
-        function [] = walk(obj,steps,stepFunc)
+        function [] = walk(obj, steps, stepFunc)
+            %% walk function
             for e = 1:steps
                 %{
                 % plot before step
@@ -178,10 +186,12 @@ classdef goT < matlab.mixin.Copyable
                     obj.plotCurrentLocation(h);
                 end
                 %}
+                
                 if nargin == 2
                     [nP direc] = obj.step();
                 end
-                obj.position(:,end+1) = nP;
+                
+                obj.position(:,end+1)    = nP;
                 obj.direction(:,:,end+1) = direc;
                 %{
                 % plot after step
@@ -192,34 +202,42 @@ classdef goT < matlab.mixin.Copyable
             end
         end
         
-        function [] = walkUntil(obj,terminateFunc,stepFunc)
-            while terminateFunc(obj.position);
-                %{
+        function [] = walkUntil(obj, terminateFunc, stepFunc)
+            %% walk function until stop point
+            while terminateFunc(obj.position)
+
                 % plot before step
-                if nargin == 3;
-                    obj.plotCurrentLocation(h);
-                end
-                %}
+%                 if nargin == 3
+%                     obj.plotCurrentLocation(h);
+%                 end
+
                 if nargin == 2
-                    [nP direc] = obj.step();
+                    [nP , direc] = obj.step();
                 end
-                obj.position(:,end+1) = nP;
-                obj.direction(:,:,end+1) = direc;
-                %{
+                
+                obj.position(:, end+1)     = nP;
+                obj.direction(:, :, end+1) = direc;
+
                 % plot after step
-                if nargin == 3;
-                    obj.plotCurrentLocation(h);
-                end
-                %}
+%                 if nargin == 3
+%                     obj.plotCurrentLocation(h);
+%                 end
+
             end
         end
         
         
         
-        function [] = plotCurrentLocation(obj,h)
-            plot(obj.position(1,end),obj.position(2,end),'b.');
-            quiver(obj.position(1,end),obj.position(2,end),obj.direction(1,1,end),obj.direction(1,2,end),10,'Color','r');
-            quiver(obj.position(1,end),obj.position(2,end),obj.direction(2,1,end),obj.direction(2,2,end),10,'Color','g');
+        function [] = plotCurrentLocation(obj, h)
+            plot(obj.position(1,end), obj.position(2,end), 'b.');
+            
+            quiver(obj.position(1,end), obj.position(2,end), ...
+                obj.direction(1,1,end), obj.direction(1,2,end), ...
+                10, 'Color', 'r');
+            
+            quiver(obj.position(1,end), obj.position(2,end), ...
+                obj.direction(2,1,end), obj.direction(2,2,end), ...
+                10, 'Color', 'g');
         end
         
         function [] = plotCurrentPath(obj)
@@ -235,21 +253,22 @@ classdef goT < matlab.mixin.Copyable
     
     methods (Static)
         function [TB] = generateTangentBundle(curve)
-            % construct bundle
+            %% construct bundle
             dT = gradient(curve);
-            dL = sum(dT.*dT,1).^-.5;
-            dT = bsxfun(@times,dL,dT);
+            dL = sum(dT .* dT, 1).^-0.5;
+            dT = bsxfun(@times, dL, dT);
+            
             for e = 1:size(dT,2)
-                TB(:,:,e) = [dT(:,e)';[dT(2,e) -dT(1,e)]];
+                TB(:,:,e) = [dT(:,e)' ; [dT(2,e) -dT(1,e)]];
             end
         end
         
         function [curve] = reparameterize(curve)
-            dT = diff(curve,1,2);
-            dT = sum(dT.*dT,1).^.5;
-            L = cumsum([0 dT]);
-            newL = linspace(0,L(end),round(L(end)));
-            curve = interp1(L,curve',newL)';
+            dT    = diff(curve, 1, 2);
+            dT    = sum(dT .* dT, 1).^0.5;
+            L     = cumsum([0 dT]);
+            newL  = linspace(0, L(end), round(L(end)));
+            curve = interp1(L, curve', newL)';
         end
         
         function [] = viewData(curveData,imageData)
@@ -266,7 +285,7 @@ end
 
 %{
 %%%%%%%%%%%%%%%%%%
-% the width of the belief or the momentum is a function of percent 
+% the width of the belief or the momentum is a function of percent
 % of cutoff
 wsigma = .3;
 maxWidth = 20*pi/180;

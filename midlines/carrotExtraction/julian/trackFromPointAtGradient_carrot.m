@@ -1,4 +1,4 @@
-function curve = trackFromPointAtGradient_carrot(skel, tip, initDirection, MAX_STEP, RHO, RAD, PDENSITY, WSIGMA)
+function curve = trackFromPointAtGradient_carrot(skel, tipCrds, initDirection, MAX_STEP, RHO, RAD, PDENSITY, WSIGMA)
 %% trackFromPointAtGradient_carrot: follow curve on path
 % This is where I'd describe this function but I have no idea how it works
 %
@@ -20,8 +20,8 @@ function curve = trackFromPointAtGradient_carrot(skel, tip, initDirection, MAX_S
 %
 
 %% Set-up for algorithm
-x = tip(1);
-y = tip(2);
+x = tipCrds(1);
+y = tipCrds(2);
 
 %% Constants for Belief Function
 % the width of the belief or the momentum is a function of percent of cutoff

@@ -1,4 +1,0 @@
-resolution:1200
-deltaTime:600
-duration:79200
-imagepath:/mnt/snapper/kernelSwellingData/Scott/rawData

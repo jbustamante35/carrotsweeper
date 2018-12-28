@@ -202,25 +202,26 @@ classdef goT < matlab.mixin.Copyable
             end
         end
         
-        function [] = walkUntil(obj,terminateFunc,stepFunc)
+        function [] = walkUntil(obj, terminateFunc, stepFunc)
             %% walk function until stop point
             while terminateFunc(obj.position)
 
                 % plot before step
-                if nargin == 3
-                    obj.plotCurrentLocation(h);
-                end
+%                 if nargin == 3
+%                     obj.plotCurrentLocation(h);
+%                 end
 
                 if nargin == 2
                     [nP , direc] = obj.step();
                 end
+                
                 obj.position(:, end+1)     = nP;
                 obj.direction(:, :, end+1) = direc;
 
                 % plot after step
-                if nargin == 3
-                    obj.plotCurrentLocation(h);
-                end
+%                 if nargin == 3
+%                     obj.plotCurrentLocation(h);
+%                 end
 
             end
         end

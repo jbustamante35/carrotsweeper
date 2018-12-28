@@ -45,13 +45,13 @@ try
     if size(msk, 3) > 1
         msk = rgb2gray(msk);
     end
-    
+
     bak        = msk;
     msk(:,end) = [];
     msk        = handleFLIP(msk, []);
     msk        = padarray(msk, [0 MASK_THRESH], 'pre', 'replicate');
     Io         = msk;
-    
+
     %% Get skeleton structure and store contour
     % This is where everything goes wrong [ often creates empty data ]
     % Perhaps playing around with the SKEL_THRESH value will help?
@@ -62,7 +62,7 @@ try
     thresh   = graythresh(msk);
     skel     = msk < thresh;
     skel     = bwareaopen(skel, SKEL_THRESH);
-    
+
     % Setting edge with object to 0
     if sum(~msk(:, end)) > 0
         % Right side
@@ -71,28 +71,28 @@ try
         % Left sie
         cIdx = 1;
     end
-    
+
     saveVec       = skel(:, cIdx);
     skel(:, cIdx) = 0;
     cB            = imclearborder(skel);
     cB(:, cIdx)   = saveVec;
-    
+
     skel      = cB;
     skel      = imfill(skel, 'holes');
-    
+
     %
     cB   = imclearborder(skel);
     skel = skel - cB;
     skel = imclose(skel, strel('disk', 21, 0));
     skel = imfill(skel, 'holes');
-    
+
     C = contourc(double(skel), [1 1]);
-    
+
     %% Get the curve structure
     str     = 1;
     c       = 1;
     ttlCrds = size(C, 2);
-    
+
     while str < ttlCrds
         ed              = str + C(2, str);
         curve(c).level  = C(1, str);
@@ -101,12 +101,12 @@ try
         c               = c + 1;
         str             = ed + 1;
     end
-    
+
     % Remove curves below threshold
     %     curve(curve.length < CURV_THRESH) = [];
     curve(cell2mat(arrayfun(@(x) x.length < CURV_THRESH, ...
         curve, 'UniformOutput', 0))) = [];
-    
+
     %% Find the highest curvature
     numCurves = numel(curve);
     tipIdx    = cell(1, numCurves);
@@ -117,68 +117,71 @@ try
         [~, fine_tipIDX] = min((o.K(tipIdx{i} - KSNIP : tipIdx{i} + KSNIP)));
         tipIdx{i}        = tipIdx{i} + (fine_tipIDX - KSNIP - 1);
     end
-    
+
     img = double(bwdist(~skel));
     g1  = -g1;
     g2  = -g2;
     for i = 1: numCurves
-        
+
         tipCrds = curve(i).data(:, tipIdx{i});
         tipX    = tipCrds(1);
         tipY    = tipCrds(2);
         t1      = ba_interp2(g1, tipX, tipY);
         t2      = ba_interp2(g2, tipX, tipY);
-        
+
         %
         N     = [t2 t1];
         N     = -N / norm(N);
         T     = [N(2) -N(1)];
         iDirc = [T ; N];
-        
+
         %%
         %         quiver(curve(e).data(1,:),curve(e).data(2,:),d1X1,d1X2)
         %         quiver(curve(e).data(1,:),curve(e).data(2,:),-d1X2,d1X1,'r')
-        
+
         midlines(i).data = trackFromPointAtGradient_carrot(img, tipCrds, iDirc, ...
             MAX_STEP, RHO, RAD, PDENSITY, WSIGMA);
-        
+
     end
-    
+
     %% Debug curvature finder with differing values of constants
     % A main point of failure is when the function to compute the point of
     % highest curvature identifies a coordinate on the side of the object,
     % rather than the desired tip of the structure. This debug function iterates
     % through a broad range of values for the following constants and plots
-    % the highest curvature point. 
-    %
+    % the highest curvature point.
+
     if DEBUG
         cla;clf;
         imshow(msk, []);
         hold on;
+
         rng               = 1 : 20 : 201;
-        groundTruth       = [327 ; 234];
-        [tipIdx, tipCrds] = runDebugMode(curve, rng, groundTruth, numCurves);
-        
+        halfIdx           = size(curve(i).data', 2) / 2;
+        halfCrd           = curve(i).data(:, halfIdx);
+        %halfCrd          = [327 ; 234];
+        [tipIdx, tipCrds] = runDebugMode(curve, rng, halfCrd, numCurves);
+
         %%
         tipX    = tipCrds(1);
         tipY    = tipCrds(2);
         img     = double(bwdist(~skel));
         g1      = -g1;
-        g2      = -g2;        
-        
-        %
+        g2      = -g2;
+
+        %%
         t1    = ba_interp2(g1, tipX, tipY);
         t2    = ba_interp2(g2, tipX, tipY);
         N     = [t2 t1];
         N     = -N / norm(N);
         T     = [N(2) -N(1)];
         iDirc = [T ; N];
-        
+
         %%
         midlines(i).data = trackFromPointAtGradient_carrot(img, tipCrds, iDirc, ...
             MAX_STEP, RHO, RAD, PDENSITY, WSIGMA);
     end
-    
+
     %% Visualize outputs
     if vis
         hold off;
@@ -187,18 +190,18 @@ try
         colormap('gray')
         axis off;
         hold on;
-        
+
         for i = 1 : numCurves
             plot(curve(i).data(1,:),    curve(i).data(2,:),    'r');
             plot(midlines(i).data(1,:), midlines(i).data(2,:), 'g');
         end
-        
+
         for i = 1 : numCurves
             plot(curve(i).data(1,tipIdx{i}), curve(i).data(2,tipIdx{i}), 'g*');
         end
-        
+
         drawnow;
-        
+
         if nargin == 4
             if ~isempty(dOut)
                 mkdir(dOut);
@@ -206,10 +209,10 @@ try
             end
         end
     end
-    
+
     out.midlines = midlines;
     out.contours = curve;
-    
+
 catch e
     fprintf(2, 'Error isolating root\n%s\n', e.getReport);
     out.ME = e;
@@ -217,7 +220,7 @@ end
 
 end
 
-function [tipIdx, tipCrds] = runDebugMode(curve, rng, groundTruth, n)
+function [tipIdx, tipCrds] = runDebugMode(curve, rng, halfCrd, n)
 %%
 for k = rng
     col   = 'mo';
@@ -228,18 +231,18 @@ for k = rng
             SMOOTH_VALUE  = kk;  % Original 15
             SMOOTH_VALUE2 = kkk; % Original 30
             try
-                numCurves = numel(curve);
-                tipIdx    = cell(1, numCurves);
+                numCurves        = numel(curve);
+                tipIdx           = cell(1, numCurves);
                 o                = cwtK(curve(n).data', {SMOOTH_VALUE});
                 [~, tipIdx{n}]   = min(o.K);
                 o                = cwtK(curve(n).data', {SMOOTH_VALUE2});
                 [~, fine_tipIDX] = min((o.K(tipIdx{n} - KSNIP : tipIdx{n} + KSNIP)));
                 tipIdx{n}        = tipIdx{n} + (fine_tipIDX - KSNIP - 1);
                 tipCrds          = curve(n).data(:, tipIdx{n});
-            catch 
-                tipCrds = groundTruth;
-                err     = 2;
+            catch
+                tipCrds = halfCrd;
                 col     = 'yo';
+                err     = 2;
             end
             plt(tipCrds', col, 8);
             drawnow;

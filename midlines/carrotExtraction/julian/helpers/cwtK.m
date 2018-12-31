@@ -1,7 +1,7 @@
 function out = cwtK(J, para)
 %% cwtK: wrapper for continuous wavelet transform to compute curvature
 % This function is essentially a wrapper for a customized cwt algorithm, which
-% is the continous 1-dimensional wavelet transform. 
+% is the continous 1-dimensional wavelet transform.
 %
 % Usage:
 %   out = cwtK(J, para)

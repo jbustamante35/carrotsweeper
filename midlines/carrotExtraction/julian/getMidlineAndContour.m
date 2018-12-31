@@ -18,7 +18,7 @@ function [mline, cntr] = getMidlineAndContour(msk, vis)
 %%
 try
     % 
-    out = isolate_carrot_Roots(msk, 0, [], []);    
+    out = isolate_carrot_Roots(msk, 0, 0);    
     
     %
     mline       = out(1).midlines.data';    

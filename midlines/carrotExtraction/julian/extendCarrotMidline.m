@@ -1,6 +1,6 @@
 function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, lp)
 %% extendCarrotMidline:
-% This function extends from the midline to the contour boundary
+% I think this function extends from the midline to the contour boundary?
 %
 % Usage:
 %

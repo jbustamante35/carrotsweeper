@@ -53,7 +53,7 @@ for n = 1 : tot
         
         % Run processed mask through extraction functions
         [mline{n}, cntr{n}] = getMidlineAndContour(pmsk{n}, vis);
-        smsk{n}             = sampleStraighten(mline{n}, flip(pmsk{n}, 2), pmsk{n});
+        smsk{n}             = sampleStraighten(mline{n}, flip(pmsk{n}, 3), pmsk{n});
         
         % Clear figure axis
         if vis && n < tot
@@ -67,11 +67,12 @@ end
 
 %% Show Output of processed and straightened masks
 if vis
-    psec  = 0.7;
-    fig   = figure;
+    psec = 0.7;
+    fig  = gcf;
     set(fig, 'Color', 'w');
     
     for n = 1 : tot
+        cla;clf;
         try
             plotCarrots(n, pmsk{n}, mline{n}, cntr{n}, smsk{n}, psec, 0);
             
@@ -90,8 +91,7 @@ if vis
             savefig(fig, fnm);
             saveas(fig, fnm, 'tiffn');
         end
-        
-        cla;clf;
+                
     end
 end
 
@@ -116,16 +116,14 @@ if f
     figs(2) = figure;
     set(figs,  'Color',  'w');
 else
-    figs = 1:2;
-    cla(figs);
-    clf(figs);
+    figs = 1;
     set(figs, 'Color', 'w');
 end
 
-set(0, 'CurrentFigure', figs(1));
+set(0, 'CurrentFigure', figs);
 
-subplot(211);
-img = handleFLIP(raw_mask, 3);
+subplot(121);
+img = handleFLIP(raw_mask, []);
 imshow(img, []);
 hold on;
 plt(midline, 'r-', 2);
@@ -133,7 +131,7 @@ plt(contours, 'b-', 2);
 ttlP = sprintf('Midline and Contour on Mask\nCarrot %d', idx);
 title(ttlP);
 
-subplot(212);
+subplot(122);
 flp = handleFLIP(straight_mask, 2);
 imshow(flp, []);
 ttlS = sprintf('Straighted Mask\nCarrot %d', idx);

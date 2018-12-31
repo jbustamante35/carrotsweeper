@@ -1,10 +1,10 @@
-function [vec, vecM] = sampleStraighten(mline, msk, img)
+function [vecS, vecM] = sampleStraighten(mline, msk, img)
 %% sampleStraighten: midline-based straightener
 % This function straightens an object in an image by extending from the midline
 % coordinates and extracting the pixel values each coordinate corresponds to.
 %
 % Usage:
-%   [vec, vecM] = sampleStraighten(midline, carrotMask, carrotImage)
+%   [vecS, vecM] = sampleStraighten(mline, msk, img)
 %
 % Input:
 %   mline: midline coordinates
@@ -12,33 +12,31 @@ function [vec, vecM] = sampleStraighten(mline, msk, img)
 %   img: grayscale or rgb image corresponding to binary mask image
 %
 % Output:
-%   vec: pixel values from raw image
-%   vecM: raw coordinates used for vec
+%   vecS: pixel values from mask image
+%   vecM: pixel values from grayscale or original image
 %
 
 %%
 try
     [dS, dG] = extendCarrotMidline(mline, [0 0], msk);
-    dsz      = size(dG);
-    imgSize  = size(img, 3);
-    vec      = [];
+    dSize    = size(dG);
+    chnls    = size(img, 3);
+    vecS     = zeros(length(dS), chnls);
     
     %%
-    for k = 1 : imgSize
-        vec(:, k) = ba_interp2(double(img(:,:,k)) / 255, dS(:,2), dS(:,1));
+    for chnl = 1 : chnls
+        vecS(:,chnl) = ba_interp2(double(img(:,:,chnl)) / 255, dS(:,2), dS(:,1));
     end
     
-    %%
     vecM = ba_interp2(double(msk) / 255, dS(:,2), dS(:,1));
-    %     vec  = reshape(vec,  [dsz(1) dsz(2) 3]);
-    %     vecM = reshape(vecM, [dsz(1) dsz(2)]);
     
-    vec  = reshape(vec,  dsz(1:2));
-    vecM = reshape(vecM, dsz(1:2));
+    %%        
+    vecS = reshape(vecS, dSize(1:2));
+    vecM = reshape(vecM, dSize(1:2));
     
 catch e
     fprintf(2, 'Error straightening mask\n%s\n', e.getReport);
-    vec  = [];
+    vecS = [];
     vecM = [];
     
 end

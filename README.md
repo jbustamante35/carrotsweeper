@@ -7,7 +7,8 @@ roots on a black background, where filenames contain data on that root's
 Location, Curvature, Unique Identifier (UID), etc.
 
 [TODO]
-This README needs some updating
+- This README needs some updating
+- Update list of dependencies
 
 ## Background
 This is simply a subset of files from HypoQuantyl needed to run a full analysis

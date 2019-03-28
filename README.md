@@ -6,6 +6,9 @@ PCs. More features to come. As of now, this is optimized for images of carrot
 roots on a black background, where filenames contain data on that root's
 Location, Curvature, Unique Identifier (UID), etc.
 
+[TODO]
+This README needs some updating
+
 ## Background
 This is simply a subset of files from HypoQuantyl needed to run a full analysis
 for Scott Brainard's corn project. Scott images a large collection of carrot
@@ -40,12 +43,12 @@ The general pipeline for our analyses (as of September 9, 2018) is as follows:
 Scott:
 - Collect color and black-and-white (bw) images of carrot roots
   laid on black backgrounds <br />
-- Cut off the head and leave a small gap from the edge of the 
+- Cut off the head and leave a small gap from the edge of the
   window <br />
-    * This was necessary because the bw image combines the 
+    * This was necessary because the bw image combines the
       edge of the photo with the contour. <br />
     * This considerably weakened the accuracy of the data <br />
-- Generate filenames that contain plenty of identifiable 
+- Generate filenames that contain plenty of identifiable
   information <br />
     * Location, Genotype, UID, Curvature, etc. <br />
 

@@ -16,21 +16,23 @@ function [mline, cntr] = getMidlineAndContour(msk, vis)
 % 
 
 %%
+MIN_THRESH_SIZE = 300; % Remove midlines of certain number of coordinates
+
 try
     % 
     out = isolate_carrot_Roots(msk, 0, 0);    
     
     %
-    mline       = out(1).midlines.data';    
-    rm          = mline(:,1) < 300;
-    mline(rm,:) = [];
-    mline(:,1)  = mline(:,1) - 300;
+    cntr       = out(1).contours.data';
+    rm         = cntr(:,1) < MIN_THRESH_SIZE;
+    cntr(rm,:) = [];
+    cntr(:,1)  = cntr(:,1) - MIN_THRESH_SIZE;
     
     %
-    cntr       = out(1).contours.data';
-    rm         = cntr(:,1) < 300;
-    cntr(rm,:) = [];
-    cntr(:,1)  = cntr(:,1) - 300;
+    mline       = out(1).midlines.data';    
+    rm          = mline(:,1) < MIN_THRESH_SIZE;
+    mline(rm,:) = [];
+    mline(:,1)  = mline(:,1) - MIN_THRESH_SIZE;        
     
     %% Visualize output
     if ~vis

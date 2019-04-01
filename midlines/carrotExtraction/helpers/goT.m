@@ -7,7 +7,7 @@ classdef goT < matlab.mixin.Copyable
         position
         direction
         % parameters for nHood
-        stepSize = 0.2
+        STEP_SIZE = 0.2
         rho
         rad
         density
@@ -85,7 +85,7 @@ classdef goT < matlab.mixin.Copyable
 
         function [] = setStepSize(obj,step)
             %% set Image
-            obj.stepSize = step;
+            obj.STEP_SIZE = step;
         end
 
         function [sam] = sampleImageAtPoint(obj,index)
@@ -171,7 +171,7 @@ classdef goT < matlab.mixin.Copyable
             vec = obj.direction(:,:,end)*vec;
 
             % get next point and direction
-            nextPoint = obj.position(:,end) + obj.stepSize*vec;
+            nextPoint = obj.position(:,end) + obj.STEP_SIZE * vec;
             T = [vec]';
             N = [T(2) -T(1)];
             direction = ([T;N]);

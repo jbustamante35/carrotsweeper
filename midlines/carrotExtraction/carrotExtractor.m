@@ -1,4 +1,4 @@
-function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
+function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFigs)
 %% carrotExtractor: midline extraction and straightener
 % This is a detailed description of this script...
 %
@@ -30,10 +30,13 @@ function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs
 % dataIn = '/path/to/directory/of/masks';
 %
 
-%% Load file list of binary mask images
-% dataIn = '~/Dropbox/EdgarSpalding/projects/carrotsweeper/data/development_181011';
+%% Some constants to consider playing around with
+THRESH = 300; % Minimum length to pad one or both dimensions of image 
 
-if svData || svFigs
+%% Load file list of binary mask images
+% dataIn = '/home/jbustamante/LabData/CarrotSweeper/z_datasets/masks_wi2019';
+
+if savData || savFigs
     dOut    = sprintf('output_%s', tdate('s'));
     dataOut = sprintf('%s/%s', dataIn, dOut);
     mkdir(dataOut);
@@ -47,8 +50,8 @@ tot                       = numel(fin.Files);
 [mline, cntr, pmsk, smsk] = deal(cell(1, tot));
 for n = 1 : tot
     try
-        % Prepare mask for extraction functions
-        pmsk{n} = extendDimension(fin.readimage(n), 0);
+        % Prepare mask for extraction functions        
+        pmsk{n} = extendDimension(fin.readimage(n), 0, THRESH);
         pmsk{n} = double(imcomplement(pmsk{n}));
         
         % Run processed mask through extraction functions
@@ -85,7 +88,7 @@ if vis
         end
         
         % Save figures in output directory
-        if svFigs
+        if savFigs
             fName = getDirName(dataIn);
             fnm   = sprintf('%s/straightCarrot%d_%s', dataOut, n, fName);
             savefig(fig, fnm);
@@ -96,7 +99,7 @@ if vis
 end
 
 %% Save Data in output directory
-if svData
+if savData
     fName   = getDirName(dataIn);
     CARROTS = v2struct(mline, cntr, smsk, pmsk);
     nm      = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...

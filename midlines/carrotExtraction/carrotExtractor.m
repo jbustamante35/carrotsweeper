@@ -1,4 +1,4 @@
-function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
+function [mline, crv, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFigs)
 %% carrotExtractor: midline extraction and straightener
 % This is a detailed description of this script...
 %
@@ -18,8 +18,8 @@ function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs
 %
 % Output:
 %   mline: cell array of midline data
-%   cntr; cell array of contour data
-%   smsk; cell array of straightened mask images
+%   crv: cell array of contour data
+%   smsk: cell array of straightened mask images
 %   pmsk: cell array of processed mask images
 %
 % Usage (continued):
@@ -30,10 +30,13 @@ function [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs
 % dataIn = '/path/to/directory/of/masks';
 %
 
-%% Load file list of binary mask images
-% dataIn = '~/Dropbox/EdgarSpalding/projects/carrotsweeper/data/development_181011';
+%% Some constants to consider playing around with
+THRESH = 300; % Minimum length to pad one or both dimensions of image 
 
-if svData || svFigs
+%% Load file list of binary mask images
+% dataIn = '/home/jbustamante/LabData/CarrotSweeper/z_datasets/masks_wi2019';
+
+if savData || savFigs
     dOut    = sprintf('output_%s', tdate('s'));
     dataOut = sprintf('%s/%s', dataIn, dOut);
     mkdir(dataOut);
@@ -43,17 +46,17 @@ ext = '.png';
 fin = imageDatastore(dataIn, 'FileExtensions', ext);
 
 %% Extract Midline, Contour, Straightened Image, Straightened Mask
-tot                       = numel(fin.Files);
-[mline, cntr, pmsk, smsk] = deal(cell(1, tot));
+tot                      = numel(fin.Files);
+[mline, crv, pmsk, smsk] = deal(cell(1, tot));
 for n = 1 : tot
     try
-        % Prepare mask for extraction functions
-        pmsk{n} = extendDimension(fin.readimage(n), 0);
+        % Prepare mask for extraction functions        
+        pmsk{n} = extendDimension(fin.readimage(n), 0, THRESH);
         pmsk{n} = double(imcomplement(pmsk{n}));
         
         % Run processed mask through extraction functions
-        [mline{n}, cntr{n}] = getMidlineAndContour(pmsk{n}, vis);
-        smsk{n}             = sampleStraighten(mline{n}, flip(pmsk{n}, 3), pmsk{n});
+        [crv{n}, mline{n}] = getContourAndMidline(pmsk{n}, vis);
+        smsk{n}            = sampleStraighten(mline{n}, flip(pmsk{n}, 3), pmsk{n});
         
         % Clear figure axis
         if vis && n < tot
@@ -74,7 +77,7 @@ if vis
     for n = 1 : tot
         cla;clf;
         try
-            plotCarrots(n, pmsk{n}, mline{n}, cntr{n}, smsk{n}, psec, 0);
+            plotCarrots(n, pmsk{n}, mline{n}, crv{n}, smsk{n}, psec, 0);
             
         catch e
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
@@ -85,7 +88,7 @@ if vis
         end
         
         % Save figures in output directory
-        if svFigs
+        if savFigs
             fName = getDirName(dataIn);
             fnm   = sprintf('%s/straightCarrot%d_%s', dataOut, n, fName);
             savefig(fig, fnm);
@@ -96,9 +99,9 @@ if vis
 end
 
 %% Save Data in output directory
-if svData
+if savData
     fName   = getDirName(dataIn);
-    CARROTS = v2struct(mline, cntr, smsk, pmsk);
+    CARROTS = v2struct(mline, crv, smsk, pmsk);
     nm      = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');

@@ -29,7 +29,7 @@ MAX_WIDTH   = 60 * pi / 180;
 K           = 1.5;
 ALPHA       = 1;
 SCALE       = 10;
-STOP_THRESH = 300;
+STOP_THRESH = 300; % Original 300
 
 %% Function handles for Width, Radial, Angula Belief, and then Stop Function
 width  = @(delta)           MAX_WIDTH * normpdf(delta, 0, WSIGMA) / normpdf(0, 0, WSIGMA);

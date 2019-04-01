@@ -12,7 +12,7 @@ Location, Curvature, Unique Identifier (UID), etc.
 
 ## Background
 This is simply a subset of files from HypoQuantyl needed to run a full analysis
-for Scott Brainard's corn project. Scott images a large collection of carrot
+for Scott Brainard's carrot project. Scott images a large collection of carrot
 roots of different genotypes and is trying to figure out what genes define
 particular traits/phenotypes. He is particularly interested in being able to
 predict the offspring phenotype when crossing different genotypes.

@@ -30,7 +30,7 @@ try
     
     vecM = ba_interp2(double(msk) / 255, dS(:,2), dS(:,1));
     
-    %%        
+    %%
     vecS = reshape(vecS, dSize(1:2));
     vecM = reshape(vecM, dSize(1:2));
     

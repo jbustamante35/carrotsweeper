@@ -3,11 +3,12 @@ function [skel, crv, mline] = getContourAndMidline(msk, vis)
 % This function runs Nathan's algorithm for extracting a contour and calculating
 % the midline from a binary mask image.
 %
+% NOTE: msk input should be black object on white background! 
 % Usage:
 %   [skel, crv, mline] = getContourAndMidline(msk, vis)
 %
 % Input:
-%   msk: binary mask (black object, white background)
+%   msk: binary mask (must be black object, white background)
 %   vis: boolean to visualize output
 %
 % Output:
@@ -59,23 +60,6 @@ try
     mline(:,1)                = mline(:,1) - MIN_THRESH_SIZE;
     crv(:,1)                  = crv(:,1) - MIN_THRESH_SIZE;
     
-    %% Original method [DEPRECATED]
-    %     % Run old contour extractor and midline generator
-    %     out   = isolate_carrot_Roots(msk, 0, 0);
-    %
-    %     % Remove output with small output
-    %     MIN_THRESH_SIZE = 300; % Remove midlines of certain number of coordinates
-    %     crv       = out(1).contours.data';
-    %     rm         = crv(:,1) < MIN_THRESH_SIZE;
-    %     crv(rm,:) = [];
-    %     crv(:,1)  = crv(:,1) - MIN_THRESH_SIZE;
-    %
-    %     % Remove output with small output
-    %     mline       = out(1).midlines.data';
-    %     rm          = mline(:,1) < MIN_THRESH_SIZE;
-    %     mline(rm,:) = [];
-    %     mline(:,1)  = mline(:,1) - MIN_THRESH_SIZE;
-    
     %% Visualize output
     if vis
         cla;clf;
@@ -86,24 +70,12 @@ try
         plt(mline, 'r.', 3);
         plt(tCrds, 'g*', 8);
         
-    else
-%         % Subtract midline by size for some reason
-%         sz         = size(msk);
-%         mline(:,1) = mline(:,1) - sz(2)/2;
-%         mline(:,1) = -mline(:,1);
-%         mline(:,1) = mline(:,1) + sz(2)/2;
-%         
-%         % Subtract contour by size for some reason
-%         crv(:,1) = crv(:,1) - sz(2)/2;
-%         crv(:,1) = -crv(:,1);
-%         crv(:,1) = crv(:,1) + sz(2)/2;
-        
     end
     
 catch e
     fprintf(2, 'Error extracting Midline and Contour\n%s\n', e.getReport);
     mline = [];
-    crv  = [];
+    crv   = [];
 end
 
 end

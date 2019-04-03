@@ -16,49 +16,31 @@ function [tCrds, tIdx] = getTipIdx(crv)
 %
 
 %% Constants for smoothing algorithm
-KSNIP   = 163; % Original 50
-SMOOTH1 = 5;   % Original 15
-SMOOTH2 = 10;  % Original 30
+SMOOTH = 10;  % Original 30
 
 %% Run with default constant values
 try
-%     %
-%     oInit     = cwtK(crv, SMOOTH1);
-%     [~, initIdx] = min(oInit.K);
-%     
-%     %
-%     oFine        = cwtK(crv, SMOOTH2);    
-%     
-%     try
-%         [~, fineIdx] = min((oFine.K(tIdx - KSNIP : tIdx + KSNIP)));
-%     catch e
-%         [~, fineIdx] = max(oFine.K);
-%     end
-%     
-%     %
-%     tIdx  = tIdx + (fineIdx - KSNIP - 1);
-%     tCrds = crv(tIdx, :);
-    
-    %
-    oFine     = cwtK(crv, SMOOTH2);    
-    [~, tIdx] = max(oFine.K);
+    % Get maximum of computed curvature around contour
+    curvature = cwtK(crv, SMOOTH);
+    [~, tIdx] = max(curvature.K);
     tCrds     = crv(tIdx, :);
     
 catch e
-    fprintf(2, 'Default to original constants...\n%s\n', e.message);
-    KSNIP   = 50;
-    SMOOTH1 = 15;
-    SMOOTH2 = 30;
-    
     % Try again with original constant values
+    fprintf(2, 'Default to original constants...\n%s\n', e.message);
+    KSNIP   = 50; % Original 50
+    SMOOTH1 = 15; % Original 15
+    SMOOTH2 = 30; % Original 30
+    
+    % Get minimum of inverse of initial curvature?
     oInit     = cwtK(crv, SMOOTH1);
     [~, tIdx] = min(oInit.K);
     
-    %
+    % Get curvature around contour with finer smoothing
     oFine        = cwtK(crv, SMOOTH2);
     [~, fineIdx] = min((oFine.K(tIdx - KSNIP : tIdx + KSNIP)));
     
-    %
+    % Compare tips from initial and finer smoothing
     tIdx  = tIdx + (fineIdx - KSNIP - 1);
     tCrds = crv(tIdx, :);
     

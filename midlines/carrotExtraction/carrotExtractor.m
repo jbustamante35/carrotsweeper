@@ -27,18 +27,27 @@ function [mline, crv, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFig
 % input directory as a subfolder named output_yymmdd, where 'yymmdd' corresponds
 % to the year (y), month (m), and today's date (d).
 %
-% dataIn = '/path/to/directory/of/masks';
+% Example:
+%   Run straightening pipeline on all images in a directory
+%       dataIn  = '~/LabData/CarrotSweeper/z_datasets/masks_wi2019';
+%       din     = [dataIn, '/' , 'pi-261783/binary-masks'];
+%       [mline, cntr, smsk, pmsk] = carrotExtractor(din, 1, 1, 0);
 %
 
 %% Some constants to consider playing around with
-THRESH = 300; % Minimum length to pad one or both dimensions of image
+% THRESH = 300; % Minimum length to pad one or both dimensions of image
 
 %% Load file list of binary mask images
-% dataIn = '/home/jbustamante/LabData/CarrotSweeper/z_datasets/masks_wi2019';
 
-if (savData || savFigs) && isfolder(dataIn)
-    dOut    = sprintf('output_%s', tdate('s'));
-    dataOut = sprintf('%s/%s', dataIn, dOut);
+if savData || savFigs
+    dOut = sprintf('output_%s', tdate('s'));
+    
+    if isfolder(dataIn)
+        dataOut = sprintf('%s/%s', dataIn, dOut);
+    else
+        dataOut = sprintf('%s/%s', fileparts(dataIn), dOut);
+    end
+    
     mkdir(dataOut);
 end
 
@@ -49,49 +58,35 @@ if isfolder(dataIn)
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
     tot                      = numel(img.Files);
     [mline, crv, pmsk, smsk] = deal(cell(1, tot));
+    
     for n = 1 : tot
         try
-            % Prepare mask for extraction functions
-            msk = extendDimension(img.readimage(n), 0, THRESH);
-            msk = double(imcomplement(msk));
-            
-            % Run processed mask through extraction functions
-            [pmsk{n}, crv{n}, mline{n}] = getContourAndMidline(msk, vis);
-            smsk{n}                     = ...
-                sampleStraighten(mline{n}, flip(pmsk{n}, 3), pmsk{n});
-            
-            % Clear figure axis
-            if vis && n < tot
-                cla;clf;
-            end
-            
+            [pmsk{n}, crv{n}, mline{n}, smsk{n}] = ...
+                runStraighteningPipeline(img.readimage(n), vis);
         catch e
             fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
         end
+        
+        %% Clear figure axis
+        if vis && n < tot
+            cla;clf;
+        end
+        
     end
     
 else
     img                      = imread(dataIn);
     [tot , n]                = deal(1);
     [mline, crv, pmsk, smsk] = deal(cell(1, tot));
+    
     try
-        % Prepare mask for extraction functions
-        msk = extendDimension(img, 0, THRESH);
-        msk = double(imcomplement(msk));
-        
-        % Run processed mask through extraction functions
-        [pmsk{n}, crv{n}, mline{n}] = getContourAndMidline(msk, vis);
-        smsk{n}                     = ...
-            sampleStraighten(mline{n}, flip(pmsk{n}, 3), pmsk{n});
-        
-        % Clear figure axis
-        if vis && n < tot
-            cla;clf;
-        end
+        [pmsk{n}, crv{n}, mline{n}, smsk{n}] = ...
+            runStraighteningPipeline(img, vis);
         
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
     end
+    
 end
 
 %% Show Output of processed and straightened masks
@@ -152,8 +147,6 @@ end
 set(0, 'CurrentFigure', figs);
 
 subplot(121);
-% img = handleFLIP(raw_mask, []);
-% imshow(img, []);
 imshow(raw_mask, []);
 hold on;
 plt(midline, 'r-', 2);

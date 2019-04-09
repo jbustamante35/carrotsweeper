@@ -20,6 +20,12 @@ SMOOTH = 10;  % Original 30
 
 %% Run with default constant values
 try
+    % Smooth contour to remove noise (hairs, loops, etc)
+%     bak = crv;
+%     SMOOTHSPAN   = 0.7;
+%     SMOOTHMETHOD = 'sgolay';
+%     crv          = segSmooth(crv, SMOOTHSPAN, SMOOTHMETHOD);
+    
     % Get maximum of computed curvature around contour
     curvature = cwtK(crv, SMOOTH);
     [~, tIdx] = max(curvature.K);

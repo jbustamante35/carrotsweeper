@@ -1,7 +1,8 @@
 function pca_builtin = builtinPCA(rawD, numC)
-% This function takes rasterized data and performs PCA with the number of Principal Components (PC)
-% given by the numC parameter. Output is in a structure containing various data from the analysis.
-% This uses MATLAB's builtin pca function, contrary to myPCA, which uses my own methods.
+% This function takes rasterized data and performs PCA with the number of 
+% Principal Components (PC) given by the numC parameter. Output is in a 
+% structure containing various data from the analysis. This uses MATLAB's 
+% builtin pca function, contrary to myPCA, which uses my own methods.
 %
 % Usage:
 %   pca_builtin = builtinPCA(rawD, numC)
@@ -15,7 +16,8 @@ function pca_builtin = builtinPCA(rawD, numC)
 %
 
 %% Run analysis
-warning('off','stats:pca:ColRankDefX'); % Turn off T-squared warning message for using > 3 PCs
+% Turn off T-squared warning message for using > 3 PCs
+warning('off','stats:pca:ColRankDefX');
 [C, S, L, T, E, M] = pca(rawD, 'NumComponents', numC, 'Algorithm', 'svd');
 
 %% Create output structure

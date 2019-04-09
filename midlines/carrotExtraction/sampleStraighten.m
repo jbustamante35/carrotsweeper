@@ -16,21 +16,29 @@ function [vecS, vecM] = sampleStraighten(mline, msk, img)
 %   vecM: pixel values from grayscale or original image
 %
 
-%%
 try
+    %%
     [dS, dG] = extendCarrotMidline(mline, [0 0], msk);
     dSize    = size(dG);
     chnls    = size(img, 3);
-    vecS     = zeros(length(dS), chnls);
     
-    %%
-    for chnl = 1 : chnls
-        vecS(:,chnl) = ba_interp2(double(img(:,:,chnl)) / 255, dS(:,2), dS(:,1));
+    if chnls > 1
+        vecS     = zeros(length(dS), chnls);
+        
+        %% Interpolation of mask pixels along midline
+        % Multi-channel image
+        for chnl = 1 : chnls
+            vecS(:,chnl) = ba_interp2(double(img(:,:,chnl)) / 255, dS(:,2), dS(:,1));
+        end
+        
+        vecM = vecS;
+    else
+        % Binary image
+        vecM = ba_interp2(double(msk) / 255, dS(:,2), dS(:,1));
+        vecS = vecM;
     end
     
-    vecM = ba_interp2(double(msk) / 255, dS(:,2), dS(:,1));
-    
-    %%
+    %% Reshape to generate straight mask
     vecS = reshape(vecS, dSize(1:2));
     vecM = reshape(vecM, dSize(1:2));
     

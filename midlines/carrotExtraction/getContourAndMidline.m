@@ -18,8 +18,8 @@ function [skel, crv, mline] = getContourAndMidline(msk, vis)
 %
 
 %% Set constants for respective algorithms
-MASK_THRESH = 300; % Original 300
-MIN_THRESH_SIZE = 300; % Remove midlines of certain number of coordinates
+MASK_THRESH     = 100; % Original 300
+MIN_THRESH_SIZE = 100; % Remove midlines of certain number of coordinates
 
 % TODO: Pass these constants to the respective algorithm
 % getBWContour
@@ -41,24 +41,38 @@ try
         msk = rgb2gray(msk);
     end
     
-    skel = handleFLIP(msk, []);
+    % Force flip to left-right [arg = 3]
+%     skel = handleFLIP(msk, []);
+    skel = handleFLIP(msk, 3);
     skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
     
+    % Smooth out image
+    se   = strel('disk',4,4);
+    skel = imerode(skel, se);
+    
     %% Run through main functions
-    crv   = getBWContour(skel);
-    tCrds = getTipIdx(crv);
-    mline = generateMidline(~skel, tCrds)';
-        
-    %% Remove padded area of mask and curve/midline coordinates
+    crv = getBWContour(skel);                
+    
+    % Remove padded area of mask and curve/midline coordinates
     rmCrv          = crv(:,1) < MIN_THRESH_SIZE;
     crv(rmCrv,:)   = [];
+    
+    % Identify tip as point of highest curvature
+    tCrds = getTipIdx(crv);        
+    
+    % Generate midline starting from tip
+    mline = generateMidline(~skel, tCrds)';
+    
+    %% Remove padding from mask, contour, and midline
+    % Remove padded area of mask
+    skel(:,1:MIN_THRESH_SIZE) = [];    
+    crv(:,1)       = crv(:,1) - MIN_THRESH_SIZE;
+    
+    % Remove any midline coordinates beyond mask
     rmMid          = mline(:,1) < MIN_THRESH_SIZE;
     mline(rmMid,:) = [];
-    
-    % Remove padded area of mask
-    skel(:,1:MIN_THRESH_SIZE) = [];
-    mline(:,1)                = mline(:,1) - MIN_THRESH_SIZE;
-    crv(:,1)                  = crv(:,1) - MIN_THRESH_SIZE;
+    mline(:,1)     = mline(:,1) - MIN_THRESH_SIZE;    
+        
     
     %% Visualize output
     if vis

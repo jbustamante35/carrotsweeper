@@ -92,7 +92,8 @@ end
 %% Show Output of processed and straightened masks
 if vis
     psec = 0.7;
-    fig  = gcf;
+    fig  = figure(1);
+    set(0, 'CurrentFigure', fig);
     set(fig, 'Color', 'w');
     
     for n = 1 : tot
@@ -110,7 +111,7 @@ if vis
         
         % Save figures in output directory
         if savFigs
-            fName = getDirName(dataIn);
+            [~, fName] = fileparts(dataIn);
             fnm   = sprintf('%s/straightCarrot%d_%s', dataOut, n, fName);
             savefig(fig, fnm);
             saveas(fig, fnm, 'tiffn');

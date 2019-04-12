@@ -32,4 +32,10 @@ msk = double(imcomplement(msk));
 [pmsk, crv, mline] = getContourAndMidline(msk, vis);
 smsk               = sampleStraighten(mline, flip(pmsk, 3), pmsk);
 
+% Post-process data [Flip right-to-left and binarize]
+pmsk  = handleFLIP(pmsk, 3);
+crv   = fliplr(crv);
+mline = fliplr(mline);
+smsk  = handleFLIP(imbinarize(smsk), 2);
+
 end

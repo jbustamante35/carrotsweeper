@@ -36,6 +36,7 @@ function [mline, crv, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFig
 
 %% Some constants to consider playing around with
 % THRESH = 300; % Minimum length to pad one or both dimensions of image
+FACE = 2;   % Direction to point straightened images (original 3)
 
 %% Load file list of binary mask images
 
@@ -99,13 +100,13 @@ if vis
     for n = 1 : tot
         cla;clf;
         try
-            plotCarrots(n, pmsk{n}, mline{n}, crv{n}, smsk{n}, psec, 0);
+            plotCarrots(n, pmsk{n}, mline{n}, crv{n}, smsk{n}, psec, FACE, 0);
             
         catch e
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
-            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], psec, 0);
+            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], psec, FACE, 0);
             
         end
         
@@ -131,7 +132,7 @@ end
 
 end
 
-function figs = plotCarrots(idx, raw_mask, midline, contours, straight_mask, psec, f)
+function figs = plotCarrots(idx, raw_mask, midline, contours, straight_mask, psec, FACE, f)
 %% plotCarrots: plotting function for this script
 % Generate figures if they don't exist
 % Set f to false to overwrite existing figures
@@ -156,7 +157,7 @@ ttlP = sprintf('Midline and Contour on Mask\nCarrot %d', idx);
 title(ttlP);
 
 subplot(122);
-flp = handleFLIP(straight_mask, 3);
+flp = handleFLIP(straight_mask, FACE);
 imshow(flp, []);
 ttlS = sprintf('Straighted Mask\nCarrot %d', idx);
 title(ttlS);

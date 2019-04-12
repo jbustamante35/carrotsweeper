@@ -20,6 +20,7 @@ function [skel, crv, mline] = getContourAndMidline(msk, vis)
 %% Set constants for respective algorithms
 MASK_THRESH     = 100; % Original 300
 MIN_THRESH_SIZE = 100; % Remove midlines of certain number of coordinates
+FACE            = 3;   % Direction to point images (original 3)
 
 % TODO: Pass these constants to the respective algorithm
 % getBWContour
@@ -43,7 +44,7 @@ try
     
     % Force flip to left-right [arg = 3]
 %     skel = handleFLIP(msk, []);
-    skel = handleFLIP(msk, 3);
+    skel = handleFLIP(msk, FACE);
     skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
     
     % Smooth out image

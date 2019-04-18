@@ -67,7 +67,7 @@ try
     %% Remove padding from mask, contour, and midline
     % Remove padded area of mask
     skel(:,1:MIN_THRESH_SIZE) = [];    
-    crv(:,1)       = crv(:,1) - MIN_THRESH_SIZE;
+    crv(:,1)                  = crv(:,1) - MIN_THRESH_SIZE;
     
     % Remove any midline coordinates beyond mask
     rmMid          = mline(:,1) < MIN_THRESH_SIZE;

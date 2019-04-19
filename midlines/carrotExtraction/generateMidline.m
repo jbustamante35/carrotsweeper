@@ -1,4 +1,4 @@
-function mline = generateMidline(msk, tCrds)
+function [mline, dsts] = generateMidline(msk, tCrds)
 %% generateMidline: runs Nathan's algorithm for generating midlines from masks
 % Description of Nathan's algorithm. Blah blah distance transform and
 % mask gradient blah blah.
@@ -50,6 +50,9 @@ iDirc = [T ; N];
 
 %% Trace midline from tip coordinate along gradient
 mline = trackFromPointAtGradient_carrot(img, tCrds, iDirc, ...
-    MAX_STEP, RHO, RAD, PDENSITY, WSIGMA);
+    MAX_STEP, RHO, RAD, PDENSITY, WSIGMA)';
+
+% Get distances from midline to contour (hopefully)
+dsts = getDim(impixel(gI, mline(:,1), mline(:,2)), 1) * 2;
 
 end

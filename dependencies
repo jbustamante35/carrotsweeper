@@ -4,6 +4,7 @@
 /home/jbustamante/Software/hypoquantyl/helpers/classhelp/rasterizeImagesHQ.m
 /home/jbustamante/Software/hypoquantyl/helpers/contours/interpolateOutline.m
 /home/jbustamante/Software/hypoquantyl/helpers/contours/oldContours/extractContour.m
+/home/jbustamante/Software/hypoquantyl/helpers/contours/snap2curve.m
 /home/jbustamante/Software/hypoquantyl/helpers/filesort/tdate.m
 /home/jbustamante/Software/hypoquantyl/helpers/pca/analysis/builtinPCA.m
 /home/jbustamante/Software/hypoquantyl/helpers/pca/analysis/myPCA.m

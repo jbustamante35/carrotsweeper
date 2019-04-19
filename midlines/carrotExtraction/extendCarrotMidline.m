@@ -1,4 +1,4 @@
-function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, lp)
+function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, wid, lp)
 %% extendCarrotMidline:
 % I think this function extends from the midline to the contour boundary?
 %
@@ -9,6 +9,7 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 %   mline: coordinates of the path along a midline
 %   domainTranslation:
 %   msk: binary mask image for corresponding midline
+%   wid: width to extend interpolation of straightened mask
 %   lp:
 %
 % Output:
@@ -17,10 +18,12 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 %
 
 %% Generate curvilinear-domain
-WIDTH_NUMP = 200;
+LPARGS     = 4; % number of arguments if lp is used
+% WIDTH_NUMP = 200; % Dynamically set to original mask width
 PCA_RHO    = 15;
-WIDTH      = 200;
-domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk, 0);
+WIDTH      = 200; % Dynamically set to original mask width
+% domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk, 0);
+domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, wid, msk, 0);
 
 %% extension on one side
 dX   = -diff(domain, 1, 1);
@@ -29,7 +32,7 @@ dX   = mean(dX(1:SNIP,:,:), 1);
 dNOR = sum(dX.^2, 3).^-0.5;
 dX   = bsxfun(@times, dX, dNOR);
 
-if nargin == 3
+if nargin == LPARGS
     lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
 end
 
@@ -48,7 +51,7 @@ dX     = mean(dX(1:SNIP,:,:), 1);
 dNOR   = sum(dX.^2,3).^-.5;
 dX     = bsxfun(@times, dX, dNOR);
 
-if nargin == 3
+if nargin == LPARGS
     lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
 end
 

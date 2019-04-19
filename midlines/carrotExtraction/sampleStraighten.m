@@ -18,7 +18,9 @@ function [vecS, vecM] = sampleStraighten(mline, msk, img)
 
 try
     %%
-    [dS, dG] = extendCarrotMidline(mline, [0 0], msk);
+%     wid      = ceil(size(msk, 1) / 2);
+    wid      = size(msk, 1);
+    [dS, dG] = extendCarrotMidline(mline, [0 0], msk, wid);
     dSize    = size(dG);
     chnls    = size(img, 3);
     
@@ -28,7 +30,8 @@ try
         %% Interpolation of mask pixels along midline
         % Multi-channel image
         for chnl = 1 : chnls
-            vecS(:,chnl) = ba_interp2(double(img(:,:,chnl)) / 255, dS(:,2), dS(:,1));
+            vecS(:,chnl) = ...
+                ba_interp2(double(img(:,:,chnl)) / 255, dS(:,2), dS(:,1));
         end
         
         vecM = vecS;
@@ -39,8 +42,8 @@ try
     end
     
     %% Reshape to generate straight mask
-    vecS = reshape(vecS, dSize(1:2));
-    vecM = reshape(vecM, dSize(1:2));
+    vecS = reshape(vecS, dSize(1:2))';
+    vecM = reshape(vecM, dSize(1:2))';
     
 catch e
     fprintf(2, 'Error straightening mask\n%s\n', e.getReport);

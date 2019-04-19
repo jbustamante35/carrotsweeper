@@ -1,4 +1,4 @@
-function [mline, crv, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFigs)
+function [mline, crv, smsk, pmsk, tcrd, dsts] = carrotExtractor(dataIn, vis, savData, savFigs)
 %% carrotExtractor: midline extraction and straightener
 % This is a detailed description of this script...
 %
@@ -21,6 +21,8 @@ function [mline, crv, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFig
 %   crv: cell array of contour data
 %   smsk: cell array of straightened mask images
 %   pmsk: cell array of processed mask images
+%   tcrd: cell array of tip coordinates
+%   dsts: cell array of distance transform values along midline
 %
 % Usage (continued):
 % If you want to save the results, the data will automatically be placed in the
@@ -31,7 +33,7 @@ function [mline, crv, smsk, pmsk] = carrotExtractor(dataIn, vis, savData, savFig
 %   Run straightening pipeline on all images in a directory
 %       dataIn  = '~/LabData/CarrotSweeper/z_datasets/masks_wi2019';
 %       din     = [dataIn, '/' , 'pi-261783/binary-masks'];
-%       [mline, cntr, smsk, pmsk] = carrotExtractor(din, 1, 1, 0);
+%       [mline, cntr, smsk, pmsk, tcrd, dsts] = carrotExtractor(din, 1, 1, 0);
 %
 
 %% Some constants to consider playing around with
@@ -57,32 +59,27 @@ if isfolder(dataIn)
     img = imageDatastore(dataIn, 'FileExtensions', ext);
     
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
-    tot                      = numel(img.Files);
-    [mline, crv, pmsk, smsk] = deal(cell(1, tot));
+    tot                                  = numel(img.Files);
+    [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
     
     for n = 1 : tot
         try
-            [pmsk{n}, crv{n}, mline{n}, smsk{n}] = ...
-                runStraighteningPipeline(img.readimage(n), vis);
+            [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+                runStraighteningPipeline(img.readimage(n));
         catch e
-            fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
-        end
-        
-        %% Clear figure axis
-        if vis && n < tot
-            cla;clf;
+            fprintf(2, 'Error in Carrot Pipeline\n%s\n', e.getReport);
         end
         
     end
     
 else
-    img                      = imread(dataIn);
-    [tot , n]                = deal(1);
-    [mline, crv, pmsk, smsk] = deal(cell(1, tot));
+    img                            = imread(dataIn);
+    [tot , n]                      = deal(1);
+    [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
     
     try
-        [pmsk{n}, crv{n}, mline{n}, smsk{n}] = ...
-            runStraighteningPipeline(img, vis);
+        [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+            runStraighteningPipeline(img);
         
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
@@ -100,13 +97,14 @@ if vis
     for n = 1 : tot
         cla;clf;
         try
-            plotCarrots(n, pmsk{n}, mline{n}, crv{n}, smsk{n}, psec, FACE, 0);
+            plotCarrots(n, pmsk{n}, mline{n}, crv{n}, tcrd{n}, dsts{n}, ...
+                smsk{n}, psec, 0);
             
         catch e
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
-            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], psec, FACE, 0);
+            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], [0 0], [0 0], psec, 0);
             
         end
         
@@ -122,6 +120,7 @@ if vis
 end
 
 %% Save Data in output directory
+% Add CSV with UID | Width | Length
 if savData
     fName   = getDirName(dataIn);
     CARROTS = v2struct(mline, crv, smsk, pmsk);
@@ -132,7 +131,7 @@ end
 
 end
 
-function figs = plotCarrots(idx, raw_mask, midline, contours, straight_mask, psec, FACE, f)
+function figs = plotCarrots(idx, raw_mask, midline, contours, tip_crds, dsts, straight_mask, psec, f)
 %% plotCarrots: plotting function for this script
 % Generate figures if they don't exist
 % Set f to false to overwrite existing figures
@@ -140,25 +139,84 @@ if f
     figs = [];
     figs(1) = figure;
     figs(2) = figure;
+    figs(3) = figure;
+    figs(4) = figure;
     set(figs,  'Color',  'w');
 else
-    figs = 1;
+    figs = 1:4;
     set(figs, 'Color', 'w');
 end
 
-set(0, 'CurrentFigure', figs);
+%% Overlay midline, contour, tip on processed mask
+fIdx = 1;
+set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
+cla;clf;
 
-subplot(121);
 imshow(raw_mask, []);
+imagesc(raw_mask);
+colormap gray;
+axis image;
 hold on;
 plt(midline, 'r-', 2);
 plt(contours, 'b-', 2);
+plt(tip_crds, 'g*', 5);
 ttlP = sprintf('Midline and Contour on Mask\nCarrot %d', idx);
 title(ttlP);
 
-subplot(122);
-flp = handleFLIP(straight_mask, FACE);
-imshow(flp, []);
+%% Bar plot of distance vector
+set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
+cla;clf;
+
+bar(flip(dsts), 1, 'r');
+ttlS = sprintf('Width Profile\nCarrot %d', idx);
+title(ttlS);
+
+%% Tick marks along midline showing widths at tick
+set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
+cla;clf;
+
+imagesc(raw_mask);
+colormap gray;
+axis image;
+hold on;
+
+plt(midline, 'r.', 3);
+plt(contours, 'y.', 3);
+plt(tip_crds, 'g*', 6);
+
+% Show every length / 10
+lng = length(midline);
+itr = ceil(lng / 15);
+X   = midline(:,1) - 5;
+Y   = midline(:,2) - 15;
+txt = cellstr(num2str(round(dsts,2)));
+        
+for i = 1 : itr : lng
+    % Plot distance and tick marks
+    text(X(i), Y(i), txt{i}, 'Color', 'b', 'FontSize', 6);
+%     text(X(i), Y(i), '+', 'Color', 'r', 'FontSize', 6); % Calibrate position
+    plt(midline(i,:), 'b+', 3);
+end
+
+% Plot max distance
+[maxD, maxIdx]  = max(dsts);
+maxP = midline(maxIdx,:);
+maxX = maxP(1) - 25;
+maxY = maxP(2) + 20;
+maxT = num2str(round(maxD, 2));
+plt(maxP, 'k+', 8);
+text(maxX, maxY, maxT, 'Color', 'k', 'FontSize', 7, 'FontWeight', 'bold');
+
+ttlP = sprintf('Length %d pixels | Max Width %.02f pixels\nCarrot %d', ...
+    lng, maxD, idx);
+title(ttlP);
+
+%% Straightened mask
+set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
+cla;clf;
+
+flp = handleFLIP(straight_mask, 4);
+imagesc(flp); colormap gray;
 ttlS = sprintf('Straighted Mask\nCarrot %d', idx);
 title(ttlS);
 

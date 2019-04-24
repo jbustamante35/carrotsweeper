@@ -19,8 +19,8 @@ function [vecS, vecM] = sampleStraighten(mline, msk, img)
 try
     %%
 %     wid      = ceil(size(msk, 1) / 2);
-    wid      = size(msk, 1);
-    [dS, dG] = extendCarrotMidline(mline, [0 0], msk, wid);
+    np      = size(msk, 1) + 1;
+    [dS, dG] = extendCarrotMidline(mline, [0 0], msk, np);
     dSize    = size(dG);
     chnls    = size(img, 3);
     

@@ -44,24 +44,24 @@ FACE = 2;   % Direction to point straightened images (original 3)
 
 if savData || savFigs
     dOut = sprintf('output_%s', tdate('s'));
-    
+
     if isfolder(dataIn)
         dataOut = sprintf('%s/%s', dataIn, dOut);
     else
         dataOut = sprintf('%s/%s', fileparts(dataIn), dOut);
     end
-    
+
     mkdir(dataOut);
 end
 
 if isfolder(dataIn)
     ext = '.png';
     img = imageDatastore(dataIn, 'FileExtensions', ext);
-    
+
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
     tot                                  = numel(img.Files);
     [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
-    
+
     for n = 1 : tot
         try
             [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
@@ -69,74 +69,85 @@ if isfolder(dataIn)
         catch e
             fprintf(2, 'Error in Carrot Pipeline\n%s\n', e.getReport);
         end
-        
+
     end
-    
+
 else
     img                            = imread(dataIn);
     [tot , n]                      = deal(1);
     [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
-    
+
     try
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
             runStraighteningPipeline(img);
-        
+
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
     end
-    
+
 end
 
 %% Show Output of processed and straightened masks
 if vis
     psec = 0.7;
-    fig  = figure(1);
-    set(0, 'CurrentFigure', fig);
-    set(fig, 'Color', 'w');
-    
+    figs = [];
+    fnms = {};
+    fnms{1} = sprintf('MidlineContourMask');
+    fnms{2} = sprintf('WidthProfile');
+    fnms{3} = sprintf('WidthsOnMask');
+    fnms{4} = sprintf('StraightenedMask');
+
+    set(figs, 'Color', 'w');
+
     for n = 1 : tot
         cla;clf;
         try
-            plotCarrots(n, pmsk{n}, mline{n}, crv{n}, tcrd{n}, dsts{n}, ...
+            figs = plotCarrots(n, pmsk{n}, mline{n}, crv{n}, tcrd{n}, dsts{n}, ...
                 smsk{n}, psec, 0);
-            
+
         catch e
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
-            
-            plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], [0 0], [0 0], psec, 0);
-            
+
+            figs = plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], [0 0], [0 0], psec, 0);
+
         end
-        
+
         % Save figures in output directory
         if savFigs
             [~, fName] = fileparts(dataIn);
-            fnm   = sprintf('%s/straightCarrot%d_%s', dataOut, n, fName);
-            savefig(fig, fnm);
-            saveas(fig, fnm, 'tiffn');
+            for fig = figs
+                fnm   = sprintf('%s/%s%d_%s', dataOut, fnms{fig}, n, fName);
+                savefig(fig, fnm);
+                saveas(fig, fnm, 'tiffn');
+            end
         end
-        
+
     end
 end
 
 %% Save Data in output directory
 % Add CSV with UID | Width | Length
 if savData
-    fName   = getDirName(dataIn);
-    CARROTS = v2struct(mline, crv, smsk, pmsk);
-    nm      = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
+    [~, fName]   = fileparts(dataIn);
+    CARROTS      = v2struct(mline, crv, smsk, pmsk);
+    nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
+    
+    % Write into CSV file
+    % UID [UID] | Max Width (mm) [Scale] | Length
+    
 end
 
 end
 
 function figs = plotCarrots(idx, raw_mask, midline, contours, tip_crds, dsts, straight_mask, psec, f)
 %% plotCarrots: plotting function for this script
-% Generate figures if they don't exist
+% Set f to false generate figures if they don't exist
 % Set f to false to overwrite existing figures
 if f
-    figs = [];
+    figs = 1:4;
     figs(1) = figure;
     figs(2) = figure;
     figs(3) = figure;
@@ -144,6 +155,11 @@ if f
     set(figs,  'Color',  'w');
 else
     figs = 1:4;
+    figs(1) = figure(1);
+    figs(2) = figure(2);
+    figs(3) = figure(3);
+    figs(4) = figure(4);
+    set(figs,  'Color',  'w');
     set(figs, 'Color', 'w');
 end
 
@@ -190,11 +206,11 @@ itr = ceil(lng / 15);
 X   = midline(:,1) - 5;
 Y   = midline(:,2) - 15;
 txt = cellstr(num2str(round(dsts,2)));
-        
+
 for i = 1 : itr : lng
     % Plot distance and tick marks
     text(X(i), Y(i), txt{i}, 'Color', 'b', 'FontSize', 6);
-%     text(X(i), Y(i), '+', 'Color', 'r', 'FontSize', 6); % Calibrate position
+    %     text(X(i), Y(i), '+', 'Color', 'r', 'FontSize', 6); % Calibrate position
     plt(midline(i,:), 'b+', 3);
 end
 

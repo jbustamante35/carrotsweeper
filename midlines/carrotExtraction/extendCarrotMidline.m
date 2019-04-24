@@ -1,4 +1,4 @@
-function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, wid, lp)
+function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, np, lp)
 %% extendCarrotMidline:
 % I think this function extends from the midline to the contour boundary?
 %
@@ -21,9 +21,10 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 LPARGS     = 4; % number of arguments if lp is used
 % WIDTH_NUMP = 200; % Dynamically set to original mask width
 PCA_RHO    = 15;
-WIDTH      = 200; % Dynamically set to original mask width
+% WIDTH      = 200; % Dynamically set to original mask width
+wid = round(np / 2); % 
 % domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk, 0);
-domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, wid, msk, 0);
+domain     = genCurvilinearDomain(mline, PCA_RHO, wid, np, msk, 0);
 
 %% extension on one side
 dX   = -diff(domain, 1, 1);

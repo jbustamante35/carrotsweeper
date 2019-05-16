@@ -32,13 +32,14 @@ msk = extendDimension(img, 0, THRESH);
 msk = double(imcomplement(msk));
 
 %% Run processed mask through extraction functions
-[pmsk, crv, mline, tcrd, dsts] = getContourAndMidline(msk, 0);
-smsk                           = sampleStraighten(mline, flip(pmsk, 3), pmsk);
+[pmsk, crv, mline, tcrd, ~] = getContourAndMidline(msk, 0);
+smsk                        = sampleStraighten(mline, flip(pmsk, 3), pmsk);
 
 % Post-process data [Flip right-to-left and binarize]
 % pmsk  = handleFLIP(pmsk, FACE);
 % crv   = fliplr(crv);
 % mline = fliplr(mline);
-smsk  = handleFLIP(imbinarize(smsk), FACE);
+smsk = handleFLIP(smsk, FACE);
+dsts = sum(smsk,2);
 
 end

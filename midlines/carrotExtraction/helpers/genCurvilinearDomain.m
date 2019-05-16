@@ -1,4 +1,4 @@
-function domain = genCurvilinearDomain(crv, RHO, WIDTH, nP, img, vis)
+function domain = genCurvilinearDomain(crv, rho, wid, np, msk, vis)
 %% genCurvilinearDomain:
 % This function does something and uses igetFrame and genDomains, which uses the
 % sub-function createDomains.
@@ -8,9 +8,9 @@ function domain = genCurvilinearDomain(crv, RHO, WIDTH, nP, img, vis)
 %
 % Input:
 %   crv: x-/y-coordinates
-%   RHO: constant representing some value
-%   WIDTH: is this a constant too?
-%   nP: I don't even know
+%   rho: constant representing some value
+%   wid: is this a constant too?
+%   np: I don't even know
 %   img: grayscale image corresponding to curve
 %   vis: boolean to visualize output
 %
@@ -19,15 +19,15 @@ function domain = genCurvilinearDomain(crv, RHO, WIDTH, nP, img, vis)
 %
 
 %% Get ref frames along midline
-BV = igetFrame(crv,RHO);
+BV = igetFrame(crv,rho);
 
 %% Create physioframe
 para{1}.type = 'box';
 para{1}.value{1} = [0 0  1];
-para{1}.value{2} = [-WIDTH WIDTH nP];
+para{1}.value{2} = [-wid wid np];
 para = genDomains(para);
 
-domain = zeros(size(crv,1),2,nP);
+domain = zeros(size(crv,1),2,np);
 
 %%
 for pt = 1:size(crv,1)
@@ -37,23 +37,32 @@ for pt = 1:size(crv,1)
     %% create affine transform
     curPoint = crv(pt,:);
     %T = [imrotate(squeeze(BV(pt,:,:)),90) fliplr(curPoint)'];
-    T = [squeeze(BV(pt,:,:))' fliplr(curPoint)'];
-    domain(pt,:,:) = T*para{1}.d;
+    T              = [squeeze(BV(pt,:,:))' fliplr(curPoint)'];
+    domain(pt,:,:) = T * para{1}.d;
     
     %% Visualize output
-    if vis
-        qLEN = 10;
-        imshow(img, []);
+    if vis && mod(pt/10,1) == 0
+        qLEN = 20;
+        %         imshow(msk, []);
+        %         hold on;
+        %         plot(crv(:,2),crv(:,1),'b.');
+        %         plot(crv(:,2),crv(:,1),'g');
+        %         quiver(crv(pt,2), crv(pt,1), qLEN * -BV(pt,1,2), qLEN * -BV(pt,2,2), ...
+        %             0, 'Color', 'g');
+        %         waitforbuttonpress;
+        
+        imagesc(msk);
+        axis auto;
         hold on;
-        plot(crv(:,2),crv(:,1),'b.');
-        plot(crv(:,2),crv(:,1),'g');
-        %quiver(iCurve(:,2),iCurve(:,1),qLEN*BV(:,1,2),qLEN*BV(:,2,2),0,'Color','b');
-        %quiver(iCurve(:,2),iCurve(:,1),qLEN*-BV(:,1,2),qLEN*-BV(:,2,2),0,'Color','r');
-        quiver(crv(pt,2), crv(pt,1), qLEN * -BV(pt,1,2), qLEN * -BV(pt,2,2), ...
-            0, 'Color', 'g');
+        plt(crv, 'm.', 3);
+        px = crv(pt, 1);
+        py = crv(pt, 2);
+        bx = qLEN * -BV(pt, 2, 2);
+        by = qLEN * -BV(pt, 1, 2);
+        quiver(px, py, bx, by, 0, 'Color', 'r');
+        quiver(px, py, by, bx, 0, 'Color', 'b');
         hold off;
-        drawnow;
-        waitforbuttonpress;
+        pause(0.001);        
     end
     
     %fprintf(['End@' num2str(pt) ':' num2str(size(iCurve,1)) '\n']);

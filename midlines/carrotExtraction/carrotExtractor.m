@@ -44,24 +44,24 @@ FACE = 2;   % Direction to point straightened images (original 3)
 
 if savData || savFigs
     dOut = sprintf('output_%s', tdate('s'));
-
+    
     if isfolder(dataIn)
         dataOut = sprintf('%s/%s', dataIn, dOut);
     else
         dataOut = sprintf('%s/%s', fileparts(dataIn), dOut);
     end
-
+    
     mkdir(dataOut);
 end
 
 if isfolder(dataIn)
     ext = '.png';
     img = imageDatastore(dataIn, 'FileExtensions', ext);
-
+    
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
     tot                                  = numel(img.Files);
     [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
-
+    
     for n = 1 : tot
         try
             [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
@@ -69,22 +69,22 @@ if isfolder(dataIn)
         catch e
             fprintf(2, 'Error in Carrot Pipeline\n%s\n', e.getReport);
         end
-
+        
     end
-
+    
 else
     img                            = imread(dataIn);
     [tot , n]                      = deal(1);
     [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
-
+    
     try
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
             runStraighteningPipeline(img);
-
+        
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
     end
-
+    
 end
 
 %% Show Output of processed and straightened masks
@@ -96,23 +96,23 @@ if vis
     fnms{2} = sprintf('WidthProfile');
     fnms{3} = sprintf('WidthsOnMask');
     fnms{4} = sprintf('StraightenedMask');
-
+    
     set(figs, 'Color', 'w');
-
+    
     for n = 1 : tot
         cla;clf;
         try
             figs = plotCarrots(n, pmsk{n}, mline{n}, crv{n}, tcrd{n}, dsts{n}, ...
                 smsk{n}, psec, 0);
-
+            
         catch e
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
-
+            
             figs = plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], [0 0], [0 0], psec, 0);
-
+            
         end
-
+        
         % Save figures in output directory
         if savFigs
             [~, fName] = fileparts(dataIn);
@@ -122,7 +122,7 @@ if vis
                 saveas(fig, fnm, 'tiffn');
             end
         end
-
+        
     end
 end
 
@@ -137,7 +137,57 @@ if savData
     
     % Write into CSV file
     % UID [UID] | Max Width (mm) [Scale] | Length
+    %% Outpt CSV with UID [UID] | Max Width (mm) [Scale] | Length
+    % Extract metadata from filenames
+    if isfolder(dataIn)
+        % For directories of images
+        tdir = dataIn;
+        I    = imageDatastore(tdir);
+        nms  = I.Files;
+    end
     
+    ID   = 'UID';
+    expr = sprintf('%s_(?<id>.*?)}', ID);
+    uid  = regexpi(nms, expr, 'names');
+    uids = cellfun(@(x) char(x.id), uid, 'UniformOutput', 0);
+    
+    ID   = 'Scale';
+    expr = sprintf('%s_(?<id>.*?)}', ID);
+    scl  = regexpi(nms, expr, 'names');
+    scls = cellfun(@(x) str2double(char(x.id)), scl, 'UniformOutput', 0);
+    
+    % Compute lengths and max widths
+    flp_dsts       = cellfun(@(x) flipud(x), dsts, 'UniformOutput', 0)';
+    flp_mln        = cellfun(@(x) flipud(x), mline, 'UniformOutput', 0)';
+    [maxDst, ~]    = cellfun(@(x) max(x), flp_dsts, 'UniformOutput', 0);
+    
+    % Convert pix2in2mm using Scale [DPI]
+    in2mm  = 25.4;
+    dig    = 2;
+    maxWid = cellfun(@(d,s) round((d * in2mm) / s, dig), ...
+        maxDst, scls, 'UniformOutput', 0);
+    maxLen = cellfun(@(w,s) round((length(w) * in2mm) / s, dig), ...
+        flp_mln, scls, 'UniformOutput', 0);
+    proWid = cellfun(@(x) sprintf('%.0f,', x'), dsts, 'UniformOutput', 0)';
+    
+    % Store UID-Wid-Len in structure format and display random carrot's data
+    str  = struct('UID', uids, 'MaxWidth', maxWid, 'MaxLen', maxLen, ...
+        'WidthProfile', proWid);
+    
+    % Convert structure to table and store as CSV
+    PI   = 'PI';
+    expr = sprintf('%s-(?<id>.*?)/', PI);
+    pid  = regexpi(tdir, expr, 'names');
+    tnm  = sprintf('%s/PI-%s.csv', dataOut, pid.id);
+    tbl  = struct2table(str);
+    writetable(tbl, tnm, 'FileType', 'text');
+    
+    tnm2 = sprintf('%s/PI-%s', dataOut, pid.id);
+    writetable(tbl, tnm2, 'FileType', 'spreadsheet');
+else
+    % Single images [this needs to be fixed]
+    tdir = dataIn;
+    nms = tdir;
 end
 
 end
@@ -205,7 +255,7 @@ lng = length(midline);
 itr = ceil(lng / 15);
 X   = midline(:,1) - 5;
 Y   = midline(:,2) - 15;
-txt = cellstr(num2str(round(dsts,2)));
+txt = cellstr(num2str(round(dsts, 2)));
 
 for i = 1 : itr : lng
     % Plot distance and tick marks
@@ -214,12 +264,16 @@ for i = 1 : itr : lng
     plt(midline(i,:), 'b+', 3);
 end
 
-% Plot max distance
-[maxD, maxIdx]  = max(dsts);
-maxP = midline(maxIdx,:);
-maxX = maxP(1) - 25;
-maxY = maxP(2) + 20;
-maxT = num2str(round(maxD, 2));
+% Plot max distance [reverse order to read left-right]
+flp_dsts       = flipud(dsts);
+flp_mln        = flipud(midline);
+
+[maxD, maxIdx] = max(flp_dsts);
+maxP           = flp_mln(maxIdx,:);
+maxX           = maxP(1) - 25;
+maxY           = maxP(2) + 20;
+maxT           = num2str(round(maxD, 2));
+
 plt(maxP, 'k+', 8);
 text(maxX, maxY, maxT, 'Color', 'k', 'FontSize', 7, 'FontWeight', 'bold');
 
@@ -239,3 +293,4 @@ title(ttlS);
 pause(psec);
 
 end
+

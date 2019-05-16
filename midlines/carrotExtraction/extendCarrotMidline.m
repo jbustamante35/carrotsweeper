@@ -1,4 +1,4 @@
-function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, np, lp)
+function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk, lp)
 %% extendCarrotMidline:
 % I think this function extends from the midline to the contour boundary?
 %
@@ -18,17 +18,23 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 %
 
 %% Generate curvilinear-domain
-LPARGS     = 4; % number of arguments if lp is used
-% WIDTH_NUMP = 200; % Dynamically set to original mask width
-PCA_RHO    = 15;
+rho    = 1;                % I think this is where the extension is coming from [default 15]
+np     = size(msk, 1) + 1; % 
+wid    = round(np / 2);    % 
+domain = genCurvilinearDomain(mline, rho, wid, np, msk, 0);
+
+% Set defined width and image size [old method]
 % WIDTH      = 200; % Dynamically set to original mask width
-wid = round(np / 2); % 
+% WIDTH_NUMP = 200; % Dynamically set to original mask width
 % domain     = genCurvilinearDomain(mline, PCA_RHO, WIDTH, WIDTH_NUMP, msk, 0);
-domain     = genCurvilinearDomain(mline, PCA_RHO, wid, np, msk, 0);
+
+% Constants for extension of curvilinear domain
+EXTORG     = 1; % I think this is where the extension is coming from [default 20]
+SNIP       = 1; % I think this is where the extension is coming from [default 50]
+LPARGS     = 3; % number of arguments if lp is used
 
 %% extension on one side
 dX   = -diff(domain, 1, 1);
-SNIP = 50;
 dX   = mean(dX(1:SNIP,:,:), 1);
 dNOR = sum(dX.^2, 3).^-0.5;
 dX   = bsxfun(@times, dX, dNOR);
@@ -38,7 +44,7 @@ if nargin == LPARGS
 end
 
 %%
-EXT    = 20;
+EXT    = EXTORG;
 EXT    = linspace(0, EXT, EXT / lp);
 EXT    = bsxfun(@times, EXT', dX);
 EXT    = bsxfun(@plus, EXT, domain(1,:,:));
@@ -47,7 +53,6 @@ domain = cat(1, flip(EXT, 1), domain);
 %% extension on one side
 domain = flip(domain, 1);
 dX     = -diff(domain, 1, 1);
-SNIP   = 50;
 dX     = mean(dX(1:SNIP,:,:), 1);
 dNOR   = sum(dX.^2,3).^-.5;
 dX     = bsxfun(@times, dX, dNOR);
@@ -57,7 +62,7 @@ if nargin == LPARGS
 end
 
 %%
-EXT    = 20;
+EXT    = EXTORG;
 EXT    = linspace(0, EXT, EXT / lp);
 EXT    = bsxfun(@times, EXT', dX);
 EXT    = bsxfun(@plus, EXT, domain(1,:,:));

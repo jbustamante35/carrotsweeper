@@ -18,9 +18,7 @@ function [vecS, vecM] = sampleStraighten(mline, msk, img)
 
 try
     %%
-%     wid      = ceil(size(msk, 1) / 2);
-    np      = size(msk, 1) + 1;
-    [dS, dG] = extendCarrotMidline(mline, [0 0], msk, np);
+    [dS, dG] = extendCarrotMidline(mline, [0 0], msk);
     dSize    = size(dG);
     chnls    = size(img, 3);
     
@@ -37,13 +35,14 @@ try
         vecM = vecS;
     else
         % Binary image
-        vecM = ba_interp2(double(msk) / 255, dS(:,2), dS(:,1));
+        mmsk = double(msk) / 255;
+        vecM = ba_interp2(mmsk, dS(:,2), dS(:,1));
         vecS = vecM;
     end
     
     %% Reshape to generate straight mask
-    vecS = reshape(vecS, dSize(1:2))';
-    vecM = reshape(vecM, dSize(1:2))';
+    vecS = imbinarize(reshape(vecS, dSize(1:2))');
+    vecM = imbinarize(reshape(vecM, dSize(1:2))');
     
 catch e
     fprintf(2, 'Error straightening mask\n%s\n', e.getReport);

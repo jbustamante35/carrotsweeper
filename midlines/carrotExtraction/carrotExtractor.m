@@ -60,10 +60,11 @@ if isfolder(dataIn)
     
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
     tot                                  = numel(img.Files);
-    [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
+    [mline, crv, pmsk, smsk, tcrd, dsts, fnms] = deal(cell(1, tot));
     
     for n = 1 : tot
         try
+            fnms{n} = getDirName(img.Files{n});
             [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
                 runStraighteningPipeline(img.readimage(n));
         catch e
@@ -130,7 +131,7 @@ end
 % Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
-    CARROTS      = v2struct(mline, crv, smsk, pmsk);
+    CARROTS      = v2struct(fnms, mline, crv, smsk, pmsk);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
@@ -175,6 +176,11 @@ if savData
         'WidthProfile', proWid);
     
     % Convert structure to table and store as CSV
+    ID   = 'Genotype';
+    expr = sprintf('%s_(?<id>.*?)}', ID);
+    gen  = regexpi(nms, expr, 'names');
+    gens = cellfun(@(x) str2double(char(x.id)), gen, 'UniformOutput', 0);
+    
     PI   = 'PI';
     expr = sprintf('%s-(?<id>.*?)/', PI);
     pid  = regexpi(tdir, expr, 'names');

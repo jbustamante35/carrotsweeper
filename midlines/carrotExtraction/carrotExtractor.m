@@ -38,7 +38,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts] = carrotExtractor(dataIn, vis, sav
 
 %% Some constants to consider playing around with
 % THRESH = 300; % Minimum length to pad one or both dimensions of image
-FACE = 2;   % Direction to point straightened images (original 3)
+% FACE = 2;     % Direction to point straightened images (original 3)
 
 %% Load file list of binary mask images
 
@@ -74,8 +74,8 @@ if isfolder(dataIn)
     end
     
 else
-    img                            = imread(dataIn);
-    [tot , n]                      = deal(1);
+    img                                  = imread(dataIn);
+    [tot , n]                            = deal(1);
     [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
     
     try
@@ -107,6 +107,7 @@ if vis
                 smsk{n}, psec, 0);
             
         catch e
+            % Only shows processed mask if there's an error
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
@@ -131,7 +132,7 @@ end
 % Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
-    CARROTS      = v2struct(fnms, mline, crv, smsk, pmsk);
+    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
@@ -163,8 +164,8 @@ if savData
     [maxDst, ~]    = cellfun(@(x) max(x), flp_dsts, 'UniformOutput', 0);
     
     % Convert pix2in2mm using Scale [DPI]
-    in2mm  = 25.4;
-    dig    = 2;
+    in2mm  = 25.4; % Convert inches to millimeters
+    dig    = 2;    % Round to n digits
     maxWid = cellfun(@(d,s) round((d * in2mm) / s, dig), ...
         maxDst, scls, 'UniformOutput', 0);
     maxLen = cellfun(@(w,s) round((length(w) * in2mm) / s, dig), ...
@@ -259,8 +260,10 @@ plt(tip_crds, 'g*', 6);
 % Show every length / 10
 lng = length(midline);
 itr = ceil(lng / 15);
-X   = midline(:,1) - 5;
-Y   = midline(:,2) - 15;
+xos = 5;  % x-offset
+yos = 15; % y-offset
+X   = midline(:,1) - xos;
+Y   = midline(:,2) - yos;
 txt = cellstr(num2str(round(dsts, 2)));
 
 for i = 1 : itr : lng

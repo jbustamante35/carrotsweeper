@@ -9,8 +9,8 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 % [Insert information about what data is outputted here]
 %
 % Usage:
-%   [mlines, cntrs, smsks, pmsks] = ...
-%                   carrotStraightener(DIN, dirName, savData, savFigs, vis)
+%   [mlines, cntrs, smsks, pmsks, tcrds, dsts] = ...
+%         carrotStraightener(DIN, dirName, savData, savFigs, vis)
 %
 % Input:
 %   DIN: path to root directory of data to analyze
@@ -60,6 +60,9 @@ for din = dins'
         n = n + 1;
     end
 end
+
+% Remove empty cells
+X = X(cell2mat(cellfun(@(x) ~isempty(x), X, 'UniformOutput', 0)));
 
 %% Run algorithm on all sub-directories and return data
 [mlines, cntrs, smsks, pmsks, tcrds, dsts] =  cellfun(@(x) ...

@@ -8,7 +8,8 @@ function [mline, crv, smsk, pmsk, tcrd, dsts] = carrotExtractor(dataIn, vis, sav
 % in a single structure called CARROTS.
 %
 % Usage:
-%   [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
+%   [mline, crv, smsk, pmsk, tcrd, dsts] = ...
+%         carrotExtractor(dataIn, vis, savData, savFigs)
 %
 % Input:
 %   dataIn: path to directory of binary images
@@ -59,7 +60,7 @@ if isfolder(dataIn)
     img = imageDatastore(dataIn, 'FileExtensions', ext);
     
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
-    tot                                  = numel(img.Files);
+    tot                                        = numel(img.Files);
     [mline, crv, pmsk, smsk, tcrd, dsts, fnms] = deal(cell(1, tot));
     
     for n = 1 : tot

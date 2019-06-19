@@ -41,28 +41,7 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 
 %% Collect all sub-directories named dirName
 % Get sub-directories from root directory
-dins      = dir(DIN);
-dins(1:2) = [];
-
-% Get all subdirectories named 'binary-masks'
-% Doesn't work when sub-directories have multiple sub-directories
-X = cell(1, numel(dins));
-n = 1;
-for din = dins'
-    d      = [din.folder '/' din.name];
-    e      = dir(d);
-    e(1:2) = [];
-
-    msks = e(cell2mat(arrayfun(@(x) strcmpi(x.name, dirName), ...
-        e, 'UniformOutput', 0)));
-    if ~isempty(msks)
-        X{n}   = [msks.folder '/' msks.name];
-        n = n + 1;
-    end
-end
-
-% Remove empty cells
-X = X(cell2mat(cellfun(@(x) ~isempty(x), X, 'UniformOutput', 0)));
+X = loadSubDirectories(DIN, dirName);
 
 %% Run algorithm on all sub-directories and return data
 [mlines, cntrs, smsks, pmsks, tcrds, dsts] =  cellfun(@(x) ...

@@ -1,7 +1,7 @@
 function SUB = loadSubDirectories(DIN, dirName)
 %% loadSubDirectories: Collect all sub-directories from root
 % This is a helper script that creates a cell array of sub-directories from the
-% inputted root directory DIN. 
+% inputted root directory DIN.
 %
 % Usage:
 %   SUB = loadSubDirectories(DIN)
@@ -11,8 +11,8 @@ function SUB = loadSubDirectories(DIN, dirName)
 %   dirName: sub-directory from sub-directories containing image data
 %
 % Output:
-%   SUB: cell array of sub-directories 
-% 
+%   SUB: cell array of sub-directories
+%
 
 %% Collect all sub-directories named dirName
 % Get sub-directories from root directory
@@ -27,7 +27,7 @@ for din = dins'
     d      = [din.folder '/' din.name];
     e      = dir(d);
     e(1:2) = [];
-
+    
     msks = e(cell2mat(arrayfun(@(x) strcmpi(x.name, dirName), ...
         e, 'UniformOutput', 0)));
     if ~isempty(msks)

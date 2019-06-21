@@ -1,4 +1,4 @@
-function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, dirName, savData, savFigs, vis)
+function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener(DIN, dirName, savData, savFigs, vis)
 %% carrotStraightener: function to run carrotExtractor on sub-directories
 % This is a script that simply takes in a root directory and identifies all the
 % sub-directories matching the dirName parameter and runs the carrotExtractor
@@ -9,7 +9,7 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 % [Insert information about what data is outputted here]
 %
 % Usage:
-%   [mlines, cntrs, smsks, pmsks, tcrds, dsts] = ...
+%   [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = ...
 %         carrotStraightener(DIN, dirName, savData, savFigs, vis)
 %
 % Input:
@@ -26,6 +26,7 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 %   pmsks: cell array of processed masks for each sub-directory of images
 %   tcrd: cell array of tip coordinates
 %   dsts: cell array of distance transform values along midline
+%   fnames: cell array of filenames of images
 %
 % Example:
 %   Run straightening pipeline on sub-directories named 'binary-masks' from
@@ -44,7 +45,7 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 X = loadSubDirectories(DIN, dirName);
 
 %% Run algorithm on all sub-directories and return data
-[mlines, cntrs, smsks, pmsks, tcrds, dsts] =  cellfun(@(x) ...
+[mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
     carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
 
 end

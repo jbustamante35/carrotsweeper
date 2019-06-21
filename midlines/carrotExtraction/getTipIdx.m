@@ -21,15 +21,50 @@ SMOOTH = 10;  % Original 30
 %% Run with default constant values
 try
     % Smooth contour to remove noise (hairs, loops, etc)
-%     bak = crv;
-%     SMOOTHSPAN   = 0.7;
-%     SMOOTHMETHOD = 'sgolay';
-%     crv          = segSmooth(crv, SMOOTHSPAN, SMOOTHMETHOD);
+    %     bak = crv;
+    %     SMOOTHSPAN   = 0.7;
+    %     SMOOTHMETHOD = 'sgolay';
+    %     crv          = segSmooth(crv, SMOOTHSPAN, SMOOTHMETHOD);
     
     % Get maximum of computed curvature around contour
     curvature = cwtK(crv, SMOOTH);
     [~, tIdx] = max(curvature.K);
     tCrds     = crv(tIdx, :);
+    
+    %% 
+%     set(0, 'CurrentFigure', figure(3));
+%     cla;clf;
+%     
+%     n    = 30;
+%     srt  = fliplr(sort(curvature.K));
+%     topN = srt(1:n);
+%     plot(topN);
+%     xlim([-10 10]);
+% %     ylim([-0.2 10]);
+% 
+%     
+%     topcrvs = crv(ismember(curvature.K , topN), :);
+%     plt(crv, 'k.', 10);
+%     hold on;
+%     plt(topcrvs(1, :), 'rx', 5);
+%     plt(topcrvs(11, :), 'bx', 5);
+%     plt(topcrvs(21, :), 'mx', 5);
+%     axis image;
+%     axis ij;
+    
+    %% Try secondary smoothing
+%     % Get maximum of computed curvature around contour
+% %     SMOOTH2    = round(SMOOTH / 5);
+%     SMOOTH2    = 3;
+%     cIdx = 1;
+%     c = 1;
+%     
+%     for c = 1 : 10 : length(topcrvs)        
+%         curvature2(cIdx) = cwtK(topcrvs(c:(c + 9), :), SMOOTH2);
+%         [~, tIdx2] = max(curvature2(cIdx).K);
+%         tCrds2     = topcrvs(tIdx2, :);
+%         cIdx = cIdx + 1;
+%     end
     
 catch e
     % Try again with original constant values

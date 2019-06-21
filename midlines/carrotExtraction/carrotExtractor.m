@@ -8,7 +8,8 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 % in a single structure called CARROTS.
 %
 % Usage:
-%   [mline, cntr, smsk, pmsk] = carrotExtractor(dataIn, vis, svData, svFigs)
+%   [mline, crv, smsk, pmsk, tcrd, dsts] = ...
+%         carrotExtractor(dataIn, vis, savData, savFigs)
 %
 % Input:
 %   dataIn: path to directory of binary images
@@ -38,7 +39,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 
 %% Some constants to consider playing around with
 % THRESH = 300; % Minimum length to pad one or both dimensions of image
-FACE = 2;   % Direction to point straightened images (original 3)
+% FACE = 2;     % Direction to point straightened images (original 3)
 
 %% Load file list of binary mask images
 
@@ -59,7 +60,7 @@ if isfolder(dataIn)
     img = imageDatastore(dataIn, 'FileExtensions', ext);
     
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
-    tot                                  = numel(img.Files);
+    tot                                         = numel(img.Files);
     [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
     
     for n = 1 : tot
@@ -77,8 +78,8 @@ if isfolder(dataIn)
     end
     
 else
-    img                            = imread(dataIn);
-    [tot , n]                      = deal(1);
+    img                                         = imread(dataIn);
+    [tot , n]                                   = deal(1);
     [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
     
     try
@@ -110,6 +111,7 @@ if vis
                 smsk{n}, psec, 0);
             
         catch e
+            % Only shows processed mask if there's an error
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
@@ -134,7 +136,7 @@ end
 % Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
-    CARROTS      = v2struct(mline, crv, smsk, pmsk);
+    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
@@ -166,8 +168,8 @@ if savData
     [maxDst, ~]    = cellfun(@(x) max(x), flp_dsts, 'UniformOutput', 0);
     
     % Convert pix2in2mm using Scale [DPI]
-    in2mm  = 25.4;
-    dig    = 2;
+    in2mm  = 25.4; % Convert inches to millimeters
+    dig    = 2;    % Round to n digits
     maxWid = cellfun(@(d,s) round((d * in2mm) / s, dig), ...
         maxDst, scls, 'UniformOutput', 0);
     maxLen = cellfun(@(w,s) round((length(w) * in2mm) / s, dig), ...
@@ -179,6 +181,11 @@ if savData
         'WidthProfile', proWid);
     
     % Convert structure to table and store as CSV
+    ID   = 'Genotype';
+    expr = sprintf('%s_(?<id>.*?)}', ID);
+    gen  = regexpi(nms, expr, 'names');
+    gens = cellfun(@(x) str2double(char(x.id)), gen, 'UniformOutput', 0);
+    
     PI   = 'PI';
     expr = sprintf('%s-(?<id>.*?)/', PI);
     pid  = regexpi(tdir, expr, 'names');
@@ -257,8 +264,10 @@ plt(tip_crds, 'g*', 6);
 % Show every length / 10
 lng = length(midline);
 itr = ceil(lng / 15);
-X   = midline(:,1) - 5;
-Y   = midline(:,2) - 15;
+xos = 5;  % x-offset
+yos = 15; % y-offset
+X   = midline(:,1) - xos;
+Y   = midline(:,2) - yos;
 txt = cellstr(num2str(round(dsts, 2)));
 
 for i = 1 : itr : lng

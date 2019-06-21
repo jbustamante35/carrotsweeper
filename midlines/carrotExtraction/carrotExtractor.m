@@ -8,7 +8,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 % in a single structure called CARROTS.
 %
 % Usage:
-%   [mline, crv, smsk, pmsk, tcrd, dsts] = ...
+%   [mline, crv, smsk, pmsk, tcrd, dsts, fname] = ...
 %         carrotExtractor(dataIn, vis, savData, savFigs)
 %
 % Input:
@@ -24,6 +24,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 %   pmsk: cell array of processed mask images
 %   tcrd: cell array of tip coordinates
 %   dsts: cell array of distance transform values along midline
+%   fname: cell array of filenames of images
 %
 % Usage (continued):
 % If you want to save the results, the data will automatically be placed in the
@@ -66,15 +67,18 @@ if isfolder(dataIn)
     for n = 1 : tot
         tic;
         try
-            [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = runStraighteningPipeline(img.readimage(n));
-
             fname{n} = getDirName(img.Files{n});
-            msg = sprintf('Successfully processed: %s', fname{n}); disp(msg);    
+            fprintf('\nProcessing %s...\n', fname{n});    
+                        
+            [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+                runStraighteningPipeline(img.readimage(n));
+
+            fprintf('Successfully processed %s\n', fname{n});    
 
         catch e
-            fprintf(2, 'Error in Carrot Pipeline\n%s\n', e.getReport);
+            fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
         end
-        toc;
+        fprintf('Pipeline finished in %.02f sec\n', toc);
     end
     
 else

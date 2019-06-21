@@ -1,5 +1,5 @@
-function [endPoints5 , endPoints10] = testSkeletonize(mline, msk)
-% testSkeletonize: 
+function [endPoints5 , endPoints10] = testSkeletonize1(mline, msk)
+% testSkeletonize:
 % Scott's implementation to convert coordinates to logical, then perform
 % skeletonization and de-spurring on midline coordinates.
 %
@@ -12,7 +12,7 @@ function [endPoints5 , endPoints10] = testSkeletonize(mline, msk)
 %    endPoints10: What's the difference from endPoints5?
 %
 
-%% Save midlines 
+%% Save midlines
 % mline10 doesn't branch, mline5 does
 figure
 fig = plt(mline{5}, 'k-', 5);
@@ -49,4 +49,26 @@ sum(endPoints5(:) == 1) %%3
 endPoints10 = bwmorph(BW10, 'endpoints');
 sum(endPoints10(:) == 1) %%2
 
+end
+
+function testSkeletonize2(mline)
+% Try out de-spurring
+spurCount = 20;
+for i=1:10
+    fig = plt(mline{i}, 'k-', 1);
+    axis off;
+    F = getframe(gcf);
+    [X, Map] = frame2im(F);
+    image = imcomplement(rgb2gray(X));
+    bw = imbinarize(image);
+    skel = bwmorph(bw,'skel', inf);
+    despurred = bwmorph(skel, 'spur', spurCount);
+    
+    endpoints = bwmorph(despurred, 'endpoints');
+    if sum(endpoints(:) == 1) > 2
+        text =  '\nThe following root has a branch point: %s';
+        name = fname{i};
+        sprintf(text,name)
+    end
+end
 end

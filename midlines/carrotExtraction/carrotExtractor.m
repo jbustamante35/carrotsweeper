@@ -1,4 +1,4 @@
-function [mline, crv, smsk, pmsk, tcrd, dsts] = carrotExtractor(dataIn, vis, savData, savFigs)
+function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, vis, savData, savFigs)
 %% carrotExtractor: midline extraction and straightener
 % This is a detailed description of this script...
 %
@@ -60,22 +60,26 @@ if isfolder(dataIn)
     
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
     tot                                  = numel(img.Files);
-    [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
+    [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
     
     for n = 1 : tot
+        tic;
         try
-            [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
-                runStraighteningPipeline(img.readimage(n));
+            [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = runStraighteningPipeline(img.readimage(n));
+
+            fname{n} = getDirName(img.Files{n});
+            msg = sprintf('Successfully processed: %s', fname{n}); disp(msg);    
+
         catch e
             fprintf(2, 'Error in Carrot Pipeline\n%s\n', e.getReport);
         end
-        
+        toc;
     end
     
 else
     img                            = imread(dataIn);
     [tot , n]                      = deal(1);
-    [mline, crv, pmsk, smsk, tcrd, dsts] = deal(cell(1, tot));
+    [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
     
     try
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...

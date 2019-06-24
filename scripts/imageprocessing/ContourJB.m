@@ -43,13 +43,17 @@ classdef ContourJB < handle
             
         end
         
-        function obj = ReindexCoordinates(obj)
+        function obj = ReindexCoordinates(obj, init)
+            %% Use alternative initial points
+            if nargin < 2
+                init = obj.AltInit;
+            end
+            
             %% Reindex coordinates to normalize start points
             [obj.AnchorPoint, obj.AnchorIndex] = ...
                 findAnchorPoint(obj, obj.InterpOutline, obj.AltInit);
             obj.NormalizedOutline              = ...
-                repositionPoints(obj, obj.InterpOutline, obj.AnchorIndex, ...
-                obj.AltInit);
+                repositionPoints(obj, obj.InterpOutline, obj.AnchorIndex, init);
         end
         
         function crds = Normal2Raw(obj)
@@ -188,8 +192,8 @@ classdef ContourJB < handle
             
             if strcmpi(init , 'default')
                 %% Use CarrotSweeper's anchor point
-                low = max(crds(:,1));
-                rng = round(crds(crds(:,1) == low, :), 4);
+                low = min(crds(:,1));                
+                rng = round(crds(crds(:,1) == low, :), 4);                
                 
                 % Get median of column range
                 if mod(size(rng,1), 2)

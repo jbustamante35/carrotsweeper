@@ -52,6 +52,7 @@ classdef ContourJB < handle
             %% Reindex coordinates to normalize start points
             [obj.AnchorPoint, obj.AnchorIndex] = ...
                 findAnchorPoint(obj, obj.InterpOutline, obj.AltInit);
+            
             obj.NormalizedOutline              = ...
                 repositionPoints(obj, obj.InterpOutline, obj.AnchorIndex, init);
         end
@@ -180,7 +181,7 @@ classdef ContourJB < handle
             % selected.
             %
             % The first is typically for CarrotSweeper, where the
-            % anchor point is defined as lowest and central location of the
+            % anchor point is defined as lowest and central column of the
             % corresponding image. This is the default algorithm if the alg
             % parameter is empty.
             %
@@ -188,7 +189,7 @@ classdef ContourJB < handle
             % defined as the lower-left coordinate of the image. This is the
             % standardaized starting location for training hypocotyl images. The
             % alg parameter should be set to 1 or true to use this.
-            %
+            %           
             
             if strcmpi(init , 'default')
                 %% Use CarrotSweeper's anchor point

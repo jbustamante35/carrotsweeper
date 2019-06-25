@@ -140,7 +140,7 @@ end
 % Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
-    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts);
+    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts, fname);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');

@@ -1,10 +1,10 @@
-function out = cwtK(J, smth, flt)
+function [out, K] = cwtK(J, smth, flt)
 %% cwtK: wrapper for continuous wavelet transform to compute curvature
 % This function is essentially a wrapper for a customized cwt algorithm, which
 % is the continous 1-dimensional wavelet transform.
 %
 % Usage:
-%   out = cwtK(J, smth)
+%   [out, K] = cwtK(J, smth)
 %
 % Input:
 %   J: input curve's x-/y-coordinates
@@ -13,6 +13,7 @@ function out = cwtK(J, smth, flt)
 %
 % Output:
 %   out: output structure containing information about wavelet transform
+%   K: returns only the curvature array
 %
 % Additional notes from Nathan:
 %   MUST REMOVE THE BASE
@@ -28,14 +29,14 @@ out = struct('K', [], 'baseSize', [], 'J', [], 'Filter', flt);
 switch flt
     case 'open'
         try
-            out = runOpenContour(J, smth);
+            [out, K] = runOpenContour(J, smth);
         catch re
             fprintf(2, 'Error in cwtK [%s]\n%s\n', flt, re.getReport);
         end
         
     case 'closed'
         try
-            out = runClosedContour(J, smth);
+            [out, K] = runClosedContour(J, smth);
         catch re
             fprintf(2, 'Error in cwtK [%s]\n%s\n', flt, re.getReport);
         end
@@ -43,7 +44,7 @@ switch flt
     otherwise
         %% Default to run on open contour
         try
-            out = runOpenContour(J, smth);
+            [out, K] = runOpenContour(J, smth);
         catch re
             fprintf(2, 'Error in cwtK [%s]\n%s\n', flt, re.getReport);
         end
@@ -51,7 +52,7 @@ end
 
 end
 
-function out = runOpenContour(J, smth)
+function [out, K] = runOpenContour(J, smth)
 %% runOpenContour: subfunction to run CWT on open contour [default]
 % This is the default behavior for this function
 
@@ -73,7 +74,7 @@ out.J        = J;
 
 end
 
-function out = runClosedContour(J, smth)
+function [out, K] = runClosedContour(J, smth)
 %% runClosedContour: subfunction to run CWT on closed contour
 % Run curvelet wave transform on closed loop
 

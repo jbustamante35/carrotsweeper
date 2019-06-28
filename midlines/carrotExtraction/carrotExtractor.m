@@ -27,7 +27,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 %   fname: cell array of filenames of images
 %
 % Usage (continued):
-% If you want to save the results, the data will automatically be placed in the
+% If you want to save the resulzts, the data will automatically be placed in the
 % input directory as a subfolder named output_yymmdd, where 'yymmdd' corresponds
 % to the year (y), month (m), and today's date (d).
 %
@@ -154,6 +154,8 @@ if savData
         tdir = dataIn;
         I    = imageDatastore(tdir);
         nms  = I.Files;
+    else
+        nms = dataIn;
     end
     
     ID   = 'UID';

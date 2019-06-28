@@ -52,7 +52,7 @@ try
     % Remove rows that are all empty
     cols2remove = 1;
     while ~sum(chk(:,1))
-        chk(:,1) = [];
+        chk(:,1)    = [];
         cols2remove = cols2remove  + 1;
     end
 
@@ -63,11 +63,13 @@ try
     crv = getBWContour(skel);
 
     % Remove padded area of mask and curve/midline coordinates
-    rmCrv          = crv(:,1) < MIN_THRESH_SIZE;
-    crv(rmCrv,:)   = [];
+    rmCrv        = crv(:,1) < MIN_THRESH_SIZE;
+    crv(rmCrv,:) = [];
 
     % Identify tip as point of highest curvature
-    tCrds = getTipIdx(skel);
+%     tCrds = getTipIdx(skel);
+    tCrds = getTipIdx(chk);
+    tCrds = [tCrds(:,1) + MIN_THRESH_SIZE tCrds(:,2)];
 
     % Generate midline starting from tip and distance transform values
     [mline, dsts] = generateMidline(~skel, tCrds);
@@ -96,7 +98,7 @@ try
         plt(crv, 'b.', 4);
         plt(mline, 'r.', 3);
         plt(tCrds, 'g*', 8);
-        bar(flip(dsts), 1, 'r');
+%         bar(flip(dsts), 1, 'r');
     end
 
 catch e

@@ -42,12 +42,14 @@ tmpOpt    = ALPHA * optS;
 [~, sCrv] = cwtK(iCnt, tmpOpt, 'closed');
 sCrv      = sCrv .* sVec;
 
-try
-    [~ , sIdx] = max(sCrv);
-catch 
-    % Take abs to deal with negative curvatures [could screw up results]
-    fprintf('Taking max of absolute curvature values\n');
-    [~ , sIdx] = max(abs(sCrv));
+if sum(sCrv < 0) ~= sum(sVec == 1)
+    % If no negative curvatures
+    [~ , sIdx] = max(sCrv);    
+else
+    % Get maximum of negative curvatures if entire region is negative
+    fprintf('*');
+    [nCrv, ~] = max(sCrv(sVec == 1));
+    sIdx      = find(sCrv == nCrv);
 end
 
 sTip = iCnt(sIdx,:);

@@ -27,7 +27,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 %   fname: cell array of filenames of images
 %
 % Usage (continued):
-% If you want to save the results, the data will automatically be placed in the
+% If you want to save the resulzts, the data will automatically be placed in the
 % input directory as a subfolder named output_yymmdd, where 'yymmdd' corresponds
 % to the year (y), month (m), and today's date (d).
 %
@@ -140,7 +140,7 @@ end
 % Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
-    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts);
+    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts, fname);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
@@ -154,6 +154,8 @@ if savData
         tdir = dataIn;
         I    = imageDatastore(tdir);
         nms  = I.Files;
+    else
+        nms = dataIn;
     end
     
     ID   = 'UID';

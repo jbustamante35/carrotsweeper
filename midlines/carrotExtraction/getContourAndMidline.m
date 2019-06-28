@@ -59,28 +59,20 @@ try
     skel = skel(:, cols2remove:end);
     skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
 
-    % Smooth out image
-%     se   = strel('disk',4,4);
-%     skel = imerode(skel, se);
-
     %% Run through main functions
     crv = getBWContour(skel);
 
-%     % Remove padded area of mask and curve/midline coordinates
+    % Remove padded area of mask and curve/midline coordinates
     rmCrv          = crv(:,1) < MIN_THRESH_SIZE;
     crv(rmCrv,:)   = [];
 
     % Identify tip as point of highest curvature
-    tCrds = getTipIdx(crv);
+    tCrds = getTipIdx(skel);
 
     % Generate midline starting from tip and distance transform values
     [mline, dsts] = generateMidline(~skel, tCrds);
 
     %% Remove padding from mask, contour, and midline
-    % Remove padded area of mask and curve/midline coordinates
-%     rmCrv          = crv(:,1) < MIN_THRESH_SIZE;
-%     crv(rmCrv,:)   = [];
-
     % Remove padded area of mask
     skel(:,1:MIN_THRESH_SIZE) = [];
     crv(:,1)                  = crv(:,1) - MIN_THRESH_SIZE;

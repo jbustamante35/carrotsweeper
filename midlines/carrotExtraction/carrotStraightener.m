@@ -1,4 +1,4 @@
-function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener(DIN, dirName, savData, savFigs, vis)
+function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener(DIN, dirName, savData, savFigs, vis, par)
 %% carrotStraightener: function to run carrotExtractor on sub-directories
 % This is a script that simply takes in a root directory and identifies all the
 % sub-directories matching the dirName parameter and runs the carrotExtractor
@@ -45,8 +45,24 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener
 X = loadSubDirectories(DIN, dirName);
 
 %% Run algorithm on all sub-directories and return data
-[mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
-    carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
+% [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
+%     carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
+
+%% Normal run or with parallel processing
+if nargin > 5
+    if par
+        % Version that runs algorithm with parallel processing
+        parfor i = 1 : numel(X)
+            x = X{i};
+            [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
+                fnames{i}] = carrotExtractor(x, vis, savData, savFigs);
+        end
+    else
+        % Run algorithm on all sub-directories and return data
+        [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
+            carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
+    end
+end
 
 end
 

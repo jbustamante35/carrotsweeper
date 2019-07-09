@@ -140,7 +140,10 @@ end
 % Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
-    CARROTS      = v2struct(mline, crv, smsk, pmsk, tcrd, dsts, fname);
+    flds         = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', 'tcrd', ...
+        'dsts', 'fname'};
+    CARROTS      = v2struct(flds);
+%     CARROTS      = v2struct('fieldNames', mline, crv, smsk, pmsk, tcrd, dsts, fname);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
@@ -304,7 +307,7 @@ title(ttlP);
 set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
 cla;clf;
 
-flp = handleFLIP(straight_mask, 4);
+flp  = handleFLIP(straight_mask, 4);
 imagesc(flp); colormap gray;
 ttlS = sprintf('Straighted Mask\nCarrot %d', idx);
 title(ttlS);

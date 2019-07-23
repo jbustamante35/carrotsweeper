@@ -1,4 +1,4 @@
-function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, vis, savData, savFigs)
+function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, vis, savData, savFigs, par)
 %% carrotExtractor: midline extraction and straightener
 % This is a detailed description of this script...
 %
@@ -16,6 +16,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 %   vis: boolean visualize outputs
 %   svData: boolean to save output in .mat file [ see note above ]
 %   svFigs: boolean to save figures of straightened carrots
+%   par: boolean to run on single thread (0) or with parallel processing (1)
 %
 % Output:
 %   mline: cell array of midline data
@@ -64,23 +65,41 @@ if isfolder(dataIn)
     tot                                         = numel(img.Files);
     [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
     
-    for n = 1 : tot
-        tic;
-        try
-            fname{n} = getDirName(img.Files{n});
-            fprintf('\nProcessing %s...\n', fname{n});    
-                        
-            [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
-                runStraighteningPipeline(img.readimage(n));
-
-            fprintf('Successfully processed %s\n', fname{n});    
-
-        catch e
-            fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
+    if par
+        parfor n = 1 : tot
+            tic;
+            try
+                fname{n} = getDirName(img.Files{n});
+                fprintf('\nProcessing %s...\n', fname{n});
+                
+                [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+                    runStraighteningPipeline(img.readimage(n));
+                
+                fprintf('Successfully processed %s\n', fname{n});
+                
+            catch e
+                fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
+            end
+            fprintf('Pipeline finished in %.02f sec\n', toc);
         end
-        fprintf('Pipeline finished in %.02f sec\n', toc);
+    else
+        for n = 1 : tot
+            tic;
+            try
+                fname{n} = getDirName(img.Files{n});
+                fprintf('\nProcessing %s...\n', fname{n});
+                
+                [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+                    runStraighteningPipeline(img.readimage(n));
+                
+                fprintf('Successfully processed %s\n', fname{n});
+                
+            catch e
+                fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
+            end
+            fprintf('Pipeline finished in %.02f sec\n', toc);
+        end
     end
-    
 else
     img                                         = imread(dataIn);
     [tot , n]                                   = deal(1);
@@ -128,7 +147,7 @@ if vis
             [~, fName] = fileparts(dataIn);
             for fig = figs
                 fnm   = sprintf('%s/%s%d_%s', dataOut, fnms{fig}, n, fName);
-                savefig(fig, fnm);
+%                 savefig(fig, fnm); % Nobody cares about the .fig files
                 saveas(fig, fnm, 'tiffn');
             end
         end

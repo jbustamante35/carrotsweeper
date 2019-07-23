@@ -43,50 +43,50 @@ try
     if size(msk, 3) > 1
         msk = rgb2gray(msk);
     end
-
+    
     % Force flip to left-right [arg = 3]
-%     skel = handleFLIP(msk, []);
+    %     skel = handleFLIP(msk, []);
     skel = handleFLIP(msk, FACE);
     chk  = ~imbinarize(skel);
-
+    
     % Remove rows that are all empty
     cols2remove = 1;
     while ~sum(chk(:,1))
         chk(:,1)    = [];
         cols2remove = cols2remove  + 1;
     end
-
+    
     skel = skel(:, cols2remove:end);
     skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
-
+    
     %% Run through main functions
     crv = getBWContour(skel);
-
+    
     % Remove padded area of mask and curve/midline coordinates
     rmCrv        = crv(:,1) < MIN_THRESH_SIZE;
     crv(rmCrv,:) = [];
-
+    
     % Identify tip as point of highest curvature
-%     tCrds = getTipIdx(skel);
+    %     tCrds = getTipIdx(skel);
     tCrds = getTipIdx(chk);
     tCrds = [tCrds(:,1) + MIN_THRESH_SIZE tCrds(:,2)];
-
+    
     % Generate midline starting from tip and distance transform values
     [mline, dsts] = generateMidline(~skel, tCrds);
-
+    
     %% Remove padding from mask, contour, and midline
     % Remove padded area of mask
     skel(:,1:MIN_THRESH_SIZE) = [];
     crv(:,1)                  = crv(:,1) - MIN_THRESH_SIZE;
-
+    
     % Remove any midline coordinates beyond mask
     rmMid          = mline(:,1) < MIN_THRESH_SIZE;
     mline(rmMid,:) = [];
     mline(:,1)     = mline(:,1) - MIN_THRESH_SIZE;
-
+    
     % Shift tip coordinates to new location
     tCrds = [tCrds(:,1) - MIN_THRESH_SIZE , tCrds(:,2)];
-
+    
     %% Visualize output
     if vis
         cla;clf;
@@ -94,13 +94,13 @@ try
         colormap gray;
         axis image;
         hold on;
-
+        
         plt(crv, 'b.', 4);
         plt(mline, 'r.', 3);
         plt(tCrds, 'g*', 8);
-%         bar(flip(dsts), 1, 'r');
+        %         bar(flip(dsts), 1, 'r');
     end
-
+    
 catch e
     fprintf(2, 'Error extracting Midline and Contour\n%s\n', e.getReport);
     mline = [];

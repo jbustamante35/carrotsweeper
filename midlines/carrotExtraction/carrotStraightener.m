@@ -1,4 +1,4 @@
-function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, dirName, savData, savFigs, vis)
+function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener(DIN, dirName, savData, savFigs, vis, par)
 %% carrotStraightener: function to run carrotExtractor on sub-directories
 % This is a script that simply takes in a root directory and identifies all the
 % sub-directories matching the dirName parameter and runs the carrotExtractor
@@ -9,8 +9,8 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 % [Insert information about what data is outputted here]
 %
 % Usage:
-%   [mlines, cntrs, smsks, pmsks] = ...
-%                   carrotStraightener(DIN, dirName, savData, savFigs, vis)
+%   [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = ...
+%         carrotStraightener(DIN, dirName, savData, savFigs, vis)
 %
 % Input:
 %   DIN: path to root directory of data to analyze
@@ -26,6 +26,7 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 %   pmsks: cell array of processed masks for each sub-directory of images
 %   tcrd: cell array of tip coordinates
 %   dsts: cell array of distance transform values along midline
+%   fnames: cell array of filenames of images
 %
 % Example:
 %   Run straightening pipeline on sub-directories named 'binary-masks' from
@@ -41,29 +42,28 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts] = carrotStraightener(DIN, di
 
 %% Collect all sub-directories named dirName
 % Get sub-directories from root directory
-dins      = dir(DIN);
-dins(1:2) = [];
-
-% Get all subdirectories named 'binary-masks'
-% Doesn't work when sub-directories have multiple sub-directories
-X = cell(1, numel(dins));
-n = 1;
-for din = dins'
-    d      = [din.folder '/' din.name];
-    e      = dir(d);
-    e(1:2) = [];
-
-    msks = e(cell2mat(arrayfun(@(x) strcmpi(x.name, dirName), ...
-        e, 'UniformOutput', 0)));
-    if ~isempty(msks)
-        X{n}   = [msks.folder '/' msks.name];
-        n = n + 1;
-    end
-end
+X = loadSubDirectories(DIN, dirName);
 
 %% Run algorithm on all sub-directories and return data
-[mlines, cntrs, smsks, pmsks, tcrds, dsts] =  cellfun(@(x) ...
-    carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
+% [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
+%     carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
+
+%% Normal run or with parallel processing
+% [NOTE] Changed parallelization to carrotExtractor rather than here
+if nargin > 5
+    if par
+        % Version that runs algorithm with parallel processing
+        for i = 1 : numel(X)
+            x = X{i};
+            [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
+                fnames{i}] = carrotExtractor(x, vis, savData, savFigs, par);
+        end
+    else
+        % Run algorithm on all sub-directories and return data
+        [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
+            carrotExtractor(x, vis, savData, savFigs, par), X, 'UniformOutput', 0);
+    end
+end
 
 end
 

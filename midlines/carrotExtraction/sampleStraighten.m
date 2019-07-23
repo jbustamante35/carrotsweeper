@@ -41,8 +41,14 @@ try
     end
     
     %% Reshape to generate straight mask
-    vecS = imbinarize(reshape(vecS, dSize(1:2))');
-    vecM = imbinarize(reshape(vecM, dSize(1:2))');
+    vecS = imbinarize(reshape(vecS, dSize(1:2))', ...
+        'adaptive', 'Sensitivity', 1);
+    vecM = imbinarize(reshape(vecM, dSize(1:2))', ...
+        'adaptive', 'Sensitivity', 1);
+    
+    %% Run from midline, extend from normal and remove out-of-contour pixels
+%     rmsk = fliplr(imrotate(msk, 90*3));
+%     rline = fliplr(mline);
     
 catch e
     fprintf(2, 'Error straightening mask\n%s\n', e.getReport);

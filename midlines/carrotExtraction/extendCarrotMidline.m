@@ -7,9 +7,8 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 %
 % Input:
 %   mline: coordinates of the path along a midline
-%   domainTranslation:
+%   domainTranslation: distance to shift final domain
 %   msk: binary mask image for corresponding midline
-%   wid: width to extend interpolation of straightened mask
 %   lp:
 %
 % Output:
@@ -21,7 +20,7 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 rho    = 1;                % I think this is where the extension is coming from [default 15]
 np     = size(msk, 1) + 1; % 
 wid    = round(np / 2);    % 
-domain = genCurvilinearDomain(mline, rho, wid, np, msk, 0);
+domain = genCurvilinearDomain(mline, rho, np, wid, msk, 1);
 
 % Set defined width and image size [old method]
 % WIDTH      = 200; % Dynamically set to original mask width
@@ -43,31 +42,31 @@ if nargin == LPARGS
     lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
 end
 
-%%
-EXT    = EXTORG;
-EXT    = linspace(0, EXT, EXT / lp);
-EXT    = bsxfun(@times, EXT', dX);
-EXT    = bsxfun(@plus, EXT, domain(1,:,:));
-domain = cat(1, flip(EXT, 1), domain);
+%% extend domain 
+% EXT    = EXTORG;
+% EXT    = linspace(0, EXT, EXT / lp);
+% EXT    = bsxfun(@times, EXT', dX);
+% EXT    = bsxfun(@plus, EXT, domain(1,:,:));
+% domain = cat(1, flip(EXT, 1), domain);
 
 %% extension on one side
-domain = flip(domain, 1);
-dX     = -diff(domain, 1, 1);
-dX     = mean(dX(1:SNIP,:,:), 1);
-dNOR   = sum(dX.^2,3).^-.5;
-dX     = bsxfun(@times, dX, dNOR);
+% domain = flip(domain, 1);
+% dX     = -diff(domain, 1, 1);
+% dX     = mean(dX(1:SNIP,:,:), 1);
+% dNOR   = sum(dX.^2,3).^-.5;
+% dX     = bsxfun(@times, dX, dNOR);
+% 
+% if nargin == LPARGS
+%     lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
+% end
 
-if nargin == LPARGS
-    lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
-end
-
-%%
-EXT    = EXTORG;
-EXT    = linspace(0, EXT, EXT / lp);
-EXT    = bsxfun(@times, EXT', dX);
-EXT    = bsxfun(@plus, EXT, domain(1,:,:));
-domain = cat(1, flip(EXT,1), domain);
-domain = flip(domain,1);
+%% extension on opposite side
+% EXT    = EXTORG;
+% EXT    = linspace(0, EXT, EXT / lp);
+% EXT    = bsxfun(@times, EXT', dX);
+% EXT    = bsxfun(@plus, EXT, domain(1,:,:));
+% domain = cat(1, flip(EXT,1), domain);
+% domain = flip(domain,1);
 
 %% Reshape for sub-sampling
 dsz            = size(domain);

@@ -35,7 +35,11 @@ for i = 1:depth
             plt(mline{k}, 'r-', 2);
             plt(cntr{k}, 'b-', 2);
             plt(tcrd{k}, 'g*', 5);
+<<<<<<< HEAD
             ttlP = sprintf('Midline and Contour on Mask\n%s', fname{k});
+=======
+            ttlP = sprintf('Midline and Contour on Mask\nRoot %d', k);
+>>>>>>> c32c7bff76a4cd10d54ade0fc5cf6523e045230c
             title(ttlP);
             
             fnm = sprintf('%s%s%s', genoPath, 'midline-overlays/', fname{k});

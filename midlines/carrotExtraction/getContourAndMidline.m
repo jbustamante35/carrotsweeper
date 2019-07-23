@@ -50,7 +50,8 @@ try
     chk  = ~imbinarize(skel);
     
     % Remove rows that are all empty
-    cols2remove = 1;
+%     cols2remove = 1;
+    cols2remove = 5;
     while ~sum(chk(:,1))
         chk(:,1)    = [];
         cols2remove = cols2remove  + 1;

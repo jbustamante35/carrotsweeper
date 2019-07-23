@@ -65,6 +65,7 @@ if isfolder(dataIn)
     tot                                         = numel(img.Files);
     [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
     
+    %% Run through images with parallel processing
     if par
         parfor n = 1 : tot
             tic;
@@ -83,6 +84,7 @@ if isfolder(dataIn)
             fprintf('Pipeline finished in %.02f sec\n', toc);
         end
     else
+        %% Run through images with normal for loop
         for n = 1 : tot
             tic;
             try
@@ -101,6 +103,7 @@ if isfolder(dataIn)
         end
     end
 else
+    %% Run on single image
     img                                         = imread(dataIn);
     [tot , n]                                   = deal(1);
     [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
@@ -128,7 +131,7 @@ if vis
     set(figs, 'Color', 'w');
     
     for n = 1 : tot
-        cla;clf;
+%         cla;clf;
         try
             figs = plotCarrots(n, pmsk{n}, mline{n}, crv{n}, tcrd{n}, dsts{n}, ...
                 smsk{n}, psec, 0);
@@ -160,9 +163,8 @@ end
 if savData
     [~, fName]   = fileparts(dataIn);
     flds         = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', 'tcrd', ...
-        'dsts', 'fname'};
+        'dsts', 'fName'};
     CARROTS      = v2struct(flds);
-%     CARROTS      = v2struct('fieldNames', mline, crv, smsk, pmsk, tcrd, dsts, fname);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
@@ -191,9 +193,9 @@ if savData
     scls = cellfun(@(x) str2double(char(x.id)), scl, 'UniformOutput', 0);
     
     % Compute lengths and max widths
-    flp_dsts       = cellfun(@(x) flipud(x), dsts, 'UniformOutput', 0)';
-    flp_mln        = cellfun(@(x) flipud(x), mline, 'UniformOutput', 0)';
-    [maxDst, ~]    = cellfun(@(x) max(x), flp_dsts, 'UniformOutput', 0);
+    flp_dsts    = cellfun(@(x) flipud(x), dsts, 'UniformOutput', 0)';
+    flp_mln     = cellfun(@(x) flipud(x), mline, 'UniformOutput', 0)';
+    [maxDst, ~] = cellfun(@(x) max(x), flp_dsts, 'UniformOutput', 0);
     
     % Convert pix2in2mm using Scale [DPI]
     in2mm  = 25.4; % Convert inches to millimeters
@@ -209,20 +211,33 @@ if savData
         'WidthProfile', proWid);
     
     % Convert structure to table and store as CSV
-    ID   = 'Genotype';
-    expr = sprintf('%s_(?<id>.*?)}', ID);
-    gen  = regexpi(nms, expr, 'names');
-    gens = cellfun(@(x) str2double(char(x.id)), gen, 'UniformOutput', 0);
+    [mskPath, ~] = fileparts(dataIn);
+    [idPath, ~]  = fileparts(mskPath);
+    [~, idDir]   = fileparts(idPath);    
+    tnm1         = sprintf('%s/%s.csv', dataOut, idDir);
     
-    PI   = 'PI';
-    expr = sprintf('%s-(?<id>.*?)/', PI);
-    pid  = regexpi(tdir, expr, 'names');
-    tnm  = sprintf('%s/PI-%s.csv', dataOut, pid.id);
     tbl  = struct2table(str);
-    writetable(tbl, tnm, 'FileType', 'text');
+    writetable(tbl, tnm1, 'FileType', 'text');
     
-    tnm2 = sprintf('%s/PI-%s', dataOut, pid.id);
+    tnm2 = sprintf('%s/%s', dataOut, idDir);
     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
+    
+    % Convert structure to table and store as CSV [DEPRECATED]
+%     ID   = 'Genotype';
+%     expr = sprintf('%s_(?<id>.*?)}', ID);
+%     gen  = regexpi(nms, expr, 'names');
+%     gens = cellfun(@(x) str2double(char(x.id)), gen, 'UniformOutput', 0);
+%     
+    % Old method assumes genotype starts with "PI" [DEPRECATED]
+%     PI   = 'PI';
+%     expr = sprintf('%s-(?<id>.*?)/', PI);
+%     pid  = regexpi(tdir, expr, 'names');
+%     tnm  = sprintf('%s/PI-%s.csv', dataOut, pid.id);
+%     tbl  = struct2table(str);
+%     writetable(tbl, tnm, 'FileType', 'text');
+%     tnm2 = sprintf('%s/PI-%s', dataOut, pid.id);
+%     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
+
 else
     % Single images [this needs to be fixed]
     tdir = dataIn;
@@ -233,7 +248,7 @@ end
 
 function figs = plotCarrots(idx, raw_mask, midline, contours, tip_crds, dsts, straight_mask, psec, f)
 %% plotCarrots: plotting function for this script
-% Set f to false generate figures if they don't exist
+% Set f to true generate figures if they don't exist
 % Set f to false to overwrite existing figures
 if f
     figs = 1:4;
@@ -241,14 +256,13 @@ if f
     figs(2) = figure;
     figs(3) = figure;
     figs(4) = figure;
-    set(figs,  'Color',  'w');
+    set(figs, 'Color', 'w');
 else
     figs = 1:4;
     figs(1) = figure(1);
     figs(2) = figure(2);
     figs(3) = figure(3);
     figs(4) = figure(4);
-    set(figs,  'Color',  'w');
     set(figs, 'Color', 'w');
 end
 

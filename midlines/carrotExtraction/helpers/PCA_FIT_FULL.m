@@ -1,102 +1,62 @@
-function [S C U E L ERR LAM] = PCA_FIT_FULL(M,COM)
-%%%%%%%%%%%%%%%%
-% INPUTS:   M       : = data matrix
-%           COM     : = number of vectors
-%%%%%%%%%%%%%%%%
-% OUTPUTS:  S       : = simulated signal (reconstruction)
-%           C       : = components ("unique" fingerprint)
-%           U       : = mean of data
-%           E       : = basis vectors
-%           L       : = eig values
-%           ERR     : = error in reconstruction
-%           LAM     : = percent explained
-%%%%%%%%%%%%%%%%
+function [S, C, U, E, L, ERR, LAM] = PCA_FIT_FULL(M, COM)
+%% PCA_FIT_FULL: Principal Components Analysis using eigenvector decomposition
+% Performs PCA (principal component analysis) using eigenvector decomposition,
+% then backprojects to simulate the data and calculates error.
+%
+% Usage: 
+%   [S, C, U, E, L, ERR, LAM] = PCA_FIT_FULL(M, COM)
+%
+% Input:
+%   M: data matrix
+%   COM: number of vectors
+%
+% Output:
+%   S: simulated signal (reconstruction)
+%   C: components ("unique" fingerprint)
+%   U: mean of data
+%   E: basis vectors
+%   L: eig values
+%   ERR: error in reconstruction
+%   LAM: percent explained
+%
 
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % performs PCA (principal component analysis) using eigenvector
-    % decomposition, backprojects to simulate the data and calculates the
-    % error
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % INPUTS:
-    %           M       : = data matrix
-    %           COM     : = number of vectors
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % OUTPUTS:
-    %           S       : = simulated signal (reconstruction)
-    %           C       : = components ("unique" fingerprint)
-    %           U       : = mean of data
-    %           E       : = basis vectors
-    %           L       : = eig values
-    %           ERR     : = error in reconstruction
-    %           LAM     : = percent explained
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % take the mean
-    %fprintf(['PCA:start:taking off mean \n']);
-    toOpDim = 1;
-    U = mean(M,toOpDim);
-    M = bsxfun(@minus,M,U);
-    %fprintf(['PCA:end:taking off mean \n']);
-    % look at covariance
-    %fprintf(['PCA:start:creating COV \n']);
-    try
-        COV = mtimesx(M,'T',M,'speed');
-    catch
-        COV = M'*M;
-    end
-    COV = COV / size(M,toOpDim);
-    %fprintf(['PCA:end:creating COV \n']);
-    % eig vector decomp
-    %fprintf(['PCA:start:decomposing COV \n'])
-    [E L] = eigs(COV,COM);
+%% Get the mean
+toOpDim = 1;
+U       = mean(M, toOpDim);
+M       = bsxfun(@minus,M,U);
 
-
-    [J sidx] = sort(diag(L),'descend');
-    E = E(:,sidx);
-    L = diag(L);
-    L = L(sidx);
-    L = diag(L);
-
-    %fprintf(['PCA:end:decomposing COV \n'])
-    % return eig values
-    LAM = L;
-    % calc percent explained
-    L = cumsum(diag(L))*sum(diag(L))^-1;
-    % get coeffs (fingerprints)
-    try
-        C = mtimesx(M,E);
-    catch
-        C = M*E;
-    end
-    % use the back-projection to create simulated signal
-    S = PCA_BKPROJ(C,E,U);
-    % calc the error
-    ERR = sum((S - M).^2,1).^.5;
-
-
-%{
-% take the mean
-%fprintf(['PCA:start:taking off mean \n']);
-U = mean(M,1);
-for i = 1:size(M,1)
-    M(i,:) = M(i,:) - U;
+%% Get covariance
+try
+    COV = mtimesx(M,'T',M,'speed');
+catch
+    COV = M' * M;
 end
-%fprintf(['PCA:end:taking off mean \n']);
-% look at covariance
-COV = cov(M);
-% eig vector decomp
-[E L] = eigs(COV,COM);
-% return eig values
+
+COV = COV / size(M, toOpDim);
+
+%% Eigenvector decomposition
+[E, L]    = eigs(COV, COM);
+[~, sIdx] = sort(diag(L), 'descend');
+
+%% Return eig values
+E   = E(:, sIdx);
+L   = diag(L);
+L   = L(sIdx);
+L   = diag(L);
 LAM = L;
-% calc percent explained
-L = cumsum(diag(L))*sum(diag(L))^-1;
-% get coeffs (fingerprints)
-if isdeployed
-    C = M*E;
-else
-    C = mtimesx(M,E);
+
+% Calculate percent explained
+L = cumsum(diag(L)) * sum(diag(L))^-1;
+
+%% Coeffs (fingerprints)
+try
+    C = mtimesx(M, E);
+catch
+    C = M * E;
 end
-% use the back-projection to create simulated signal
-S = PCA_BKPROJ(C,E,U);
-% calc the error
-ERR = sum((S - M).^2,2).^.5;
-    %}
+
+%% Back-projection to create simulated signal and compute error
+S   = PCA_BKPROJ(C, E, U);
+ERR = sum((S - M).^2, 1).^0.5;
+
+end

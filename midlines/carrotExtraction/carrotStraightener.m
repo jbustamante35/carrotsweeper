@@ -49,18 +49,19 @@ X = loadSubDirectories(DIN, dirName);
 %     carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
 
 %% Normal run or with parallel processing
+% [NOTE] Changed parallelization to carrotExtractor rather than here
 if nargin > 5
     if par
         % Version that runs algorithm with parallel processing
-        parfor i = 1 : numel(X)
+        for i = 1 : numel(X)
             x = X{i};
             [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
-                fnames{i}] = carrotExtractor(x, vis, savData, savFigs);
+                fnames{i}] = carrotExtractor(x, vis, savData, savFigs, par);
         end
     else
         % Run algorithm on all sub-directories and return data
         [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
-            carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
+            carrotExtractor(x, vis, savData, savFigs, par), X, 'UniformOutput', 0);
     end
 end
 

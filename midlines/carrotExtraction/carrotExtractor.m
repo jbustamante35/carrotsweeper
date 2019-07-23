@@ -9,7 +9,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 %
 % Usage:
 %   [mline, crv, smsk, pmsk, tcrd, dsts, fname] = ...
-%         carrotExtractor(dataIn, vis, savData, savFigs)
+%         carrotExtractor(dataIn, vis, savData, savFigs, par)
 %
 % Input:
 %   dataIn: path to directory of binary images

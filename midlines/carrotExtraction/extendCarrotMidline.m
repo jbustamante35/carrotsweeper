@@ -20,7 +20,7 @@ function [domainS, domainG] = extendCarrotMidline(mline, domainTranslation, msk,
 rho    = 1;                % I think this is where the extension is coming from [default 15]
 np     = size(msk, 1) + 1; % 
 wid    = round(np / 2);    % 
-domain = genCurvilinearDomain(mline, rho, np, wid, msk, 1);
+domain = genCurvilinearDomain(mline, rho, np, wid, msk, 0);
 
 % Set defined width and image size [old method]
 % WIDTH      = 200; % Dynamically set to original mask width

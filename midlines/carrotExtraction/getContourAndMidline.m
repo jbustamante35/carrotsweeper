@@ -51,7 +51,7 @@ try
     
     % Remove rows that are all empty
 %     cols2remove = 1;
-    cols2remove = 5;
+    cols2remove = 15;
     while ~sum(chk(:,1))
         chk(:,1)    = [];
         cols2remove = cols2remove  + 1;

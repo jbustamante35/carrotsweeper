@@ -68,45 +68,54 @@ if isfolder(dataIn)
     %% Run through images with parallel processing
     if par
         parfor n = 1 : tot
-            tic;
+            t = tic;
             try
                 fname{n} = getDirName(img.Files{n});
-                fprintf('\nProcessing %s...\n', fname{n});
+                fprintf('\n================================================\n');
+                fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
+                fprintf('\n------------------------------------------------\n');                
                 
                 [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
                 
+                fprintf('\n------------------------------------------------\n');
                 fprintf('Successfully processed %s\n', fname{n});
                 
             catch e
                 fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
             end
-            fprintf('Pipeline finished in %.02f sec\n', toc);
+            fprintf('Pipeline finished in %.02f sec', toc(t));
+            fprintf('\n================================================\n');
         end
     else
         %% Run through images with normal for loop
         for n = 1 : tot
-            tic;
+            t = tic;
             try
                 fname{n} = getDirName(img.Files{n});
-                fprintf('\nProcessing %s...\n', fname{n});
+                fprintf('\n================================================\n');
+                fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
+                fprintf('\n------------------------------------------------\n');
                 
                 [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
                 
+                fprintf('\n------------------------------------------------\n');
                 fprintf('Successfully processed %s\n', fname{n});
                 
             catch e
                 fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
             end
-            fprintf('Pipeline finished in %.02f sec\n', toc);
+            fprintf('Pipeline finished in %.02f sec', toc(t));
+            fprintf('\n================================================\n');
         end
     end
 else
     %% Run on single image
-    img                                         = imread(dataIn);
-    [tot , n]                                   = deal(1);
-    [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
+    fname{1}                             = getDirName(dataIn);
+    img                                  = imread(dataIn);
+    [tot , n]                            = deal(1);
+    [pmsk, crv, mline, smsk, tcrd, dsts] = deal(cell(1, tot));
     
     try
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
@@ -133,15 +142,18 @@ if vis
     for n = 1 : tot
 %         cla;clf;
         try
-            figs = plotCarrots(n, pmsk{n}, mline{n}, crv{n}, tcrd{n}, dsts{n}, ...
-                smsk{n}, psec, 0);
+            [~, nm]   = fixtitle(fname{n});
+            figs = plotCarrots(nm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
+                dsts{n}, smsk{n}, psec, 0);
             
         catch e
             % Only shows processed mask if there's an error
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
-            figs = plotCarrots(n, pmsk{n}, [0 0], [0 0], [0 0], [0 0], [0 0], psec, 0);
+            nm   = fixtitle(fname{n});
+            figs = plotCarrots(nm, [0 0], [0 0], [0 0], [0 0], ...
+                [0 0], [0 0], psec, 0);
             
         end
         
@@ -159,7 +171,6 @@ if vis
 end
 
 %% Save Data in output directory
-% Add CSV with UID | Width | Length
 if savData
     [~, fName]   = fileparts(dataIn);
     flds         = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', 'tcrd', ...
@@ -169,8 +180,6 @@ if savData
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
     
-    % Write into CSV file
-    % UID [UID] | Max Width (mm) [Scale] | Length
     %% Outpt CSV with UID [UID] | Max Width (mm) [Scale] | Length
     % Extract metadata from filenames
     if isfolder(dataIn)
@@ -221,22 +230,6 @@ if savData
     
     tnm2 = sprintf('%s/%s', dataOut, idDir);
     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
-    
-    % Convert structure to table and store as CSV [DEPRECATED]
-%     ID   = 'Genotype';
-%     expr = sprintf('%s_(?<id>.*?)}', ID);
-%     gen  = regexpi(nms, expr, 'names');
-%     gens = cellfun(@(x) str2double(char(x.id)), gen, 'UniformOutput', 0);
-%     
-    % Old method assumes genotype starts with "PI" [DEPRECATED]
-%     PI   = 'PI';
-%     expr = sprintf('%s-(?<id>.*?)/', PI);
-%     pid  = regexpi(tdir, expr, 'names');
-%     tnm  = sprintf('%s/PI-%s.csv', dataOut, pid.id);
-%     tbl  = struct2table(str);
-%     writetable(tbl, tnm, 'FileType', 'text');
-%     tnm2 = sprintf('%s/PI-%s', dataOut, pid.id);
-%     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
 
 else
     % Single images [this needs to be fixed]
@@ -246,7 +239,7 @@ end
 
 end
 
-function figs = plotCarrots(idx, raw_mask, midline, contours, tip_crds, dsts, straight_mask, psec, f)
+function figs = plotCarrots(fname, raw_mask, midline, contours, tip_crds, dsts, straight_mask, psec, f)
 %% plotCarrots: plotting function for this script
 % Set f to true generate figures if they don't exist
 % Set f to false to overwrite existing figures
@@ -279,7 +272,7 @@ hold on;
 plt(midline, 'r-', 2);
 plt(contours, 'b-', 2);
 plt(tip_crds, 'g*', 5);
-ttlP = sprintf('Midline and Contour on Mask\nCarrot %d', idx);
+ttlP = sprintf('Midline and Contour on Mask\n%s', fname);
 title(ttlP);
 
 %% Bar plot of distance vector
@@ -287,7 +280,7 @@ set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
 cla;clf;
 
 bar(flip(dsts), 1, 'r');
-ttlS = sprintf('Width Profile\nCarrot %d', idx);
+ttlS = sprintf('Width Profile\n%s', fname);
 title(ttlS);
 
 %% Tick marks along midline showing widths at tick
@@ -332,8 +325,8 @@ maxT           = num2str(round(maxD, 2));
 plt(maxP, 'k+', 8);
 text(maxX, maxY, maxT, 'Color', 'k', 'FontSize', 7, 'FontWeight', 'bold');
 
-ttlP = sprintf('Length %d pixels | Max Width %.02f pixels\nCarrot %d', ...
-    lng, maxD, idx);
+ttlP = sprintf('Length %d pixels | Max Width %.0f pixels\n%s', ...
+    lng, maxD, fname);
 title(ttlP);
 
 %% Straightened mask
@@ -342,7 +335,7 @@ cla;clf;
 
 flp  = handleFLIP(straight_mask, 4);
 imagesc(flp); colormap gray;
-ttlS = sprintf('Straighted Mask\nCarrot %d', idx);
+ttlS = sprintf('Straighted Mask\n%s', fname);
 title(ttlS);
 
 pause(psec);

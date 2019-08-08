@@ -8,6 +8,12 @@ function [DOUT, crvs, xi, yi, vi] = buildTipDistribution(CNTRS, SMOOTH, BIN, MAG
 % Input:
 %   CNTRS: cell array of contours to train initial distribution
 %   SMOOTH: initial smoothing value to use for computing curvature
+%   BIN:
+%   MAG:
+%   OUTLIERS:
+%   MODE:
+%   sav:
+%   vis:
 %
 % Output:
 %   DOUT: structure containing additional outputs to save in a .mat file
@@ -25,7 +31,8 @@ try
             crvs = cat(1, CNTRS{:});
         case 2
             % Combine and sort curvature profiles (initialize model)
-            CRVS = cellfun(@(x) cwtK(x, SMOOTH, 'closed'), CNTRS, 'UniformOutput', 0);
+            CRVS = cellfun(@(x) cwtK(x, SMOOTH, 'closed'), ...
+                CNTRS, 'UniformOutput', 0);
             CRVS = cellfun(@(x) x.K, CRVS, 'UniformOutput', 0);
             
             % Curvature distribution with outliers removed
@@ -36,7 +43,7 @@ try
             crvs     = crvs_all(idx);
         otherwise
             % Incorrect input, error out
-            fprintf('Incorrect input format. Enter Contours or Curvatures as a cell array\n');
+            fprintf('Incorrect should be entered as a cell array\n');
             crvs = [];
     end
     

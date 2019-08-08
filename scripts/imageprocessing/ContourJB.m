@@ -247,7 +247,7 @@ classdef ContourJB < handle
                 subt = crds - crds(idx,:);
                 shft = circshift(subt, -idx+1);
             else
-                %% Only Re-index saround AnchorPoint coordinate
+                %% Only Re-index around AnchorPoint coordinate
                 shft = circshift(crds, -idx+1);
             end
         end

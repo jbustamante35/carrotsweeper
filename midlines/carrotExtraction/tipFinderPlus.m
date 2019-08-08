@@ -1,10 +1,10 @@
-function [tTip, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds)
-%% tipFinderPlus: 
+function [tTip, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds, vis)
+%% tipFinderPlus:
 %
 %
 % Usage:
 %   [tTip, tIdx, mDsk, mSmt, mMsk, mCnt, mCrv , mIdx, mTip, hTip, iTip, rCnt] = ...
-%       tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds)
+%       tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds, vis)
 %
 % Input:
 %
@@ -44,14 +44,18 @@ initCnt                  = [];
 [tRgn, tCrv, tIdx, ~, tCnt] = ...
     tipSmoother(initCrv, initIdx, initCnt, mSmt, PIX, SCL, ALPHA, msk);
 
-fprintf('|%d', tIdx);
+if vis
+    fprintf('|%d', tIdx);
+end
 
 % Decrease PIX range and ALPHA size to refine tip finder
 for n = 1 : NSMOOTH
     [tRgn, tCrv, tIdx, ~, tCnt] = ...
         tipSmoother(tCrv, tIdx, tCnt, mSmt, PIX2, SCL, ALPHA2, []);
     
-    fprintf('|%d|', tIdx);
+    if vis
+        fprintf('|%d', tIdx);
+    end
 end
 
 %% Misc Data
@@ -88,7 +92,7 @@ for e1 = 1 : numel(DISKSIZE)
     
     for e2 = 1 : numel(SMOOTH)
         % Compute curvature probabilities
-        [~, crv] = cwtK(tmpcnt, SMOOTH(e2), CWTFLT);        
+        [~, crv] = cwtK(tmpcnt, SMOOTH(e2), CWTFLT);
         ci       = interp1(xi, yi, crv, 'linear', 0);
         ci       = -log(ci);
         

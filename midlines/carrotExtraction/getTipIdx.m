@@ -32,9 +32,16 @@ yi     = OUT.yi;
 
 %% Use TipFindrX method to find optimally-refined tip
 % WTF I need to clean this up further
+VIS = 0;
 tic;
-fprintf('Running TipFindrX...');
-[tCrds, tIdx] = tipFinderPlus(msk, xi, yi, SMOOTHRANGE, DISKRANGE, NCRDS);
-fprintf('...Identified tip in %.02f sec\n', toc);
+if VIS
+    fprintf('Running TipFindrX...');
+end
+
+[tCrds, tIdx] = tipFinderPlus(msk, xi, yi, SMOOTHRANGE, DISKRANGE, NCRDS, VIS);
+
+if VIS
+    fprintf('...Identified tip in %.02f sec\n', toc);
+end
 
 end

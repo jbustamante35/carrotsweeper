@@ -32,8 +32,15 @@ msk = extendDimension(img, 0, THRESH);
 msk = double(imcomplement(msk));
 
 %% Run processed mask through extraction functions
+tic;
+fprintf('\nGetting contour and midline...');
 [pmsk, crv, mline, tcrd, ~] = getContourAndMidline(msk, 0);
-smsk                        = sampleStraighten(mline, flip(pmsk, 3), pmsk);
+fprintf('Done...[%.02f sec]\n', toc);
+
+tic;
+fprintf('Running straightening...');
+smsk = sampleStraighten(mline, pmsk);
+fprintf('Done...[%.02f sec] \n', toc);
 
 % Post-process data [Flip right-to-left and binarize]
 % pmsk  = handleFLIP(pmsk, FACE);

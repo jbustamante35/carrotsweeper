@@ -44,7 +44,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 % FACE = 2;     % Direction to point straightened images (original 3)
 
 %% Load file list of binary mask images
-
+% Save straightened images in straight-masks
 if savData || savFigs
     dOut = sprintf('output_%s', tdate('s'));
     

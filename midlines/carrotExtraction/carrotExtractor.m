@@ -47,14 +47,18 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 % Save straightened images in straight-masks
 if savData || savFigs
     dOut = sprintf('output_%s', tdate('s'));
+    dMsk = 'straight-masks';
     
     if isfolder(dataIn)
         dataOut = sprintf('%s/%s', dataIn, dOut);
+        msksOut = sprintf('%s/%s', fileparts(dataIn), dMsk);
     else
         dataOut = sprintf('%s/%s', fileparts(dataIn), dOut);
+        msksOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dMsk);
     end
     
     mkdir(dataOut);
+    mkdir(msksOut);
 end
 
 if isfolder(dataIn)
@@ -181,6 +185,10 @@ if savData
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
+    
+    %% Save straightened masks in straight-masks directory
+    cellfun(@(im,nm) imwrite(im, [msksOut '/' nm], 'png'), ...
+        smsk, fname, 'UniformOutput', 0);
     
     %% Outpt CSV with UID [UID] | Max Width (mm) [Scale] | Length
     % Extract metadata from filenames

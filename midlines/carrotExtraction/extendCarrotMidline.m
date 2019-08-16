@@ -21,6 +21,7 @@ rho    = 1;                % I think this is where the extension is coming from 
 np     = size(msk, 1) + 1; % 
 wid    = round(np / 2);    % 
 domain = genCurvilinearDomain(mline, rho, np, wid, msk, 0);
+% domain = permute(domain, [2 1 3]);
 
 % Set defined width and image size [old method]
 % WIDTH      = 200; % Dynamically set to original mask width
@@ -43,30 +44,30 @@ if nargin == LPARGS
 end
 
 %% extend domain 
-% EXT    = EXTORG;
-% EXT    = linspace(0, EXT, EXT / lp);
-% EXT    = bsxfun(@times, EXT', dX);
-% EXT    = bsxfun(@plus, EXT, domain(1,:,:));
-% domain = cat(1, flip(EXT, 1), domain);
+EXT    = EXTORG;
+EXT    = linspace(0, EXT, EXT / lp);
+EXT    = bsxfun(@times, EXT', dX);
+EXT    = bsxfun(@plus, EXT, domain(1,:,:));
+domain = cat(1, flip(EXT, 1), domain);
 
 %% extension on one side
-% domain = flip(domain, 1);
-% dX     = -diff(domain, 1, 1);
-% dX     = mean(dX(1:SNIP,:,:), 1);
-% dNOR   = sum(dX.^2,3).^-.5;
-% dX     = bsxfun(@times, dX, dNOR);
-% 
-% if nargin == LPARGS
-%     lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
-% end
+domain = flip(domain, 1);
+dX     = -diff(domain, 1, 1);
+dX     = mean(dX(1:SNIP,:,:), 1);
+dNOR   = sum(dX.^2,3).^-.5;
+dX     = bsxfun(@times, dX, dNOR);
+
+if nargin == LPARGS
+    lp = mean(sum(diff(mline, 1, 1).^2, 2).^0.5);
+end
 
 %% extension on opposite side
-% EXT    = EXTORG;
-% EXT    = linspace(0, EXT, EXT / lp);
-% EXT    = bsxfun(@times, EXT', dX);
-% EXT    = bsxfun(@plus, EXT, domain(1,:,:));
-% domain = cat(1, flip(EXT,1), domain);
-% domain = flip(domain,1);
+EXT    = EXTORG;
+EXT    = linspace(0, EXT, EXT / lp);
+EXT    = bsxfun(@times, EXT', dX);
+EXT    = bsxfun(@plus, EXT, domain(1,:,:));
+domain = cat(1, flip(EXT,1), domain);
+domain = flip(domain,1);
 
 %% Reshape for sub-sampling
 dsz            = size(domain);

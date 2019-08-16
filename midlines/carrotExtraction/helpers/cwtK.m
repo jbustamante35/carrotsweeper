@@ -95,6 +95,8 @@ for e = 1 : numel(smth)
 end
 
 %% Output curvature
-out.K = K;
+out.J        = J;
+out.baseSize = sum(J(:, 2) == 1);
+out.K        = K;
 
 end

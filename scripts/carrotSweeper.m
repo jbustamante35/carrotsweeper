@@ -66,8 +66,8 @@ fnames = I.Files;
 if ~strcmpi(ID, 'all')
     try
         expr = sprintf('%s_(?<id>.*?)}', ID);
-        ids = regexpi(fnames, expr, 'names');
-        str = cellfun(@(x) char(x.id), ids, 'UniformOutput', 0);
+        ids  = regexpi(fnames, expr, 'names');
+        str  = cellfun(@(x) char(x.id), ids, 'UniformOutput', 0);
         fprintf(2, 'ID %s not found, defaulting to UID\n', ID);
     
     catch

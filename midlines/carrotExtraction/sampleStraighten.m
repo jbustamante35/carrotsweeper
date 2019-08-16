@@ -4,11 +4,12 @@ function strVec = sampleStraighten(mline, msk)
 % coordinates and extracting the pixel values each coordinate corresponds to.
 %
 % Usage:
-%   [vecS, vecM] = sampleStraighten(mline, msk, img)
+%   strVec = sampleStraighten(mline, msk, crv)
 %
 % Input:
 %   mline: midline coordinates
 %   msk: binary mask image
+%   crv: contour to define boundary to omit pixels during straightening
 %
 % Output:
 %   strVec: straightened vector structure
@@ -33,17 +34,16 @@ try
 
     else
         % Binary image
-        mmsk = double(fmsk) / 255;
+        mmsk   = double(fmsk) / 255;
         strVec = ba_interp2(mmsk, dS(:,2), dS(:,1));
     end
     
     %% Reshape to generate straight mask
     strVec = imbinarize(reshape(strVec, dSize(1:2))', ...
-        'adaptive', 'Sensitivity', 1);
+        'adaptive', 'Sensitivity', 1);    
     
     %% Run from midline, extend from normal and remove out-of-contour pixels
-%     rmsk = fliplr(imrotate(msk, 90*3));
-%     rline = fliplr(mline);
+
     
 catch e
     fprintf(2, 'Error straightening mask\n%s\n', e.getReport);

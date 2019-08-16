@@ -38,9 +38,9 @@ L   = cumsum([0 ; dL]);
 SCL = L(end) / ncrds;
 
 % Perform initial smoothing with large range and large smooth value
-initCrv                  = mCrv;
-initIdx                  = mIdx;
-initCnt                  = [];
+initCrv                     = mCrv;
+initIdx                     = mIdx;
+initCnt                     = [];
 [tRgn, tCrv, tIdx, ~, tCnt] = ...
     tipSmoother(initCrv, initIdx, initCnt, mSmt, PIX, SCL, ALPHA, msk);
 
@@ -79,10 +79,10 @@ function [mDsk, mSth] = iterativeSmoothing(msk, xi, yi, SMOOTH, DISKSIZE, NCRDS,
 %
 %
 
-%%
+%% Iterate through ranges for SMOOTH value and DISK size
 S = zeros([numel(SMOOTH) , numel(DISKSIZE)]);
 
-%% Iterate through ranges for SMOOTH value and DISK size
+% 
 for e1 = 1 : numel(DISKSIZE)
     % Smooth binary mask and extract contour
     tmpmsk = imopen(msk, strel('disk', DISKSIZE(e1), 0));

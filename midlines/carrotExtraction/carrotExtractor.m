@@ -130,6 +130,7 @@ end
 %% Show Output of processed and straightened masks
 if vis
     psec = 0.7;
+    car  = 'carrots'; % For making cleaner figure titles
     figs = [];
     fnms = {};
     fnms{1} = sprintf('MidlineContourMask');
@@ -142,7 +143,8 @@ if vis
     for n = 1 : tot
 %         cla;clf;
         try
-            [~, nm]   = fixtitle(fname{n});
+%             [~, nm]   = fixtitle(fname{n});
+            nm   = fixtitle(fname{n}, car);
             figs = plotCarrots(nm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
                 dsts{n}, smsk{n}, psec, 0);
             
@@ -151,7 +153,7 @@ if vis
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
-            nm   = fixtitle(fname{n});
+            nm   = fixtitle(fname{n}, car);
             figs = plotCarrots(nm, [0 0], [0 0], [0 0], [0 0], ...
                 [0 0], [0 0], psec, 0);
             
@@ -264,7 +266,6 @@ fIdx = 1;
 set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
 cla;clf;
 
-imshow(raw_mask, []);
 imagesc(raw_mask);
 colormap gray;
 axis image;
@@ -292,9 +293,9 @@ colormap gray;
 axis image;
 hold on;
 
-plt(midline, 'r.', 3);
-plt(contours, 'y.', 3);
-plt(tip_crds, 'g*', 6);
+plt(midline, 'r-', 2);
+plt(contours, 'y-', 2);
+plt(tip_crds, 'g*', 5);
 
 % Show every length / 10
 lng = length(midline);
@@ -303,7 +304,7 @@ xos = 5;  % x-offset
 yos = 15; % y-offset
 X   = midline(:,1) - xos;
 Y   = midline(:,2) - yos;
-txt = cellstr(num2str(round(dsts, 2)));
+txt = cellstr(num2str(round(dsts', 2)));
 
 for i = 1 : itr : lng
     % Plot distance and tick marks
@@ -333,8 +334,9 @@ title(ttlP);
 set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
 cla;clf;
 
-flp  = handleFLIP(straight_mask, 4);
-imagesc(flp); colormap gray;
+flp  = handleFLIP(straight_mask, 3);
+imagesc(flp);
+colormap gray;
 ttlS = sprintf('Straighted Mask\n%s', fname);
 title(ttlS);
 

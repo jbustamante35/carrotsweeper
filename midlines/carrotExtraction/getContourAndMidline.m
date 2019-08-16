@@ -50,12 +50,12 @@ try
     chk  = ~imbinarize(skel);
     
     % Remove rows that are all empty
-%     cols2remove = 1;
     cols2remove = 15;
     while ~sum(chk(:,1))
         chk(:,1)    = [];
         cols2remove = cols2remove  + 1;
     end
+    CUTTIP = MIN_THRESH_SIZE - cols2remove; % proper distance to shift tip
     
     skel = skel(:, cols2remove:end);
     skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
@@ -68,9 +68,8 @@ try
     crv(rmCrv,:) = [];
     
     % Identify tip as point of highest curvature
-    %     tCrds = getTipIdx(skel);
     tCrds = getTipIdx(chk);
-    tCrds = [tCrds(:,1) + MIN_THRESH_SIZE tCrds(:,2)];
+    tCrds = [tCrds(:,1) + CUTTIP , tCrds(:,2)]; % Shift for skel
     
     % Generate midline starting from tip and distance transform values
     [mline, dsts] = generateMidline(~skel, tCrds);

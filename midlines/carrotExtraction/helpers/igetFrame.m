@@ -22,4 +22,5 @@ end
 
 % Make the first dim the trial number
 BV = permute(BV,[3 1 2]);
+
 end

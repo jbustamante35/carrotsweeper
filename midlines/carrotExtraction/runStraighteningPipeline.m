@@ -25,7 +25,7 @@ function [pmsk, crv, mline, smsk, tcrd, dsts] = runStraighteningPipeline(img)
 
 %% Some constants to consider playing around with
 THRESH = 300; % Minimum length to pad one or both dimensions of image
-FACE   = 2;   % Direction to point straightened images (original 3)
+FACE   = 3;   % Direction to point straightened images (original 3)
 
 %% Prepare mask for extraction functions
 msk = extendDimension(img, 0, THRESH);
@@ -39,7 +39,8 @@ fprintf('Done...[%.02f sec]\n', toc);
 
 tic;
 fprintf('Running straightening...');
-smsk = sampleStraighten(mline, pmsk);
+% smsk = sampleStraighten(mline, pmsk);
+smsk  = getStraightenedMask(mline, pmsk);
 fprintf('Done...[%.02f sec] \n', toc);
 
 % Post-process data [Flip right-to-left and binarize]
@@ -47,6 +48,7 @@ fprintf('Done...[%.02f sec] \n', toc);
 % crv   = fliplr(crv);
 % mline = fliplr(mline);
 smsk = handleFLIP(smsk, FACE);
-dsts = sum(smsk,2);
+% dsts = sum(smsk,2);
+dsts = sum(smsk);
 
 end

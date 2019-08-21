@@ -19,6 +19,7 @@ function [crvs, strc] = generateFullEnvelope(crds, dist2env, numCrvs, alg)
 %   strc: envelope structure reshaped as an image 
 %
 
+%%
 try
     switch alg
         case 'hq'

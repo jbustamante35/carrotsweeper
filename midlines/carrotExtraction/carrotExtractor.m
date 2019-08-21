@@ -79,7 +79,7 @@ if isfolder(dataIn)
                 fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
                 fprintf('\n------------------------------------------------\n');                
                 
-                [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+                [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
                 
                 fprintf('\n------------------------------------------------\n');
@@ -101,7 +101,7 @@ if isfolder(dataIn)
                 fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
                 fprintf('\n------------------------------------------------\n');
                 
-                [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+                [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
                 
                 fprintf('\n------------------------------------------------\n');
@@ -122,7 +122,7 @@ else
     [pmsk, crv, mline, smsk, tcrd, dsts] = deal(cell(1, tot));
     
     try
-        [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}] = ...
+        [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
             runStraighteningPipeline(img);
         
     catch e
@@ -145,12 +145,10 @@ if vis
     set(figs, 'Color', 'w');
     
     for n = 1 : tot
-%         cla;clf;
         try
-%             [~, nm]   = fixtitle(fname{n});
             nm   = fixtitle(fname{n}, car);
             figs = plotCarrots(nm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
-                dsts{n}, smsk{n}, psec, 0);
+                dsts{n}, nrms{n}, smsk{n}, psec, 0);
             
         catch e
             % Only shows processed mask if there's an error
@@ -159,7 +157,7 @@ if vis
             
             nm   = fixtitle(fname{n}, car);
             figs = plotCarrots(nm, [0 0], [0 0], [0 0], [0 0], ...
-                [0 0], [0 0], psec, 0);
+                [0 0], [0 0], [0 0], psec, 0);
             
         end
         
@@ -180,7 +178,7 @@ end
 if savData
     [~, fName]   = fileparts(dataIn);
     flds         = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', 'tcrd', ...
-        'dsts', 'fName'};
+        'dsts', 'fName', 'nrms'};
     CARROTS      = v2struct(flds);
     nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
         dataOut, tdate('s'), fName, tot);
@@ -249,7 +247,7 @@ end
 
 end
 
-function figs = plotCarrots(fname, raw_mask, midline, contours, tip_crds, dsts, straight_mask, psec, f)
+function figs = plotCarrots(fname, raw_mask, midline, contours, tip_crds, dsts, nrms, straight_mask, psec, f)
 %% plotCarrots: plotting function for this script
 % Set f to true generate figures if they don't exist
 % Set f to false to overwrite existing figures
@@ -292,7 +290,7 @@ bar(flip(dsts), 1, 'r');
 ttlS = sprintf('Width Profile\n%s', fname);
 title(ttlS);
 
-%% Tick marks along midline showing widths at tick
+%% Tick marks along midline showing widths and normals at tick
 set(0, 'CurrentFigure', figs(fIdx)); fIdx = fIdx + 1;
 cla;clf;
 
@@ -314,23 +312,34 @@ X   = midline(:,1) - xos;
 Y   = midline(:,2) - yos;
 txt = cellstr(num2str(round(dsts', 2)));
 
-for i = 1 : itr : lng
+% Extract indices for normal vectors
+mIdxs = 1 : itr : lng;
+dscl  = ceil(size(raw_mask,1) / 2) + 1;
+
+% for i = 1 : numel(mIdxs)
+for i = mIdxs
+%     idx = mIdxs(i);
     % Plot distance and tick marks
     text(X(i), Y(i), txt{i}, 'Color', 'b', 'FontSize', 6);
     %     text(X(i), Y(i), '+', 'Color', 'r', 'FontSize', 6); % Calibrate position
+    [~, ef] = extractIndices(i, dscl, nrms);
+    plt(ef(:,1:2), 'r-', 1);
+    plt(ef(:,3:4), 'b-', 1);
     plt(midline(i,:), 'b+', 3);
 end
 
-% Plot max distance [reverse order to read left-right]
-flp_dsts       = flipud(dsts);
-flp_mln        = flipud(midline);
-
-[maxD, maxIdx] = max(flp_dsts);
-maxP           = flp_mln(maxIdx,:);
+% Plot max distance
+[maxD, maxIdx] = max(dsts);
+maxP           = midline(maxIdx,:);
 maxX           = maxP(1) - 25;
 maxY           = maxP(2) + 20;
 maxT           = num2str(round(maxD, 2));
 
+% Plot max normal too
+[~, mf] = extractIndices(maxIdx, dscl, nrms);
+plt(mf(:,1:2), 'm-', 1);
+plt(mf(:,3:4), 'g-', 1);
+    
 plt(maxP, 'k+', 8);
 text(maxX, maxY, maxT, 'Color', 'k', 'FontSize', 7, 'FontWeight', 'bold');
 

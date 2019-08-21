@@ -1,56 +1,83 @@
-function smsk = getStraightenedMask(mline, msk)
+function [smsk, sdata] = getStraightenedMask(crds, img, BNZ, SCL)
 %% getStraightenedMask: straighten image from midline
 % This is a modified version of the sampleStraighten function that straightens
 % an object in an image by extending normal vectors along each coordinate of a
-% midline. 
-%
-% 
+% midline.
 %
 % Usage:
-%   smsk = getStraightenedMask(mline, msk)
+%   smsk = getStraightenedMask(crds, msk, bnz, dscl)
 %
 % Input:
-%   mline: midline coordinates
-%   msk: binary mask image
+%   crds: x-/y-coordinates of curve to map
+%   img: image to interpolate pixels from coordinates
+%   bnz: boolean to binarize the final mask [for bw objects]
+%   dscl: scaler to extend normal to desired distance [in pixels]
 %
 % Output:
-%   smsk: straightened mask
+%   smsk: straightened image
+%   sdata: extra data for visualization or debugging
 %
 
 %% Create envelope structure
 % Set unit length vector to place outer boundary
-dscl = ceil(size(msk,1) / 2);
-tng  = gradient(mline')';
+if nargin < 3
+    % Default binarization on and envelope size to half the width of the image
+    BNZ = 1;
+    SCL = ceil(size(img,1) / 2);
+end
+
+tng  = gradient(crds')';
 d2e  = sum((tng .* tng), 2).^(-0.5);
-ulng = bsxfun(@times, tng, d2e) * dscl;
+ulng = bsxfun(@times, tng, d2e) * SCL;
 
 % Compute distances from midline points to edge of envelope
-eO = [-getDim(ulng, 2) , getDim(ulng, 1)] + mline;
-eI = [getDim(ulng, 2) , -getDim(ulng, 1)] + mline;
-
-% Create
-[eOut, sOut] = generateFullEnvelope(mline, eO, dscl, 'cs');
-[eInn, sInn] = generateFullEnvelope(mline, eI, dscl, 'cs');
+bndsOut = [-getDim(ulng, 2) , getDim(ulng, 1)] + crds;
+bndsInn = [getDim(ulng, 2) , -getDim(ulng, 1)] + crds;
 
 %% Map curves to image
-sz   = [size(sInn,1), length(mline)];
+[envO, datO] = map2img(img, crds, bndsOut, SCL, BNZ);
+[envI, datI] = map2img(img, crds, bndsInn, SCL, BNZ);
 
-outI  = imbinarize(ba_interp2(double(msk), eInn(:,1), eInn(:,2)), ...
-    'adaptive', 'Sensitivity', 1);
-fullI = reshape(outI, sz);
+if BNZ
+    %% For CarrotSweeper straightener
+    smsk = handleFLIP([flipud(envO) ; envI],3);
+    
+    % Extract largest object from binarized image
+    prp                            = regionprops(smsk, 'Area', 'PixelIdxList');
+    [~ , maxIdx]                   = max(cell2mat(arrayfun(@(x) x.Area, ...
+        prp, 'UniformOutput', 0)));
+    smsk                           = zeros(size(smsk));
+    smsk(prp(maxIdx).PixelIdxList) = 1;
+    
+else
+    %% For HypoQuantyl S-Patches
+    smsk = [fliplr(envI') , envO'];
+    
+end
 
-outO  = imbinarize(ba_interp2(double(msk), eOut(:,1), eOut(:,2)), ...
-    'adaptive', 'Sensitivity', 1);
-fullO = reshape(outO, sz);
+% Extra data for visualization or debugging
+sdata = struct('OuterData', datI, 'InnerData', datO);
 
-fullE = handleFLIP([flipud(fullI) ; fullO],3);
+end
 
-% Extract largest object and resize to specified dimensions
-prp                           = regionprops(fullE, 'Area', 'PixelIdxList');
-[~ , maxIdx]                  = max(cell2mat(arrayfun(@(x) x.Area, ...
-    prp, 'UniformOutput', 0)));
-smsk                           = zeros(size(fullE));
-smsk(prp(maxIdx).PixelIdxList) = 1;
+function [env, edata] = map2img(img, crds, ebnds, dscl, bnz)
+%% map2img: interpolate pixel intensities from curve coordinates
+% Create the envelope structure
+[eCrds, eGrid] = generateFullEnvelope(crds, ebnds, dscl, 'cs');
+
+% Map curves to image
+sz     = [size(eGrid,1), length(crds)];
+mapimg = ba_interp2(double(img), eCrds(:,1), eCrds(:,2));
+
+% Binarize if using for CarrotSweeper
+if bnz
+    mapimg = imbinarize(mapimg, 'adaptive', 'Sensitivity', 1);
+end
+
+env = reshape(mapimg, sz);
+
+% Extra data for visualization or debugging
+edata = struct('eCrds', eCrds, 'eGrid', eGrid);
 
 end
 

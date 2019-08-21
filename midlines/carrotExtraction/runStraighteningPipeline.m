@@ -1,4 +1,4 @@
-function [pmsk, crv, mline, smsk, tcrd, dsts] = runStraighteningPipeline(img)
+function [pmsk, crv, mline, smsk, tcrd, dsts, nrms] = runStraighteningPipeline(img)
 %% runStraighteningPipeline: core pipeline for straightening algorithm
 % This is the core function that runs the straightening pipeline. It takes a
 % binarized image, processes it to face left-to-right, then:
@@ -40,15 +40,11 @@ fprintf('Done...[%.02f sec]\n', toc);
 tic;
 fprintf('Running straightening...');
 % smsk = sampleStraighten(mline, pmsk);
-smsk  = getStraightenedMask(mline, pmsk);
+[smsk, nrms]  = getStraightenedMask(mline, pmsk);
 fprintf('Done...[%.02f sec] \n', toc);
 
 % Post-process data [Flip right-to-left and binarize]
-% pmsk  = handleFLIP(pmsk, FACE);
-% crv   = fliplr(crv);
-% mline = fliplr(mline);
 smsk = handleFLIP(smsk, FACE);
-% dsts = sum(smsk,2);
 dsts = sum(smsk);
 
 end

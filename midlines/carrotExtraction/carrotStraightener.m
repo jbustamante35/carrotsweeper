@@ -56,11 +56,11 @@ if nargin > 5
         for i = 1 : numel(X)
             x = X{i};
             [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
-                fnames{i}] = carrotExtractor(x, vis, savData, savFigs, par);
+                fnames{i}, nrms{i}] = carrotExtractor(x, vis, savData, savFigs, par);
         end
     else
         % Run algorithm on all sub-directories and return data
-        [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
+        [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames, nrms] =  cellfun(@(x) ...
             carrotExtractor(x, vis, savData, savFigs, par), X, 'UniformOutput', 0);
     end
 end

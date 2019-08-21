@@ -33,7 +33,7 @@ for pt = 1:size(mline,1)
     %% create affine transform
     curPoint = mline(pt,:);
 %     T = [imrotate(squeeze(BV(pt,:,:)),90) fliplr(curPoint)'];
-        T              = [squeeze(BV(pt,:,:))' fliplr(curPoint)'];
+    T              = [squeeze(BV(pt,:,:))' fliplr(curPoint)'];
     domain(pt,:,:) = T * para{1}.d;
     
     %% Visualize output

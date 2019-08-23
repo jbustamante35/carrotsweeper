@@ -49,6 +49,7 @@ X = loadSubDirectories(DIN, dirName);
 if par
     % Version that runs algorithm with parallel processing
     par = 0; % Can't run nested parfor loops
+    
     parfor i = 1 : numel(X)
         x = X{i};
         [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...

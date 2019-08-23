@@ -16,17 +16,18 @@ function [crvs, strc] = generateFullEnvelope(crds, dist2env, numCrvs, alg)
 %
 % Output:
 %   crvs: intermediate curves between segment and envelope
-%   strc: envelope structure reshaped as an image 
+%   strc: envelope structure reshaped as an image
 %
 
 %%
 try
     switch alg
         case 'hq'
-            %% HypoQuantyl Method
+            %% HypoQuantyl Method [DEPRECATED 08.22.2019]
             % Just go to specified distance (need to be updated to go along normal)
             itr  = dist2env / numCrvs;
             crvs = arrayfun(@(x) crds + (itr * x), 1 : numCrvs, 'UniformOutput', 0);
+            strc = [];
             
         case 'cs'
             %% CarrotSweeper Method
@@ -41,14 +42,14 @@ try
             % Error
             fprintf(2, 'Please select appropriate algorithm [hq|cs]\n');
             crvs = [];
+            strc = [];
     end
     
 catch e
-    %% Default to HypoQuantyl Method if I missed changing it somewhere
-    fprintf('\nDefaulting to HypoQuantyl algorithm\n%s\n', e.getReport);    
-    % Just go to specified distance (need to be updated to go along normal)
-    itr  = dist2env / numCrvs;
-    crvs = arrayfun(@(x) crds + (itr * x), 1 : numCrvs, 'UniformOutput', 0);
+    %% Error with algorithm
+    fprintf(2, 'Error generating envelope\n%s\n', e.getReport);
+    crvs = [];
+    strc = [];
     
 end
 

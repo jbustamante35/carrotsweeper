@@ -1,5 +1,5 @@
-function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, vis, savData, savFigs, par)
-%% carrotExtractor: midline extraction and straightener
+function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotStraightener(dataIn, vis, savData, savFigs, par)
+%% carrotStraightener: midline extraction and straightener
 % This is a detailed description of this script...
 %
 % Note about saving with the svData parameter:
@@ -9,7 +9,7 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 %
 % Usage:
 %   [mline, crv, smsk, pmsk, tcrd, dsts, fname] = ...
-%         carrotExtractor(dataIn, vis, savData, savFigs, par)
+%         carrotStraightener(dataIn, vis, savData, savFigs, par)
 %
 % Input:
 %   dataIn: path to directory of binary images
@@ -33,32 +33,41 @@ function [mline, crv, smsk, pmsk, tcrd, dsts, fname] = carrotExtractor(dataIn, v
 % to the year (y), month (m), and today's date (d).
 %
 % Example:
-%   Run straightening pipeline on all images in a directory
+%   Run pipeline on all images in a directory with paraellelization
 %       dataIn  = '~/LabData/CarrotSweeper/z_datasets/masks_wi2019';
 %       din     = [dataIn, '/' , 'pi-261783/binary-masks'];
-%       [mline, cntr, smsk, pmsk, tcrd, dsts] = carrotExtractor(din, 1, 1, 0);
+%       [mline, cntr, smsk, pmsk, tcrd, dsts, fname] = ...
+%           carrotStraightener(din, 1, 1, 0, 1);
 %
 
-%% Some constants to consider playing around with
-% THRESH = 300; % Minimum length to pad one or both dimensions of image
-% FACE = 2;     % Direction to point straightened images (original 3)
-
 %% Load file list of binary mask images
-% Save straightened images in straight-masks
+% Save outputted data in respective directories
 if savData || savFigs
-    dOut = sprintf('output_%s', tdate('s'));
+    dMat = sprintf('output-%s', tdate('s'));
+    dOvr = 'mask-overlays';
+    dWid = 'width-profiles';
+    dNrm = 'normal-overlays';
     dMsk = 'straight-masks';
     
     if isfolder(dataIn)
-        dataOut = sprintf('%s/%s', dataIn, dOut);
-        msksOut = sprintf('%s/%s', fileparts(dataIn), dMsk);
+        matOut = sprintf('%s/%s', fileparts(dataIn), dMat);
+        ovrOut = sprintf('%s/%s', fileparts(dataIn), dOvr);
+        widOut = sprintf('%s/%s', fileparts(dataIn), dWid);
+        nrmOut = sprintf('%s/%s', fileparts(dataIn), dNrm);
+        mskOut = sprintf('%s/%s', fileparts(dataIn), dMsk);
     else
-        dataOut = sprintf('%s/%s', fileparts(dataIn), dOut);
-        msksOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dMsk);
+        matOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dMat);
+        ovrOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dOvr);
+        widOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dWid);
+        nrmOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dNrm);
+        mskOut = sprintf('%s/%s', fileparts(fileparts(dataIn)), dMsk);
     end
     
-    mkdir(dataOut);
-    mkdir(msksOut);
+    mkdir(matOut);
+    mkdir(ovrOut);
+    mkdir(widOut);
+    mkdir(nrmOut);
+    mkdir(mskOut);
 end
 
 if isfolder(dataIn)
@@ -66,18 +75,19 @@ if isfolder(dataIn)
     img = imageDatastore(dataIn, 'FileExtensions', ext);
     
     %% Extract Midline, Contour, Straightened Image, Straightened Mask
-    tot                                         = numel(img.Files);
-    [mline, crv, pmsk, smsk, tcrd, dsts, fname] = deal(cell(1, tot));
+    tot                                               = numel(img.Files);
+    [mline, crv, pmsk, smsk, tcrd, dsts, fname, nrms] = deal(cell(1, tot));
     
-    %% Run through images with parallel processing
     if par
+        %% Run through images with parallel processing
+        tt = tic;
         parfor n = 1 : tot
             t = tic;
             try
                 fname{n} = getDirName(img.Files{n});
                 fprintf('\n================================================\n');
                 fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
-                fprintf('\n------------------------------------------------\n');                
+                fprintf('\n------------------------------------------------\n');
                 
                 [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
@@ -91,8 +101,10 @@ if isfolder(dataIn)
             fprintf('Pipeline finished in %.02f sec', toc(t));
             fprintf('\n================================================\n');
         end
+        fprintf('DONE! [%.02f sec]\n', toc(tt));
     else
         %% Run through images with normal for loop
+        tt = tic;
         for n = 1 : tot
             t = tic;
             try
@@ -113,18 +125,24 @@ if isfolder(dataIn)
             fprintf('Pipeline finished in %.02f sec', toc(t));
             fprintf('\n================================================\n');
         end
+        fprintf('DONE! [%.02f sec]\n', toc(tt));
     end
 else
     %% Run on single image
-    fname{1}                             = getDirName(dataIn);
-    img                                  = imread(dataIn);
-    [tot , n]                            = deal(1);
-    [pmsk, crv, mline, smsk, tcrd, dsts] = deal(cell(1, tot));
+    t = tic;
+    fname{1}                                   = getDirName(dataIn);
+    img                                        = imread(dataIn);
+    [tot , n]                                  = deal(1);
+    [pmsk, crv, mline, smsk, tcrd, nrms, dsts] = deal(cell(1, tot));
     
     try
+        fprintf('\n================================================\n');
+        fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
+        fprintf('\n------------------------------------------------\n');
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
             runStraighteningPipeline(img);
-        
+        fprintf('Pipeline finished in %.02f sec', toc(t));
+        fprintf('\n================================================\n');
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
     end
@@ -135,19 +153,11 @@ end
 if vis
     psec = 0.7;
     car  = 'carrots'; % For making cleaner figure titles
-    figs = [];
-    fnms = {};
-    fnms{1} = sprintf('MidlineContourMask');
-    fnms{2} = sprintf('WidthProfile');
-    fnms{3} = sprintf('WidthsOnMask');
-    fnms{4} = sprintf('StraightenedMask');
-    
-    set(figs, 'Color', 'w');
     
     for n = 1 : tot
         try
-            nm   = fixtitle(fname{n}, car);
-            figs = plotCarrots(nm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
+            nm    = fixtitle(fname{n}, car);
+            fIdxs = plotCarrots(nm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
                 dsts{n}, nrms{n}, smsk{n}, psec, 0);
             
         catch e
@@ -155,20 +165,26 @@ if vis
             fprintf(2, 'Error plotting figure for data %d\n%s\n', ...
                 n, e.getReport);
             
-            nm   = fixtitle(fname{n}, car);
-            figs = plotCarrots(nm, [0 0], [0 0], [0 0], [0 0], ...
+            nm    = fixtitle(fname{n}, car);
+            fIdxs = plotCarrots(nm, [0 0], [0 0], [0 0], [0 0], ...
                 [0 0], [0 0], [0 0], psec, 0);
             
         end
         
-        % Save figures in output directory
+        %% Save figure in it's own directory named as the filename
         if savFigs
-            [~, fName] = fileparts(dataIn);
-            for fig = figs
-                fnm   = sprintf('%s/%s%d_%s', dataOut, fnms{fig}, n, fName);
-%                 savefig(fig, fnm); % Nobody cares about the .fig files
-                saveas(fig, fnm, 'tiffn');
-            end
+            % Contour-Midline-Mask overlay
+            ovrFig = sprintf('%s/%s', ovrOut, fname{n});
+            saveas(fIdxs(1), ovrFig, 'png');
+            
+            % Width Profile
+            widFig = sprintf('%s/%s', widOut, fname{n});
+            saveas(fIdxs(2), widFig, 'png');
+            
+            % Widths and Normals along Midline
+            nrmFig = sprintf('%s/%s', nrmOut, fname{n});
+            saveas(fIdxs(3), nrmFig, 'png');
+            
         end
         
     end
@@ -176,16 +192,22 @@ end
 
 %% Save Data in output directory
 if savData
-    [~, fName]   = fileparts(dataIn);
-    flds         = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', 'tcrd', ...
-        'dsts', 'fName', 'nrms'};
-    CARROTS      = v2struct(flds);
-    nm           = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
-        dataOut, tdate('s'), fName, tot);
+    % Save .mat and .csv files in output-$date$ directory
+    if isfolder(dataIn)
+        [~, fName]   = fileparts(fileparts(dataIn));
+    else
+        [~, fName]   = fileparts(dataIn);
+    end
+    
+    flds    = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', ...
+        'tcrd', 'dsts', 'fName'};
+    CARROTS = v2struct(flds);
+    nm      = sprintf('%s/%s_carrotExtractor_%s_%dCarrots', ...
+        matOut, tdate('s'), fName, tot);
     save(nm, '-v7.3', 'CARROTS');
     
-    %% Save straightened masks in straight-masks directory
-    cellfun(@(im,nm) imwrite(im, [msksOut '/' nm], 'png'), ...
+    % Save straightened masks in straight-masks directory
+    cellfun(@(im,nm) imwrite(im, [mskOut '/' nm], 'png'), ...
         smsk, fname, 'UniformOutput', 0);
     
     %% Outpt CSV with UID [UID] | Max Width (mm) [Scale] | Length
@@ -228,17 +250,22 @@ if savData
         'WidthProfile', proWid);
     
     % Convert structure to table and store as CSV
-    [mskPath, ~] = fileparts(dataIn);
-    [idPath, ~]  = fileparts(mskPath);
-    [~, idDir]   = fileparts(idPath);    
-    tnm1         = sprintf('%s/%s.csv', dataOut, idDir);
+    if isfolder(dataIn)
+        [~, idDir] = fileparts(fileparts(dataIn));
+    else
+        [mskPath, ~] = fileparts(fileparts(dataIn));
+        [idPath, ~]  = fileparts(mskPath);
+        [~, idDir]   = fileparts(idPath);
+    end
+        
+    tnm1 = sprintf('%s/%s.csv', matOut, idDir);
     
     tbl  = struct2table(str);
     writetable(tbl, tnm1, 'FileType', 'text');
     
-    tnm2 = sprintf('%s/%s', dataOut, idDir);
+    tnm2 = sprintf('%s/%s', matOut, idDir);
     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
-
+    
 else
     % Single images [this needs to be fixed]
     tdir = dataIn;
@@ -316,15 +343,16 @@ txt = cellstr(num2str(round(dsts', 2)));
 mIdxs = 1 : itr : lng;
 dscl  = ceil(size(raw_mask,1) / 2) + 1;
 
-% for i = 1 : numel(mIdxs)
+nrmO = nrms.OuterData.eCrds;
+nrmI = nrms.InnerData.eCrds;
 for i = mIdxs
-%     idx = mIdxs(i);
+    %     idx = mIdxs(i);
     % Plot distance and tick marks
     text(X(i), Y(i), txt{i}, 'Color', 'b', 'FontSize', 6);
     %     text(X(i), Y(i), '+', 'Color', 'r', 'FontSize', 6); % Calibrate position
-    [~, ef] = extractIndices(i, dscl, nrms);
-    plt(ef(:,1:2), 'r-', 1);
-    plt(ef(:,3:4), 'b-', 1);
+    nIdx = extractIndices(i, dscl);
+    plt(nrmO(nIdx,:), 'r-', 1);
+    plt(nrmI(nIdx,:), 'b-', 1);
     plt(midline(i,:), 'b+', 3);
 end
 
@@ -336,10 +364,10 @@ maxY           = maxP(2) + 20;
 maxT           = num2str(round(maxD, 2));
 
 % Plot max normal too
-[~, mf] = extractIndices(maxIdx, dscl, nrms);
-plt(mf(:,1:2), 'm-', 1);
-plt(mf(:,3:4), 'g-', 1);
-    
+mIdx = extractIndices(maxIdx, dscl);
+plt(nrmO(mIdx,:), 'm-', 1);
+plt(nrmI(mIdx,:), 'g-', 1);
+
 plt(maxP, 'k+', 8);
 text(maxX, maxY, maxT, 'Color', 'k', 'FontSize', 7, 'FontWeight', 'bold');
 

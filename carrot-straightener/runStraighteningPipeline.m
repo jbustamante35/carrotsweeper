@@ -34,7 +34,7 @@ msk = double(imcomplement(msk));
 %% Run processed mask through extraction functions
 tic;
 fprintf('\nGetting contour and midline...');
-[pmsk, crv, mline, tcrd, ~] = getContourAndMidline(msk, 0);
+[pmsk, crv, mline, tcrd] = getContourAndMidline(msk, 0);
 fprintf('Done...[%.02f sec]\n', toc);
 
 tic;
@@ -48,3 +48,4 @@ smsk = handleFLIP(smsk, FACE);
 dsts = sum(smsk);
 
 end
+

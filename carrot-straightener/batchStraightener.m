@@ -48,17 +48,18 @@ X = loadSubDirectories(DIN, dirName);
 %% Normal run or with parallel processing
 if par
     % Version that runs algorithm with parallel processing
-    par = 0; % Can't run nested parfor loops
-    
-    parfor i = 1 : numel(X)
+%     par = 0; % Can't run nested parfor loops
+%     
+%     parfor i = 1 : numel(X)
+	for i = 1 : numel(X)
         x = X{i};
         [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
-            fnames{i}] = carrotStraightener(x, vis, savData, savFigs, par);
+            fnames{i}] = carrotStraightener(x, savData, savFigs, vis, par);
     end
 else
     % Run algorithm on all sub-directories and return data
     [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
-        carrotStraightener(x, vis, savData, savFigs, par), X, 'UniformOutput', 0);
+        carrotStraightener(x, savData, savFigs, vis, par), X, 'UniformOutput', 0);
 end
 
 end

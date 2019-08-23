@@ -23,15 +23,14 @@ dins = dir2(DIN);
 SUB = cell(1, numel(dins));
 n = 1;
 for din = dins'
-    d      = [din.folder '/' din.name];
-    e      = dir(d);
-    e(1:2) = [];
+    d = [din.folder '/' din.name];
+    e = dir2(d);
     
     msks = e(cell2mat(arrayfun(@(x) strcmpi(x.name, dirName), ...
         e, 'UniformOutput', 0)));
     if ~isempty(msks)
-        SUB{n}   = [msks.folder '/' msks.name];
-        n = n + 1;
+        SUB{n} = [msks.folder '/' msks.name];
+        n      = n + 1;
     end
 end
 

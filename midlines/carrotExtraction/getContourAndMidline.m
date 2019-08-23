@@ -1,4 +1,4 @@
-function [skel, crv, mline, tCrds, dsts] = getContourAndMidline(msk, vis)
+function [skel, crv, mline, tCrds] = getContourAndMidline(msk, vis)
 %% getContourAndMidline: extract midline and contour from binary mask image
 % This function runs Nathan's algorithm for extracting a contour and calculating
 % the midline from a binary mask image.
@@ -16,27 +16,12 @@ function [skel, crv, mline, tCrds, dsts] = getContourAndMidline(msk, vis)
 %   crv: extracted countour data
 %   mline: extracted midline data
 %   tCrds: coordinates of the tip
-%   dsts: vector of distance transform along midline
 %
 
 %% Set constants for respective algorithms
 MASK_THRESH     = 100; % Original 300
 MIN_THRESH_SIZE = 100; % Remove midlines of certain number of coordinates
 FACE            = 3;   % Direction to point images (original 3)
-
-% TODO: Pass these constants to the respective algorithm
-% getBWContour
-%     CNTR_LENGTH = 800; % Interpolation size for extracted contour
-%
-% getTipIdx
-%     KSNIP   = 163;
-%     SMOOTH1 = 5;
-%     SMOOTH2 = 10;
-%
-% generateMidline
-%     DSK   = 31;
-%     FSPEC = 7;
-%
 
 try
     %% Initial processing of the mask to face left-right and then pad
@@ -72,7 +57,7 @@ try
     tCrds = [tCrds(:,1) + CUTTIP , tCrds(:,2)]; % Shift for skel
     
     % Generate midline starting from tip and distance transform values
-    [mline, dsts] = generateMidline(~skel, tCrds);
+    mline = generateMidline(~skel, tCrds);
     
     %% Remove padding from mask, contour, and midline
     % Remove padded area of mask
@@ -98,13 +83,14 @@ try
         plt(crv, 'b.', 4);
         plt(mline, 'r.', 3);
         plt(tCrds, 'g*', 8);
-        %         bar(flip(dsts), 1, 'r');
     end
     
 catch e
     fprintf(2, 'Error extracting Midline and Contour\n%s\n', e.getReport);
-    mline = [];
+    skel  = [];
     crv   = [];
+    mline = [];        
+    tCrds = [];
 end
 
 end

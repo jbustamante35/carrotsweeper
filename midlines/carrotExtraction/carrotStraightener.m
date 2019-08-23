@@ -10,23 +10,24 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener
 %
 % Usage:
 %   [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = ...
-%         carrotStraightener(DIN, dirName, savData, savFigs, vis)
+%         carrotStraightener(DIN, dirName, savData, savFigs, vis, par)
 %
 % Input:
-%   DIN: path to root directory of data to analyze
+%   DIN: path to root directory of image sub-directories
 %   dirName: name of the sub-directory containing binary-masks
-%   savData: boolean to save outputted contour, midline, straightened mask data
-%   savFigs: boolean to save figures if the vis parameter is set to true
-%   vis: boolean to show mask with midline/contour and straightened mask
+%   savData: boolean to save results in image directories, .mat, and .csv files
+%   savFigs: boolean to save figures (vis parameter must be set to true)
+%   vis: boolean to visualize output
+%   par: boolean to run with parallel processing (1) or with normal loop (0)
 %
 % Output:
-%   mlines: cell array of midlines for each sub-directory of images
-%   cntrs: cell array of contours for each sub-directory of images
-%   smsks: cell array of straightened masks for each sub-directory of images
-%   pmsks: cell array of processed masks for each sub-directory of images
-%   tcrd: cell array of tip coordinates
-%   dsts: cell array of distance transform values along midline
-%   fnames: cell array of filenames of images
+%   mlines: midlines 
+%   cntrs: contours 
+%   smsks: straightened masks 
+%   pmsks: cell array of processed masks
+%   tcrd: tip coordinates
+%   dsts: sums of columns from straightened masks
+%   fnames: filenames of images inputted to pipeline
 %
 % Example:
 %   Run straightening pipeline on sub-directories named 'binary-masks' from
@@ -35,34 +36,28 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = carrotStraightener
 %       din = '~/LabData/CarrotSweeper/z_datasets/masks_wi2019';
 %       nm  = 'binary-masks';
 %
-%       % Run straightening pipeline from root directory
-%       [mlines, cntrs, smsks, pmsks, tcrds, dsts] = ...
-%           carrotStraightener(din, nm, 1, 0, 1);
+%       % Run straightening pipeline from root directory with parellelization
+%       [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = ...
+%           carrotStraightener(din, nm, 1, 0, 1, 1);
 %
 
 %% Collect all sub-directories named dirName
 % Get sub-directories from root directory
 X = loadSubDirectories(DIN, dirName);
 
-%% Run algorithm on all sub-directories and return data
-% [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
-%     carrotExtractor(x, vis, savData, savFigs), X, 'UniformOutput', 0);
-
 %% Normal run or with parallel processing
-% [NOTE] Changed parallelization to carrotExtractor rather than here
-if nargin > 5
-    if par
-        % Version that runs algorithm with parallel processing
-        for i = 1 : numel(X)
-            x = X{i};
-            [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
-                fnames{i}, nrms{i}] = carrotExtractor(x, vis, savData, savFigs, par);
-        end
-    else
-        % Run algorithm on all sub-directories and return data
-        [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames, nrms] =  cellfun(@(x) ...
-            carrotExtractor(x, vis, savData, savFigs, par), X, 'UniformOutput', 0);
+if par
+    % Version that runs algorithm with parallel processing
+    par = 0; % Can't run nested parfor loops
+    parfor i = 1 : numel(X)
+        x = X{i};
+        [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
+            fnames{i}] = carrotExtractor(x, vis, savData, savFigs, par);
     end
+else
+    % Run algorithm on all sub-directories and return data
+    [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] =  cellfun(@(x) ...
+        carrotExtractor(x, vis, savData, savFigs, par), X, 'UniformOutput', 0);
 end
 
 end

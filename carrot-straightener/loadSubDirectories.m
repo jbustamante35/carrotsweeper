@@ -16,8 +16,7 @@ function SUB = loadSubDirectories(DIN, dirName)
 
 %% Collect all sub-directories named dirName
 % Get sub-directories from root directory
-dins      = dir(DIN);
-dins(1:2) = [];
+dins = dir2(DIN);
 
 % Get all subdirectories named 'binary-masks'
 % Doesn't work when sub-directories have multiple sub-directories
@@ -40,3 +39,4 @@ end
 SUB = SUB(cell2mat(cellfun(@(x) ~isempty(x), SUB, 'UniformOutput', 0)));
 
 end
+

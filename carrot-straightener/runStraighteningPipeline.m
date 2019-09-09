@@ -37,15 +37,24 @@ fprintf('\nGetting contour and midline...');
 [pmsk, crv, mline, tcrd] = getContourAndMidline(msk, 0);
 fprintf('Done...[%.02f sec]\n', toc);
 
-tic;
-fprintf('Running straightening...');
-% smsk = sampleStraighten(mline, pmsk);
-[smsk, nrms]  = getStraightenedMask(mline, pmsk);
-fprintf('Done...[%.02f sec] \n', toc);
-
-% Post-process data [Flip right-to-left and binarize]
-smsk = handleFLIP(smsk, FACE);
-dsts = sum(smsk);
+try
+    tic;
+    fprintf('Running straightening...');
+    % smsk = sampleStraighten(mline, pmsk);
+    [smsk, nrms]  = getStraightenedMask(mline, pmsk);
+    fprintf('Done...[%.02f sec] \n', toc);
+    
+    
+    % Post-process data [Flip right-to-left and binarize]
+    smsk = handleFLIP(smsk, FACE);
+    dsts = sum(smsk);
+catch e
+%     fprintf(2, 'Error running algorithm\n%s\n', e.getReport);
+    fprintf(2, '\nError running algorithm\n');
+    smsk = [];
+    nrms = [];
+    dsts = [];
+end
 
 end
 

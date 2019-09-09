@@ -28,7 +28,7 @@ RAD      = pi / 2;   % Original pi / 2
 PDENSITY = [20 200]; % Original [20 200]
 WSIGMA   = 0.3;      % Original 0.3
 
-%% Euclidean distancs transform to compute distances to the edge of mask
+%% Euclidean distance transform to compute distances to the edge of mask
 gI       = double(bwdist(msk));
 gI       = imfilter(gI, fspecial('gaussian', [DSK DSK], FSPEC));
 [g1, g2] = gradient(gI);
@@ -49,7 +49,11 @@ T     = [N(2) -N(1)];
 iDirc = [T ; N];
 
 %% Trace midline from tip coordinate along gradient
-mline = trackFromPointAtGradient_carrot(img, tCrds, iDirc, ...
-    MAX_STEP, RHO, RAD, PDENSITY, WSIGMA)';
+try
+    mline = trackFromPointAtGradient_carrot(img, tCrds, iDirc, ...
+        MAX_STEP, RHO, RAD, PDENSITY, WSIGMA)';
+catch
+    mline = [];
+end
 
 end

@@ -45,20 +45,26 @@ try
     skel = skel(:, cols2remove:end);
     skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
     
-    %% Run through main functions
-    crv = getBWContour(skel);
-    
-    % Remove padded area of mask and curve/midline coordinates
-    rmCrv        = crv(:,1) < MIN_THRESH_SIZE;
-    crv(rmCrv,:) = [];
-    
-    % Identify tip as point of highest curvature
-    tCrds = getTipIdx(chk);
-    tCrds = [tCrds(:,1) + CUTTIP , tCrds(:,2)]; % Shift for skel
-    
-    % Generate midline starting from tip and distance transform values
-    mline = generateMidline(~skel, tCrds);
-    
+catch
+    fprintf(2, '\nError with skeletonization\n');
+    skel = [];
+end
+
+%% Run through main functions
+crv = getBWContour(skel);
+
+% Remove padded area of mask and curve/midline coordinates
+rmCrv        = crv(:,1) < MIN_THRESH_SIZE;
+crv(rmCrv,:) = [];
+
+% Identify tip as point of highest curvature
+tCrds = getTipIdx(chk);
+tCrds = [tCrds(:,1) + CUTTIP , tCrds(:,2)]; % Shift for skel
+
+% Generate midline starting from tip and distance transform values
+mline = generateMidline(~skel, tCrds);
+
+try
     %% Remove padding from mask, contour, and midline
     % Remove padded area of mask
     skel(:,1:MIN_THRESH_SIZE) = [];
@@ -84,12 +90,10 @@ try
         plt(mline, 'r.', 3);
         plt(tCrds, 'g*', 8);
     end
-    
 catch e
-    fprintf(2, 'Error extracting Midline and Contour\n%s\n', e.getReport);
-    skel  = [];
+    fprintf(2, '\nError finding midline\n');
     crv   = [];
-    mline = [];        
+    mline = [];
     tCrds = [];
 end
 

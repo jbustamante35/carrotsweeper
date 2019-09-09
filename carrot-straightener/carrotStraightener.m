@@ -298,9 +298,9 @@ try
     ttlP = sprintf('Midline and Contour on Mask\n%s', fname);
     title(ttlP);
     
-catch e
-    fprintf(2, 'Error plotting figure %d for %s\n%s\n', ...
-        fIdx, fname, e.getReport);
+catch
+    figname = 'Mask Overlay';
+    fprintf(2, 'Error plotting figure %d for %s [%s]\n', fIdx, fname, figname);
     
 end
 
@@ -316,9 +316,9 @@ try
     ttlS = sprintf('Width Profile\n%s', fname);
     title(ttlS);
     
-catch e
-    fprintf(2, 'Error plotting figure %d for %s\n%s\n', ...
-        fIdx, fname, e.getReport);
+catch
+    figname = 'Width Profile';
+    fprintf(2, 'Error plotting figure %d for %s [%s]\n', fIdx, fname, figname);
     
 end
 
@@ -385,9 +385,9 @@ try
     plt(maxP, 'k+', 8);
     text(maxX, maxY, maxT, 'Color', 'k', 'FontSize', 7, 'FontWeight', 'bold');
     
-catch e
-    fprintf(2, 'Error plotting figure %d for %s\n%s\n', ...
-        fIdx, fname, e.getReport);
+catch
+    figname = 'Normals on Mask';
+    fprintf(2, 'Error plotting figure %d for %s [%s]\n', fIdx, fname, figname);
     
 end
 
@@ -406,9 +406,9 @@ try
     ttlS = sprintf('Straighted Mask\n%s', fname);
     title(ttlS);
     
-catch e
-    fprintf(2, 'Error plotting figure %d for %s\n%s\n', ...
-        fIdx, fname, e.getReport);
+catch
+    figname = 'Straightened Mask';
+    fprintf(2, 'Error plotting figure %d for %s [%s]\n', fIdx, fname, figname);
     
 end
 

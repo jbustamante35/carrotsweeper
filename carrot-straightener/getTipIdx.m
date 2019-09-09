@@ -30,6 +30,7 @@ OUT    = DOUT.DOUT;
 xi     = OUT.xi;
 yi     = OUT.yi;
 
+try
 %% Use TipFindrX method to find optimally-refined tip
 % WTF I need to clean this up further
 VIS = 0;
@@ -42,6 +43,12 @@ end
 
 if VIS
     fprintf('...Identified tip in %.02f sec\n', toc);
+end
+
+catch
+    fprintf(2, 'Error with tip finder\n%s\n', e.getReport);
+    tCrds = [];
+    tIdx  = [];
 end
 
 end

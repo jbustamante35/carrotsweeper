@@ -21,9 +21,9 @@ function [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = batchStraightener(
 %   par: boolean to run with parallel processing (1) or with normal loop (0)
 %
 % Output:
-%   mlines: midlines 
-%   cntrs: contours 
-%   smsks: straightened masks 
+%   mlines: midlines
+%   cntrs: contours
+%   smsks: straightened masks
 %   pmsks: cell array of processed masks
 %   tcrd: tip coordinates
 %   dsts: sums of columns from straightened masks
@@ -48,10 +48,11 @@ X = loadSubDirectories(DIN, dirName);
 %% Normal run or with parallel processing
 if par
     % Version that runs algorithm with parallel processing
-%     par = 0; % Can't run nested parfor loops
-%     
-%     parfor i = 1 : numel(X)
-	for i = 1 : numel(X)
+    %     par = 0; % Can't run nested parfor loops
+    %
+    %     parfor i = 1 : numel(X)
+    [mlines, cntrs, smsks, pmsks, tcrds, dsts, fnames] = deal(cell(1, numel(X)));
+    for i = 1 : numel(X)
         x = X{i};
         [mlines{i}, cntrs{i}, smsks{i}, pmsks{i}, tcrds{i}, dsts{i}, ...
             fnames{i}] = carrotStraightener(x, savData, savFigs, vis, par);

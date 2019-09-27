@@ -1,16 +1,18 @@
 function D = runSweepAnalysis(BW, numX, numY, stps, vis, sv)
 %% runSweepAnalysis: extract contours from dataset, run PCA, then sweep through PCs
-% This function runs a pipeline in which the user loads a cell array of bw images, then defines the
-% number of Principal Components (PCs) to extract from PCA on the x-/y-coordinates. The number of
-% respective PCs to use for the x and y coordinate are set by the numX and numY parameters.
+% This function runs a pipeline in which the user loads a cell array of bw
+% images, then defines the number of Principal Components (PCs) to extract
+% from PCA on the x-/y-coordinates. The number of respective PCs to use for
+% the x and y coordinate are set by the numX and numY parameters.
 %
-% The data from PCA then go through the sweeping function, where each PC from the x-/y-coordinates
-% are iteratively swept up or down by a standard deviation, up to the number of steps defined by the
-% stps parameter.
+% The data from PCA then go through the sweeping function, where each PC from
+% the x-/y-coordinates are iteratively swept up or down by a standard
+% deviation, up to the number of steps defined by the stps parameter.
 %
-% Additional data can be visualized if the boolean vis parameter is set to 1; otherwise only the
-% figures from the PC sweep will be shown. The boolean sv parameter saves the figure handles as both
-% .fig and .tif files, and the PCA output and PC sweep output as a single .mat file.
+% Additional data can be visualized if the boolean vis parameter is set to 1;
+% otherwise only the figures from the PC sweep will be shown. The boolean sv
+% parameter saves the figure handles as both .fig and .tif files, and the PCA
+% output and PC sweep output as a single .mat file.
 %
 % Usage:
 %   D = runSweepAnalysis(BW, numX, numY, stps, vis, sv)
@@ -21,7 +23,7 @@ function D = runSweepAnalysis(BW, numX, numY, stps, vis, sv)
 %   numY: number of PCs to extract for PCA on the y-coordinates
 %   stps: number of steps above/below standard deviations to sweep through
 %   vis: boolean to show only sweep figures (0) or additional figures (1)
-%   sv: boolean to save figure handles as .fig and .tif files and data as a .mat file
+%   sv: boolean to save figures as .fig and .tif files and data as a .mat file
 %
 % Output:
 %   D: structure containing PCA data and PC sweep data
@@ -73,7 +75,7 @@ else
 end
 
 %% Extract and Rasterize normalized contours from BW images
-m  = @(x) randi([1 length(x)], 1);
+m            = @(x) randi([1 length(x)], 1);
 [X, Y, CNTR] = extractAndRasterize(BW);
 
 %% Run PCA on x-/y-coordinates
@@ -82,8 +84,9 @@ sz        = [size(CNTR{1}.NormalizedOutline,1) 1];
 [pcaY, ~] = pcaAnalysis(Y, numY, sz, 0, 'yCoords', 0);
 
 %% Sweep through all PCs
-[scFull, smFull, fg] = performSweep('pcaX', pcaX, 'pcaY', pcaY, 'nsteps', stps, 'sv', 0);
-figs(4:5) = fg;
+[scFull, smFull, fg] = ...
+    performSweep('pcaX', pcaX, 'pcaY', pcaY, 'nsteps', stps, 'sv', 0);
+figs(4:5)            = fg;
 
 %% Set x-/y-limits equal [figure out how to set this dynamically]
 % xl = [-900 200];
@@ -95,21 +98,21 @@ yl = getMax(pcaY);
 set(0, 'CurrentFigure', figs(4));
 for s = 1 : numX
     subplot(2, 2, s);
-%     xlim(xl);
-%     ylim(yl);
+    %     xlim(xl);
+    %     ylim(yl);
 end
 
 % y-coordinates
 set(0, 'CurrentFigure', figs(5));
 for s = 1 : numY
     subplot(2, 1, s);
-%     xlim(xl);
-%     ylim(yl);
+    %     xlim(xl);
+    %     ylim(yl);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF MAIN PIPELINE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF MAIN PIPELINE %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Plot re-converted simulated contour onto bw image
 if vis
     set(0, 'CurrentFigure', figs(1));
@@ -203,9 +206,9 @@ if vis
     
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SAVE DATA HERE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SAVE DATA HERE %%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Save Figures and Dataset
 D  = v2struct(pcaX, pcaY, scFull, smFull, CNTR);
 
@@ -220,15 +223,15 @@ if sv
     end
     
     D  = v2struct(pcaX, pcaY, scFull, smFull, CNTR);
-    nm = sprintf('%s_carrotPCA_analysis_%dRoots', datestr(now, 'yymmdd'), numel(CNTR));
+    nm = sprintf('%s_carrotPCA_analysis_%dRoots', ...
+        datestr(now, 'yymmdd'), numel(CNTR));
     save(nm, '-v7.3', 'D');
 end
 end
 
 
 function [X, Y, CNTR] = extractAndRasterize(BW)
-%% subfunction to create ContourJB objects from contours then split and rasterize x-/y-coordinates
-
+%% extractAndRasterize: create ContourJB then split and rasterize coordinates
 sz   = 800;
 CNTR = cellfun(@(x) extractContour(x, sz), BW, 'UniformOutput', 0);
 BNDS = cellfun(@(x) x.NormalizedOutline, CNTR, 'UniformOutput', 0);
@@ -238,3 +241,4 @@ X    = rasterizeImagesHQ(bndX);
 Y    = rasterizeImagesHQ(bndY);
 
 end
+

@@ -255,7 +255,7 @@ if savData
 else
     % Single images [this needs to be fixed]
     tdir = dataIn;
-    nms = tdir;
+    nms  = tdir;
 end
 
 end

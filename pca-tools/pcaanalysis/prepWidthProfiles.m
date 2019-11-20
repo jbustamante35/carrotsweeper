@@ -1,6 +1,6 @@
 function [W, wids, lngs] = prepWidthProfiles(D, mth, I)
 %% prepWidthProfiles: prepare width profiles for PCA
-%
+% This function flips the widths left-to-right! 
 %
 % Usage:
 %   [W, wids, lngs] = prepWidthProfiles(D, mth)
@@ -8,7 +8,7 @@ function [W, wids, lngs] = prepWidthProfiles(D, mth, I)
 % Input:
 %   D: cell array of width profiles
 %   mth: method of prep to use [zeropad|normalize]
-%   I: size to interpolate length to
+%   I: size to interpolate length to [defaults to longest in dataset]
 %
 % Output:
 %   W: width profiles stacked using requested method
@@ -20,13 +20,17 @@ end
 
 switch mth
     case 'zeropad'
+        %% Pad width profile with zeros to match the longest profile
         padIt   = @(d) I - size(d, 2);
         W      = cellfun(@(x) padarray(x', padIt(x), 0, 'pre')', ...
             D, 'UniformOutput', 0);
         W      = fliplr(cat(1, W{:}));
+        wids   = [];
+        lngs   = [];
         
     case 'normalize'
-        % Interpolate by longest length
+        %% Normalize by each max width 
+        % Interpolate by a given length
         nrm = @(d) [d ; 1 : length(d)]';
         NL  = cellfun(@(x) getDim(interpolateOutline(nrm(x), I), 1)', ...
             D, 'UniformOutput', 0);
@@ -38,13 +42,13 @@ switch mth
         % Data regressors
         wids = cell2mat(cellfun(@(x) max(x), D, 'UniformOutput', 0));
         lngs = cell2mat(cellfun(@(x) length(x), D, 'UniformOutput', 0));
-        
-    case 'tips'
-        
-        
+                
     otherwise
         fprintf(2, 'Method must be [zeropad|normalize]\n');
-        W = [];
+        W    = [];
+        wids = [];
+        lngs = [];
 end
 
 end
+

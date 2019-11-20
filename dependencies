@@ -13,7 +13,7 @@
 /home/jbustamante/Software/hypoquantyl/helpers/pca/analysis/showMyPCA.m
 /home/jbustamante/Software/hypoquantyl/classes/ContourJB.m
 /home/jbustamante/Software/hypoquantyl/plots/plt.m
-/home/jbustamante/Software/hypoquantyl/plots/sweep_pca/input2sim.m
+/home/jbustamante/Software/hypoquantyl/plots/sweep_pca/pcaProject.m
 /home/jbustamante/Software/hypoquantyl/plots/sweep_pca/pcaSweep.m
 /home/jbustamante/Software/hypoquantyl/plots/sweep_pca/performSweep.m
 /home/jbustamante/Software/hypoquantyl/plots/sweep_pca/runSweepAnalysis.m

@@ -8,7 +8,7 @@ function [W, wids, lngs] = prepWidthProfiles(D, mth, I)
 % Input:
 %   D: cell array of width profiles
 %   mth: method of prep to use [zeropad|normalize]
-%   I: size to interpolate length to
+%   I: size to interpolate length to [defaults to longest in dataset]
 %
 % Output:
 %   W: width profiles stacked using requested method
@@ -25,6 +25,8 @@ switch mth
         W      = cellfun(@(x) padarray(x', padIt(x), 0, 'pre')', ...
             D, 'UniformOutput', 0);
         W      = fliplr(cat(1, W{:}));
+        wids   = [];
+        lngs   = [];
         
     case 'normalize'
         %% Normalize by each max width 
@@ -43,7 +45,9 @@ switch mth
                 
     otherwise
         fprintf(2, 'Method must be [zeropad|normalize]\n');
-        W = [];
+        W    = [];
+        wids = [];
+        lngs = [];
 end
 
 end

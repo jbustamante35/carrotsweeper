@@ -1,4 +1,4 @@
-function [pw, ps, pt, pr, wids, lens] =  widthProfileAnalysis(rootDir, maskDir, savpca, savcsv)
+function [pw, ps, pt, pr, wids, lens] =  widthProfileAnalysis(rootDir, maskDir, savpca, savcsv, vis)
 %% widthProfileAnalysis: mutliple PCA analyses of width profiles
 % Get PCA on Widths, Length-Width Normalized Profile, Tips, Shoulders.
 % A neat pipeline to do all this shit from raw straightened masks. Output is in
@@ -27,8 +27,8 @@ sprA = repmat('-', 1, 80);
 sprB = repmat('=', 1, 80);
 
 tAll = tic;
-fprintf('\n%s\nRunning Width Profile Analysis [Save PCA = %s | Save CSV = %s]\n%s\n', ...
-    sprB, num2str(savpca), num2str(savcsv), sprA);
+fprintf('\n%s\nRunning Width Profile Analysis [Save PCA = %s | Save CSV = %s | Vis = %s]\n%s\n', ...
+    sprB, num2str(savpca), num2str(savcsv), num2str(vis), sprA);
 
 %% Get Raw Width Profiles from Straightened Masks
 t = tic;
@@ -107,34 +107,59 @@ fprintf('DONE! [%.02f sec]\n', toc(t));
 if savcsv
     t = tic;
     fprintf('Saving output in .csv and .xls files...');
-
+    
     %
     [FDIRS , FNAMES , ~] = cellfun(@(x) fileparts(x), FPATHS, 'UniformOutput', 0);
-
+    
     % Extract filename information
     ids  = {'UID' , 'Genotype'};
     vals = cellfun(@(x) getNameID(FNAMES, x), ids, 'UniformOutput', 0);
-
+    
     % Extract PC scores
     allPCA = [ps , pt , ps , pr];
     scrs   = arrayfun(@(x) x.PCAScores, allPCA, 'UniformOutput', 0);
-
+    
     % Store data in structure and table
     flds = {'UID' , 'Genotype' , 'ShoulderPCs' , 'TipPCs' , ...
         'WidthPCs' , 'NormalizedPCs'};
     strc = cell2struct([vals , scrs] , flds, 2);
     tbl  = struct2table(strc);
-
+    
     %
     dout = sprintf('%s_CarrotPCA_%dCarrots_%dGenotypes', ...
         tdate, numel(DSTS), numel(FDIRS));
     tnm1 = sprintf('%s/%s.csv', rootDir, dout);
     writetable(tbl, tnm1, 'FileType', 'text');
-
+    
     tnm2 = sprintf('%s/%s', rootDir, dout);
     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
-
+    
     fprintf('...DONE! [%.02f sec]\n', toc(t));
+end
+
+%% Visualize results
+if vis
+    t = tic;
+    fprintf('Visualizing ranges of PC scores...');
+    
+    figs    = 1 : 4;
+    fnms    = cell(1, numel(figs));
+    rng     = 5;
+    fnms{1} = showScoreRange(ps, rng, 'Shoulders', 1);
+    fnms{2} = showScoreRange(pt, rng, 'Tips', 2);
+    fnms{3} = showScoreRange(pw, rng, 'Widths', 3);
+    fnms{4} = showScoreRange(pr, rng, 'Normalized', 4);
+    
+    if savcsv
+        for f = 1 : numel(figs)
+            fprintf('Saving figure %02d...', f);
+            fnm = sprintf('%s/%s', rootDir, fnms{f});
+            saveas(figs(f), fnm, 'png');
+        end
+    end
+    
+    fprintf('...DONE! [%.02f sec]\n', toc(t));
+    
 end
 
 fprintf('%s\nFinished Width Profile Analysis [%.02f sec]\n%s\n', ...
@@ -151,4 +176,65 @@ vals = cellfun(@(x) char(x.id), val, 'UniformOutput', 0);
 
 end
 
+%%
+function fnm = showScoreRange(pd, nRng, dnm, fIdx)
+%% showScoreRange: show range of curves after sorting by PC scores
+% Extract info from the dataset
+scrs = pd.PCAScores;
+din  = pd.InputData;
+dsim = pd.SimData;
+
+tot = length(scrs);
+col = 1;
+[dsrt , didx] = sortrows(scrs, col);
+
+% Create range of indices and color array
+itr    = ceil(size(dsrt,1) / nRng);
+cnt    = 1;
+carIdx = [1 : itr : size(dsrt, 1) , size(dsrt,1)];
+clrs   = generateColorArray(numel(carIdx));
+lgn    = cell(1, size(carIdx,1));
+
+% A little trick to make sure concat has same digits as total
+ndigs = num2str(numel(num2str(tot)));
+dstr  = sprintf('%%0%sd', sprintf('%s', ndigs));
+
+% Plot input and simulated range
+set(0, 'CurrentFigure', fIdx);
+cla;clf;
+for i = carIdx
+    clr = clrs{cnt};
+    idx = didx(i);
+    plot(din(idx,:), 'LineStyle', '-', 'Color', clr, 'LineWidth', 2);
+    hold on;
+    g(cnt) = plot(dsim(idx,:), 'LineStyle', '--', 'Color', clr, 'LineWidth', 2);
+    
+    % A little trick to make sure concat has same digits as total
+    cmd    = sprintf('sprintf(''%s'', idx)', dstr);
+    idxstr = eval(cmd);
+    
+    lgn{cnt} = sprintf('%s %s', dnm, idxstr);
+    cnt = cnt + 1;
+end
+
+% Remove simulated curves and show legend and title
+arrayfun(@(x) set(get(get(x, 'Annotation'), 'LegendInformation'), ...
+    'IconDisplayStyle', 'off'), g, 'UniformOutput', 0);
+legend(cat(1, lgn{:}), 'Location', 'bestoutside');
+
+ttl = sprintf('PC Score Range [%d %s]', tot, dnm);
+title(ttl);
+
+fnm = sprintf('%s_%s_sortedPCs_%dCarrots', dnm, tdate, tot);
+
+end
+
+function clrmap = generateColorArray(itrs)
+%% generateColorMatrix: generate a cell array of colors of specific size
+clrs   = {'k', 'b', 'r', 'g', 'c', 'm'};
+nReps  = ceil(itrs / numel(clrs));
+clrmap = repmat(clrs, 1, nReps);
+clrmap = clrmap(1 : itrs);
+
+end
 

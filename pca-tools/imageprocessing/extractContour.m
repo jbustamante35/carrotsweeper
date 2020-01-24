@@ -1,13 +1,13 @@
-function [cntr, cout] = extractContour(bw, max_size, nrm, alt, req)
+function [cntr, cout] = extractContour(bw, ncrds, nrm, alt, req)
 %% extractContour: find contour of single image
 % This function blah
 %
 % Usage:
-%   cntr = extractContour(bw, max_size, alt, nrm, req)
+%   [cntr, cout] = extractContour(bw, ncrds, nrm, alt, req)
 %
 % Input:
 %   bw: bw image
-%   max_size: number of coordinates to normalize boundaries
+%   ncrds: number of coordinates to normalize contour
 %   nrm: reindexing method for NormalizedOutline
 %   alt: use alternative reindexing parameter to use HypoQuantyl's method
 %   req: string to output '', 'Interp', or 'Normalized' Outline
@@ -24,7 +24,7 @@ bnds     = bndAll{lrg};
 
 %% Interpolate distances to an equalized number of coordinates
 bnds   = [getDim(bnds, 2) , getDim(bnds, 1)]; % Switch y-/x-coordinates to x-/y-coordinates
-intrps = interpolateOutline(bnds, max_size);
+intrps = interpolateOutline(bnds, ncrds);
 
 %% Output final structure
 % Normalization method after reindexing: 'default' subtracts by mean after

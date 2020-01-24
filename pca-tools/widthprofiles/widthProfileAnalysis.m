@@ -116,7 +116,7 @@ if savcsv
     vals = cellfun(@(x) getNameID(FNAMES, x), ids, 'UniformOutput', 0);
     
     % Extract PC scores
-    allPCA = [ps , pt , ps , pr];
+    allPCA = [pw , pt , ps , pr];
     scrs   = arrayfun(@(x) x.PCAScores, allPCA, 'UniformOutput', 0);
     
     % Store data in structure and table
@@ -125,15 +125,37 @@ if savcsv
     strc = cell2struct([vals , scrs] , flds, 2);
     tbl  = struct2table(strc);
     
-    %
+    % Save xls and csv files
     dout = sprintf('%s_CarrotPCA_%dCarrots_%dGenotypes', ...
         tdate, numel(DSTS), numel(FDIRS));
-    tnm1 = sprintf('%s/%s.csv', rootDir, dout);
+    dnm  = 'Output';
+    ddir = sprintf('%s/%s', rootDir, dnm);
+    mkdir(ddir);
+    
+    tnm1 = sprintf('%s/%s.csv', ddir, dout);
     writetable(tbl, tnm1, 'FileType', 'text');
     
-    tnm2 = sprintf('%s/%s', rootDir, dout);
+    tnm2 = sprintf('%s/%s', ddir, dout);
     writetable(tbl, tnm2, 'FileType', 'spreadsheet');
     
+    % Save Eigenvectors and Means in xls and csv files [full, tips, shoulders]    
+    eouts = {'Width' , 'Tip' , 'Shoulder'};
+    estr  = cellfun(@(x) sprintf('%s_%sVectors', tdate, x), ...
+        eouts, 'UniformOutput', 0);
+    evecs = {pw.EigVecs , pt.EigVecs , ps.EigVecs};
+    emns  = {pw.MeanVals , pt.MeanVals , ps.MeanVals};
+    
+    for e = 1 : numel(estr)
+        enm = struct('EigVecs', evecs{e}, 'Means', emns{e}');
+        etbl = struct2table(enm);
+        
+        etnm = sprintf('%s/%s.csv', ddir, estr{e});
+        writetable(etbl, etnm, 'FileType', 'text');
+        
+        etnm = sprintf('%s/%s', ddir, estr{e});
+        writetable(etbl, etnm, 'FileType', 'spreadsheet');
+    end
+        
     fprintf('...DONE! [%.02f sec]\n', toc(t));
 end
 
@@ -200,6 +222,7 @@ ndigs = num2str(numel(num2str(tot)));
 dstr  = sprintf('%%0%sd', sprintf('%s', ndigs));
 
 % Plot input and simulated range
+
 set(0, 'CurrentFigure', fIdx);
 cla;clf;
 for i = carIdx

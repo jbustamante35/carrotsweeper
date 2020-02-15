@@ -15,7 +15,7 @@ function [msk, prf] = scores2mask(scrs, evecs, mns)
 %   prf: the averaged width profile
 %
 
-avg = mean(scrs);
+avg = mean(scrs, 1); % Mean by Columns
 prf = pcaProject(avg, evecs, mns, 'scr2sim');
 msk = profile2mask(prf);
 

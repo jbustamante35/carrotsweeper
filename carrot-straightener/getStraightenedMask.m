@@ -35,8 +35,8 @@ bndsOut = [-getDim(ulng, 2) , getDim(ulng, 1)] + crds;
 bndsInn = [getDim(ulng, 2) , -getDim(ulng, 1)] + crds;
 
 %% Map curves to image
-[envO, datO] = map2img(img, crds, bndsOut, SCL, BNZ);
-[envI, datI] = map2img(img, crds, bndsInn, SCL, BNZ);
+[envO, datO] = map2img(double(img), crds, bndsOut, SCL, BNZ);
+[envI, datI] = map2img(double(img), crds, bndsInn, SCL, BNZ);
 
 if BNZ
     %% For CarrotSweeper straightener
@@ -67,7 +67,8 @@ function [env, edata] = map2img(img, crds, ebnds, dscl, bnz)
 
 % Map curves to image
 sz     = [size(eGrid,1), length(crds)];
-mapimg = ba_interp2(double(img), eCrds(:,1), eCrds(:,2));
+% mapimg = ba_interp2(double(img), eCrds(:,1), eCrds(:,2)); % Don't stretch vector
+mapimg = interp2(double(img), eCrds(:,1), eCrds(:,2));
 
 % Binarize if using for CarrotSweeper
 if bnz
@@ -75,6 +76,11 @@ if bnz
 end
 
 env = reshape(mapimg, sz);
+
+% Replace out-of-frame pixels with median background intensity
+msk             = img > graythresh(img / 255) * 255;
+bk              = median(img(msk(:)));
+env(isnan(env)) = bk;
 
 % Extra data for visualization or debugging
 edata = struct('eCrds', eCrds, 'GridSize', size(eGrid));

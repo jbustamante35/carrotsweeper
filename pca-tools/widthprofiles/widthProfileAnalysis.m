@@ -61,7 +61,7 @@ FULLTRP              = 1000;
 % Full Widths
 [FW , wids , lens] = prepWidthProfiles(DSTS, 'normalize', FULLTRP); % OG
 
-% Shoulders
+% Shoulders [needs to be flipped]
 FLPS = cellfun(@fliplr, DSTS, 'UniformOutput', 0);
 SHLD = cellfun(@(x) x(1 : CLIPSIZE), FLPS, 'UniformOutput', 0);
 SH   = fliplr(prepWidthProfiles(SHLD, 'normalize', SPLTTRP));

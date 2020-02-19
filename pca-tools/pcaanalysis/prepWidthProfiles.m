@@ -21,7 +21,7 @@ end
 switch mth
     case 'zeropad'
         %% Pad width profile with zeros to match the longest profile
-        padIt   = @(d) I - size(d, 2);
+        padIt  = @(d) I - size(d, 2);
         W      = cellfun(@(x) padarray(x', padIt(x), 0, 'pre')', ...
             D, 'UniformOutput', 0);
         W      = fliplr(cat(1, W{:}));

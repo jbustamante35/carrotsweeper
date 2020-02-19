@@ -18,7 +18,7 @@ function [DSTS , IMGS, FPATHS] = loadWidthProfiles(rootDir, maskDir)
 %%
 if nargin < 1
     IMGS = '/home/jbustamante/Dropbox/EdgarSpalding/labdata/rawdata/scott_brainard/images';
-    SET  = 'set4';
+    SET  = 'gwas-curated';
     
     rootDir = sprintf('%s/%s', IMGS, SET);
     maskDir = 'straight-masks';

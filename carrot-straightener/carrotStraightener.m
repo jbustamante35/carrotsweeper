@@ -68,6 +68,19 @@ if savData || savFigs
     mkdir(widOut);
     mkdir(nrmOut);
     mkdir(mskOut);
+    
+    % Open figures if none are open
+    nf   = 4;
+    figs = 1 : nf;
+    if isempty(findobj('type', 'figure')) || ...
+            numel(findobj('type', 'figure')) < nf
+        % Generate n figures        
+        for n = 1 : nf
+            figs(n) = figure;
+        end
+        set(figs, 'Color', 'w');
+    end
+    
 end
 
 if isfolder(dataIn)
@@ -85,21 +98,21 @@ if isfolder(dataIn)
             t = tic;
             try
                 fname{n} = getDirName(img.Files{n});
-                fprintf('\n================================================\n');
+                fprintf('\n%s\n', repmat('=', 1, 80));
                 fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
-                fprintf('\n------------------------------------------------\n');
+                fprintf('\n%s\n', repmat('-', 1, 80));
                 
                 [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
                 
-                fprintf('\n------------------------------------------------\n');
+                fprintf('\n%s\n', repmat('-', 1, 80));
                 fprintf('Successfully processed %s\n', fname{n});
                 
             catch e
                 fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
             end
             fprintf('Pipeline finished in %.02f sec', toc(t));
-            fprintf('\n================================================\n');
+            fprintf('\n%s\n', repmat('-', 1, 80));
         end
         fprintf('DONE! [%.02f sec]\n', toc(tt));
     else
@@ -109,21 +122,21 @@ if isfolder(dataIn)
             t = tic;
             try
                 fname{n} = getDirName(img.Files{n});
-                fprintf('\n================================================\n');
+                fprintf('\n%s\n', repmat('=', 1, 80));
                 fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
-                fprintf('\n------------------------------------------------\n');
+                fprintf('\n%s\n', repmat('-', 1, 80));
                 
                 [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
                     runStraighteningPipeline(img.readimage(n));
                 
-                fprintf('\n------------------------------------------------\n');
+                fprintf('\n%s\n', repmat('-', 1, 80));
                 fprintf('Successfully processed %s\n', fname{n});
                 
             catch e
                 fprintf(2, 'Error processing %s\n%s\n', fname{n}, e.getReport);
             end
             fprintf('Pipeline finished in %.02f sec', toc(t));
-            fprintf('\n================================================\n');
+            fprintf('\n%s\n', repmat('=', 1, 80));
         end
         fprintf('DONE! [%.02f sec]\n', toc(tt));
     end
@@ -135,14 +148,14 @@ else
     [tot , n]                                  = deal(1);
     [pmsk, crv, mline, smsk, tcrd, nrms, dsts] = deal(cell(1, tot));
     
-    try
-        fprintf('\n================================================\n');
-        fprintf('Processing image %d of %d\n%s', n, tot, fname{n});
-        fprintf('\n------------------------------------------------\n');
+    try        
+        fprintf('%s\n', repmat('=', 1, 80));
+        fprintf('Processing image %d of %d\n%s', n, tot, fname{n});        
+        fprintf('%s\n', repmat('-', 1, 80));
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
             runStraighteningPipeline(img);
         fprintf('Pipeline finished in %.02f sec', toc(t));
-        fprintf('\n================================================\n');
+        fprintf('%s\n', repmat('=', 1, 80));
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);
     end
@@ -156,8 +169,10 @@ if vis
     
     for n = 1 : tot
         nm    = fixtitle(fname{n}, car);
-        fIdxs = plotCarrots(nm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
-            dsts{n}, nrms{n}, smsk{n}, psec, 0);
+        nmidx = sprintf('%03d of %03d', n, tot);
+        fnm   = {nm , nmidx};
+        fIdxs = plotCarrots(fnm, pmsk{n}, mline{n}, crv{n}, tcrd{n}, ...
+            dsts{n}, nrms{n}, smsk{n}, psec, figs);
         
         %% Save figure in it's own directory named as the filename
         if savFigs
@@ -180,9 +195,9 @@ end
 if savData
     % Save .mat and .csv files in output-$date$ directory
     if isfolder(dataIn)
-        [~, fName]   = fileparts(fileparts(dataIn));
+        [~, fName] = fileparts(fileparts(dataIn));
     else
-        [~, fName]   = fileparts(dataIn);
+        [~, fName] = fileparts(dataIn);
     end
     
     flds    = {'fieldNames', 'mline', 'crv', 'smsk', 'pmsk', ...
@@ -260,43 +275,26 @@ end
 
 end
 
-function figs = plotCarrots(fname, raw_mask, midline, contours, tip_crds, dsts, nrms, straight_mask, psec, f)
+function figs = plotCarrots(fnmidx, raw_mask, midline, contours, tip_crds, dsts, nrms, straight_mask, psec, figs)
 %% plotCarrots: plotting function for this script
-% Set f to true generate figures if they don't exist
-% Set f to false to overwrite existing figures
-if f
-    figs = 1:4;
-    figs(1) = figure;
-    figs(2) = figure;
-    figs(3) = figure;
-    figs(4) = figure;
-    set(figs, 'Color', 'w');
-else
-    figs = 1:4;
-    figs(1) = figure(1);
-    figs(2) = figure(2);
-    figs(3) = figure(3);
-    figs(4) = figure(4);
-    set(figs, 'Color', 'w');
-end
+%
+%
+%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Overlay midline, contour, tip on processed mask
-fIdx = 1;
+fIdx  = 1;
+fname = fnmidx{1};
+fnidx = fnmidx{2};
 
 try
-    set(0, 'CurrentFigure', figs(fIdx));
-    cla;clf;
-    
-    imagesc(raw_mask);
-    colormap gray;
-    axis image;
+    figclr(fIdx);    
+    myimagesc(raw_mask, 'gray', 'image', 'on');
     hold on;
     plt(midline, 'r-', 2);
     plt(contours, 'b-', 2);
     plt(tip_crds, 'g*', 5);
-    ttlP = sprintf('Midline and Contour on Mask\n%s', fname);
-    title(ttlP);
+    ttlP = sprintf('Midline and Contour on Mask [%s]\n%s', fnidx, fname);
+    title(ttlP, 'FontSize', 10);
     
 catch
     figname = 'Mask Overlay';
@@ -309,12 +307,12 @@ end
 fIdx = fIdx + 1;
 
 try
-    set(0, 'CurrentFigure', figs(fIdx));
-    cla;clf;
+    figclr(fIdx);
     
     bar(flip(dsts), 1, 'r');
-    ttlS = sprintf('Width Profile\n%s', fname);
-    title(ttlS);
+    axis image;
+    ttlS = sprintf('Width Profile [%s]\n%s', fnidx, fname);
+    title(ttlS, 'FontSize', 10);
     
 catch
     figname = 'Width Profile';
@@ -327,12 +325,8 @@ end
 fIdx = fIdx + 1;
 
 try
-    set(0, 'CurrentFigure', figs(fIdx));
-    cla;clf;
-    
-    imagesc(raw_mask);
-    colormap gray;
-    axis image;
+    figclr(fIdx);        
+    myimagesc(raw_mask, 'gray', 'image', 'on');
     hold on;
     
     plt(midline, 'r-', 2);
@@ -372,9 +366,9 @@ try
     maxT           = num2str(round(maxD, 2));
     
     % Figure title
-    ttlP = sprintf('Length %d pixels | Max Width %.0f pixels\n%s', ...
-        lng, maxD, fname);
-    title(ttlP);
+    ttlP = sprintf('Length %d pixels | Max Width %.0f pixels [%s]\n%s', ...
+        lng, maxD, fnidx, fname);
+    title(ttlP, 'FontSize', 10);
     
     % Plot max normal too
     % Issues when max width is right at base [not enough envelope coordinates]
@@ -396,15 +390,13 @@ end
 fIdx = fIdx + 1;
 
 try
-    set(0, 'CurrentFigure', figs(fIdx));
-    cla;clf;
+    figclr(fIdx);
     
     flp  = handleFLIP(straight_mask, 3);
-    imagesc(flp);
-    colormap gray;
+    myimagesc(flp, 'gray', 'image', 'on');
     
-    ttlS = sprintf('Straighted Mask\n%s', fname);
-    title(ttlS);
+    ttlS = sprintf('Straighted Mask [%s]\n%s', fnidx, fname);
+    title(ttlS, 'FontSize', 10);
     
 catch
     figname = 'Straightened Mask';

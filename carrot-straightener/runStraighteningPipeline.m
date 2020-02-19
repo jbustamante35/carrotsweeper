@@ -48,8 +48,7 @@ try
     % Post-process data [Flip right-to-left and binarize]
     smsk = handleFLIP(smsk, FACE);
     dsts = sum(smsk);
-catch e
-%     fprintf(2, 'Error running algorithm\n%s\n', e.getReport);
+catch 
     fprintf(2, '\nError running algorithm\n');
     smsk = [];
     nrms = [];

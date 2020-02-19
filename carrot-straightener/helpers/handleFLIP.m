@@ -1,17 +1,37 @@
-function [I direc] = handleFLIP(I,direc)
-if isempty(direc)
+function [img , direc2flip] = handleFLIP(img, direc2flip)
+%% handleFLIP
+% Description
+%
+% Usage:
+%    [img , direc2flip] = handleFLIP(img, direc2flip)
+%
+% Input:
+%    img: image to flip
+%    direc2flip: direction (1,2,3,4) to flip [empty to auto-detect]
+%
+% Output:
+%    img: flipped image
+%    direc2flip: direction image was flipped
+%
+% Author Nathan Miller <nbmill@gmail.com>
+% Edited by Julian Bustamante <jbustamante@wisc.edu>
+%
+
+%%
+if isempty(direc2flip)
     % handle the direction
-    [direc] = DC(I);
+    [direc2flip] = DC(img);
 end
-switch direc
+
+switch direc2flip
    case 1                                                      % from the left
        % do nothing
    case 2                                                      % from the top
-       I = I';                   
+       img = img';
    case 3                                                      % from the right
-       I = fliplr(I);
+       img = fliplr(img);
    case 4                                                      % from the bottom
-       I = flipud(I)'; % WORKS
+       img = flipud(img)'; % WORKS
 end
-% handle the direction   
+% handle the direction
 % read and flip

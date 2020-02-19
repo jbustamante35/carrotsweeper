@@ -5,13 +5,13 @@ function [smsk, sdata] = getStraightenedMask(crds, img, BNZ, SCL)
 % midline.
 %
 % Usage:
-%   smsk = getStraightenedMask(crds, msk, bnz, dscl)
+%   [smsk, sdata] = getStraightenedMask(crds, img, BNZ, SCL)
 %
 % Input:
 %   crds: x-/y-coordinates of curve to map
 %   img: image to interpolate pixels from coordinates
-%   bnz: boolean to binarize the final mask [for bw objects]
-%   dscl: scaler to extend normal to desired distance [in pixels]
+%   BNZ: boolean to binarize the final mask [for bw objects]
+%   SCL: scaler to extend normal to desired distance [in pixels]
 %
 % Output:
 %   smsk: straightened image
@@ -40,7 +40,7 @@ bndsInn = [getDim(ulng, 2) , -getDim(ulng, 1)] + crds;
 
 if BNZ
     %% For CarrotSweeper straightener
-    smsk = handleFLIP([flipud(envO) ; envI],3);
+    smsk = handleFLIP([flipud(envO) ; envI], 3);
     
     % Extract largest object from binarized image
     prp                            = regionprops(smsk, 'Area', 'PixelIdxList');
@@ -67,20 +67,23 @@ function [env, edata] = map2img(img, crds, ebnds, dscl, bnz)
 
 % Map curves to image
 sz     = [size(eGrid,1), length(crds)];
-% mapimg = ba_interp2(double(img), eCrds(:,1), eCrds(:,2)); % Don't stretch vector
-mapimg = interp2(double(img), eCrds(:,1), eCrds(:,2));
+mapimg = ba_interp2(double(img), eCrds(:,1), eCrds(:,2)); % Don't stretch vector
+% mapimg = interp2(double(img), eCrds(:,1), eCrds(:,2));
 
-% Binarize if using for CarrotSweeper
+% Binarize for CarrotSweeper
 if bnz
-    mapimg = imbinarize(mapimg, 'adaptive', 'Sensitivity', 1);
+    env = logical(reshape(mapimg, sz));
+    %     env = imbinarize(env, 'adaptive', 'Sensitivity', 1);
+    %     mapimg = imbinarize(mapimg, 'adaptive', 'Sensitivity', 1);
+else
+    env = reshape(mapimg, sz);
+    
+    % Replace out-of-frame pixels with median background intensity
+    msk             = img > graythresh(img / 255) * 255;
+    bk              = median(img(msk(:)));
+    env(isnan(env)) = bk;
+    
 end
-
-env = reshape(mapimg, sz);
-
-% Replace out-of-frame pixels with median background intensity
-msk             = img > graythresh(img / 255) * 255;
-bk              = median(img(msk(:)));
-env(isnan(env)) = bk;
 
 % Extra data for visualization or debugging
 edata = struct('eCrds', eCrds, 'GridSize', size(eGrid));

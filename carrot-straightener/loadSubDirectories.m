@@ -4,7 +4,7 @@ function SUB = loadSubDirectories(DIN, dirName)
 % inputted root directory DIN.
 %
 % Usage:
-%   SUB = loadSubDirectories(DIN)
+%   SUB = loadSubDirectories(DIN, dirName)
 %
 % Input:
 %   DIN: root directory containing sub-directories

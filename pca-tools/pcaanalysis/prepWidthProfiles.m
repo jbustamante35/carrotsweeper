@@ -14,6 +14,7 @@ function [W, wids, lngs] = prepWidthProfiles(D, mth, I)
 %   W: width profiles stacked using requested method
 %
 
+%% 
 if nargin < 3
     I = max(cell2mat(cellfun(@(x) size(x,2 ), D, 'UniformOutput', 0)));
 end

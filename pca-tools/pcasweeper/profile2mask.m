@@ -14,8 +14,13 @@ function msk = profile2mask(prf, wid)
 
 % Make blank mask template 2x the width and 1x the length of the profile
 if nargin < 2
-    % Need to choose an arbitrary width since these are normalized
-    wid = 300; 
+    if max(prf, 1)
+        % Need to choose an arbitrary width since these are normalized
+        wid = 300;
+    else
+        % Profile is not normalized, so don't stretch width
+        wid = 1;
+    end
 end
 
 lng = size(prf,2);

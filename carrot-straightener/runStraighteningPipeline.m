@@ -41,7 +41,7 @@ try
     tic;
     fprintf('Running straightening...');
     % smsk = sampleStraighten(mline, pmsk);
-    [smsk, nrms]  = getStraightenedMask(mline, pmsk);
+    [smsk, nrms] = getStraightenedMask(mline, pmsk);
     fprintf('Done...[%.02f sec] \n', toc);
     
     

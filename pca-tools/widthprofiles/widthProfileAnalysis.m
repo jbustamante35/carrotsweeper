@@ -1,4 +1,4 @@
-function PW = widthProfileAnalysis(W, numC, savpca, savcsv, vis, pcdim, outlier_pct, rng)
+function PW = widthProfileAnalysis(F, FPATHS, numC, savpca, savcsv, vis, pcdim, outlier_pct, rng)
 %% widthProfileAnalysis: mutliple PCA analyses of width profiles
 % Get PCA on Widths, Length-Width Normalized Profile, Tips, Shoulders.
 % A neat pipeline to do all this shit from raw straightened masks. Output is in
@@ -35,30 +35,27 @@ sprA = repmat('-', 1, 80);
 sprB = repmat('=', 1, 80);
 
 tAll = tic;
-fprintf('\n%s\nRunning Width Profile Analysis [Save PCA = %s | Save CSV = %s | Vis = %s | Out = %s | PC = %s]\n%s\n', ...
+fprintf('\n%s\nRunning Width Profile Analysis [Save PCA = %s | Save CSV = %s | Visualize = %s | Outlier Pct = %s | PC = %s]\n%s\n', ...
     sprB, num2str(savpca), num2str(savcsv), num2str(vis), ...
     num2str(outlier_pct), num2str(pcdim), sprA);
 
 %% PCA on Width, Tips, and Shoulders [removing outliers]
-ttlWids = size(W.Profiles, 1);
-pcnm    = W.Name;
+pcnm    = F.Name;
+nmidx   = strfind(F.Name, '_');
+widnm   = F.Name(nmidx(end)+1:end);
+W       = F.Profiles;
+ttlWids = size(W, 1);
 
 t = tic;
 fprintf('Performing PCA on %d widths, shoulders, and tips...', ttlWids);
 
 % Widths
-[PW, remW] = pcaOmitOutliers(FW, numC, pcnm, outlier_pct, savpca, pcdim);
+[PW, remW] = pcaOmitOutliers(W, numC, pcnm, outlier_pct, savpca, pcdim);
 PATHFW     = FPATHS(remW);
-
-% Length-Width normalized profiles
-[PR, remR] = pcaOmitOutliers(H, numC, wrnm, outlier_pct, savpca, pcdim);
-PATHPR     = FPATHS(remR);
 
 %% Refresh some data after removing outliers
 bakWids = ttlWids;
 ttlWids = length(remW);
-wids    = wids(remW,:);
-lens    = lens(remW,:);
 
 fprintf('Removed %d outliers from each dataset...', bakWids - ttlWids);
 fprintf('DONE! [%.02f sec]\n', toc(t));
@@ -69,6 +66,7 @@ fprintf('Performing PCA on %d orthonormalized profiles...', ttlWids);
 fprintf('DONE! [%.02f sec]\n', toc(t));
 
 %% Save Results in a CSV and .mat file
+%% TODO [fix this]
 if savcsv
     t = tic;
     fprintf('Saving output in .csv and .xls files...');
@@ -84,9 +82,10 @@ if vis
     t    = tic;
     figs = 1 : 2;
     
+    %% TODO: showProfileRange hangs with non-normalized data
     fprintf('Visualizing ranges of PC scores and masks...');
-    fnms{1} = showScoreRange(PW, rng, nmsW, pcdim, 1);
-    fnms{2} = showProfileRange(PW, rng, nmsW, PATHFW, pcdim, 2);
+    fnms{1} = showScoreRange(PW, rng, widnm, pcdim, 1);
+    fnms{2} = showProfileRange(PW, rng, widnm, PATHFW, pcdim, 2);
     
     if savcsv
         fprintf('Saving %d figures...', numel(figs));
@@ -290,17 +289,17 @@ for i = 1 : numel(carIdx)
     msks{i} = scores2mask(scr, evecs, mns);
     
     % Show mask in individual subplots [ R2019a or lower ]
-    if strcpmi(visver, 'sep')
+    if strcmpi(visver, 'sep')
         msk = scores2mask(scr, evecs, mns);
-        subplot(nRng, 1, i);
+        subplot(nummsks, 1, i);
         myimagesc(msk);
-        ttl = sprintf('%s %04d\n%s', dnm, cIdx, figstr{i});
+        ttl = sprintf('%s %04d\n%s', dnm, idx, figstr{i});
         title(ttl, 'FontSize', 10);
     end
 end
 
 % Show montage in single subplot [ R2019b or higher ]
-if strcpmi(visver, 'mon')
+if strcmpi(visver, 'mon')
     buf = 5;
     montage(msks, 'Size', [1 , nummsks], 'BorderSize', [buf , buf]);
     axis off;
@@ -341,7 +340,7 @@ if strcmpi(basever, yourver)
     end
 else
     % Pre-release version
-    if baseyear > youryear
+    if youryear > baseyear
         % Greater than base year
         v = 'mon';
     else

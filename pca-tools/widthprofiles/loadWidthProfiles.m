@@ -1,13 +1,13 @@
-function [DSTS , IMGS, FPATHS] = loadWidthProfiles(rootDir, maskDir)
+function [DSTS, IMGS, FPATHS] = loadWidthProfiles(rootDir, maskDir)
 %% loadWidthProfiles: load raw width profiles from directory path
 % This function flips the widths left-to-right!
 %
 % Usage:
-%   [DSTS , IMGS, FNAMES] = loadWidthProfiles(rootDir, maskDir)
+%   [DSTS, IMGS, FNAMES] = loadWidthProfiles(rootDir, maskDir)
 %
 % Input:
 %   rootDir: path to directory of root folder to straightened masks
-%   maskDir: name of directory 
+%   maskDir: name of directory
 %
 % Output:
 %   DSTS: width profiles of straightened masks

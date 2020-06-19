@@ -368,18 +368,18 @@ basever      = 'b';
 % I get that there was probably a better way to do this but I don't have the
 % time for that.
 if strcmpi(basever, yourver)
-    % Base version
-    if baseyear >= youryear
+    % Base version [b]
+    if youryear >= baseyear
         % R2019b [ lowest year to use montage ] or greater
         v = 'mon';
-    elseif baseyear < youryear
+    else
         % Lower than base year
         v = 'sep';
     end
 else
-    % Pre-release version
+    % Pre-release version [a]
     if youryear > baseyear
-        % Greater than base year
+        % R2020a [ lowest year to use montage ] or greater
         v = 'mon';
     else
         % Lower than base year [ includes R2019a ]

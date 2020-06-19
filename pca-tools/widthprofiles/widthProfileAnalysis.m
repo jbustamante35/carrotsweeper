@@ -1,4 +1,4 @@
-function PW = widthProfileAnalysis(F, FPATHS, numC, savpca, savcsv, vis, pcdim, outlier_pct, rng)
+function PW = widthProfileAnalysis(F, FPATHS, rootDir, numC, savpca, savcsv, vis, pcdim, outlier_pct, rng, fidxs)
 %% widthProfileAnalysis: mutliple PCA analyses of width profiles
 % Get PCA on Widths, Length-Width Normalized Profile, Tips, Shoulders.
 % A neat pipeline to do all this shit from raw straightened masks. Output is in
@@ -6,18 +6,21 @@ function PW = widthProfileAnalysis(F, FPATHS, numC, savpca, savcsv, vis, pcdim, 
 % what else to store that can't be extrapolated from the PCA data.
 %
 % Usage:
-%   PW = widthProfileAnalysis(W, numC, savpca, savcsv, ...
-%                             vis, pcdim, outlier_pct, rng)
+%   PW = widthProfileAnalysis(F, FPATHS, rootDir, numC, savpca, savcsv, vis, ...
+%                               pcdim, outlier_pct, rng, fidxs)
 %
 % Input:
-%   W: structure containing widths prepared from prepWidthAnalysis function
+%   F: structure containing widths prepared from prepWidthAnalysis function
+%   FPATHS: file paths to images
+%   rootDir: root directory to save Output 
 %   numC: number of PCs to reduce width profiles to
 %   savpca: boolean to save pca output in .mat files
 %   savcsv: boolean to save output in .csv and .xls files
 %   vis: visualize results
-%   pcdim: PC score to sort by
-%   outlier_pct: percentage of top and bottom outliers to omit
-%   rng: number of profiles to visualize
+%   pcdim: PC score to sort by [default 1]
+%   outlier_pct: percentage of top and bottom outliers to omit [default 0.05]
+%   rng: number of profiles to visualize [default 5]
+%   fidxs: figure handle to the 2 figures to generate [default 1:2]
 %
 % Output:
 %   PW: PCA on width profiles
@@ -27,7 +30,8 @@ function PW = widthProfileAnalysis(F, FPATHS, numC, savpca, savcsv, vis, pcdim, 
 if nargin < 6
     pcdim       = 1;    % PC Score to sort outliers
     outlier_pct = 0.05; % Remove top and bottom outliers
-    rng         = 5;    % Number of profiles to visualize from sorted range
+    rng         = 5;    % Number of profiles to visualize in montage
+    fidxs       = 1:2;  % Default figure handles
 end
 
 %% Prep timer and constants
@@ -40,16 +44,21 @@ fprintf('\n%s\nRunning Width Profile Analysis [Save PCA = %s | Save CSV = %s | V
     num2str(outlier_pct), num2str(pcdim), sprA);
 
 %% PCA on Width, Tips, and Shoulders [removing outliers]
-pcnm    = F.Name;
+nm      = strsplit(F.Name, '_');
 nmidx   = strfind(F.Name, '_');
 widnm   = F.Name(nmidx(end)+1:end);
 W       = F.Profiles;
+nrmL    = F.LengthNorm;
+nrmW    = F.WidthNorm;
 ttlWids = size(W, 1);
+rgn     = nm{end};
 
 t = tic;
-fprintf('Performing PCA on %d widths, shoulders, and tips...', ttlWids);
-
 % Widths
+fprintf('Determined Normalization Method: [%s | %s lengths | %s widths]\n', ...
+    rgn, nrmL, nrmW);
+fprintf('Performing PCA on %d widths, shoulders, and tips...', ttlWids);
+pcnm       = sprintf('%slength_%swidth_%s', nrmL, nrmW, rgn);
 [PW, remW] = pcaOmitOutliers(W, numC, pcnm, outlier_pct, savpca, pcdim);
 PATHFW     = FPATHS(remW);
 
@@ -66,7 +75,6 @@ fprintf('Performing PCA on %d orthonormalized profiles...', ttlWids);
 fprintf('DONE! [%.02f sec]\n', toc(t));
 
 %% Save Results in a CSV and .mat file
-%% TODO [fix this]
 if savcsv
     t = tic;
     fprintf('Saving output in .csv and .xls files...');
@@ -80,13 +88,12 @@ end
 %% Visualize results
 if vis
     t    = tic;
-    figs = 1 : 2;
+    figs = fidxs;
     
-    %% TODO: showProfileRange hangs with non-normalized data
     fprintf('Visualizing ranges of PC scores and masks...');
-    fnms{1} = showScoreRange(PW, rng, widnm, pcdim, 1);
-    fnms{2} = showProfileRange(PW, rng, widnm, PATHFW, pcdim, 2);
-    
+    fnms{1} = showRangeProfiles(PW, rng, widnm, pcdim, nrmL, nrmW, fidxs(1));
+    fnms{2} = showRangeMasks(PW, rng, widnm, PATHFW, pcdim, nrmL, nrmW, fidxs(2));
+        
     if savcsv
         fprintf('Saving %d figures...', numel(figs));
         saveFiguresJB(figs, fnms, 0, 'png', outDir);
@@ -111,7 +118,10 @@ function [p, remIdx] = pcaOmitOutliers(W, pcs, pcnm, outlier_pct, savpca, pcdim)
 %
 %
 % Input:
-%
+%   W: vectorized width profiles
+%   pcs: 
+%   pcnm:
+%   outlier_pct: 
 %
 % Output:
 %
@@ -125,11 +135,10 @@ end
 
 function [W , remIdx] = removeOutliers(W, scrs, outlier_pct, pcdim)
 %% removeOutliers: returns width profiles after removing outliers
-ttlWids     = size(W,1);
-[~, srtIdx] = sortrows(scrs, pcdim);
-outTotal    = ceil(outlier_pct * ttlWids);
-remIdx      = sort(srtIdx(1 + outTotal : end - outTotal));
-W           = W(remIdx,:);
+outIdx = isoutlier(scrs(:,pcdim), 'percentiles', ...
+    100 * [outlier_pct , 1 - outlier_pct]);
+remIdx = find(~outIdx);
+W      = W(remIdx,:);
 
 end
 
@@ -157,7 +166,7 @@ emns  = P.MeanVals;
 
 %% Store data in structure and table
 flds = {'UID' , 'Genotype' , sprintf('%sPCs', dataname)};
-strc = cell2struct([vals , scrs] , flds, 2);
+strc = cell2struct([vals , scrs], flds, 2);
 tbl  = struct2table(strc);
 
 % Save xls and csv files
@@ -176,7 +185,10 @@ writetable(tbl, tnm1, 'FileType', 'text');
 tnm2 = sprintf('%s/%s', ddir, dout);
 writetable(tbl, tnm2, 'FileType', 'spreadsheet');
 
-%% Save Eigenvectors and Means in xls and csv files [full, tips, shoulders]
+%% Save data in xls and csv files
+% Eigenvectors, Means, and Curvatures
+% Whole profile, Tips, and Shoulders
+
 estr = sprintf('%s_%sVectors_PC%d', tdate, dataname, pcdim);
 
 enm  = struct('EigVecs', evecs, 'Means', emns');
@@ -197,9 +209,33 @@ vals = cellfun(@(x) char(x.id), val, 'UniformOutput', 0);
 
 end
 
-%%
-function fnm = showScoreRange(pd, nRng, dnm, pcdim, fIdx)
-%% showScoreRange: show range of curves after sorting by PC scores
+% function [nrmL , nrmW] = getNormalization(W)
+% %% getNormalization: determine normalization method used
+% ZEROTHRESH = 0.2; % fewer than 20% should be 0 in normalized lengths
+% zeroL      = numel(find(W == 0)) / numel(W); % Check if lengths have appended zeros
+% maxW       = max(W, [], 'all'); % Check if width normalized to 1
+% 
+% if zeroL > ZEROTHRESH   
+%     % Lengths have appended zeros [non-normalized]    
+%     nrmL = 'original';
+% else
+%     % Lengths are normalized
+%     nrmL = 'normalized';
+% 
+% end
+% 
+% if maxW > 1
+%     % Widths are non-normalized
+%     nrmW = 'original';
+% else
+%     % Widths are normalized
+%     nrmW = 'normalized';
+% end
+% 
+% end
+
+function fnm = showRangeProfiles(pd, nRng, dnm, pcdim, nrmL, nrmW, fIdx)
+%% showRangeProfiles: show range of profiles after sorting by PC scores
 % Extract info from the dataset
 scrs = pd.PCAScores;
 din  = pd.InputData;
@@ -244,12 +280,12 @@ legend(cat(1, lgn{:}), 'Location', 'bestoutside');
 ttl = sprintf('PC Score Range [%d %s | PC %d]', tot, dnm, pcdim);
 title(ttl, 'FontSize', 10);
 
-fnm = sprintf('%s_%s_sortedPCs_PC%d_%dCarrots', dnm, tdate, pcdim, tot);
-
+fnm = sprintf('%s_%s_%slength_%swidth_PC%d_%02dProfiles', ...
+    tdate, dnm, nrmL, nrmW, pcdim, tot);
 end
 
-function fnm = showProfileRange(pd, nRng, dnm, fpaths, pcdim, fIdx)
-%% showProfileRange: show range of profiles after sorting by PC scores
+function fnm = showRangeMasks(pd, nRng, dnm, fpaths, pcdim, nrmL, nrmW, fIdx)
+%% showRangeMasks: show range of masks after sorting by PC scores
 
 % Extract data from the range
 scrs  = pd.PCAScores;
@@ -303,11 +339,13 @@ if strcmpi(visver, 'mon')
     buf = 5;
     montage(msks, 'Size', [1 , nummsks], 'BorderSize', [buf , buf]);
     axis off;
-    ttl = sprintf('PC Score Range [%d %s | PC %d]\n%s', tot, dnm, pcdim, catstr);
+    ttl = sprintf('PC Score Range [%d %s | PC %d]\n%s', ...
+        tot, dnm, pcdim, catstr);
     title(ttl, 'FontSize', 8);
 end
 
-fnm = sprintf('%s_%s_sortedProfiles_PC%d_%02dCarrots', dnm, tdate, pcdim, tot);
+fnm = sprintf('%s_%s_%slength_%swidth_PC%d_%02dMasks', ...
+    tdate, dnm, nrmL, nrmW, pcdim, tot);
 end
 
 function clrmap = generateColorArray(itrs)

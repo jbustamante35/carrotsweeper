@@ -378,7 +378,7 @@ if strcmpi(basever, yourver)
     end
 else
     % Pre-release version [a]
-    if youryear > baseyear
+    if youryear >= baseyear
         % R2020a [ lowest year to use montage ] or greater
         v = 'mon';
     else

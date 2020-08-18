@@ -4,7 +4,7 @@ function saveFiguresJB(figs, fnms, sav_fig, img_type, sav_dir)
 % for loop every day.
 %
 % Usage:
-%   saveFiguresJB(figs, fnms, sav_fig, img_type)
+%   saveFiguresJB(figs, fnms, sav_fig, img_type, sav_dir)
 %
 % Input:
 %   figs: numeric array of figure handles
@@ -30,8 +30,12 @@ if nargin <= 3
     end
 end
 
-% Save figures
+% Save figures (create directory if it doesn't exist)
 currDir = pwd;
+if ~isfolder(sav_dir)
+    mkdir(sav_dir);
+end
+
 cd(sav_dir);
 for fig = 1 : numel(figs)
     if sav_fig

@@ -5,10 +5,10 @@ function [skel, crv, mline, tCrds] = getContourAndMidline(msk, vis)
 %
 % NOTE: msk input should be black object on white background!
 % Usage:
-%   [skel, crv, mline] = getContourAndMidline(msk, vis)
+%   [skel, crv, mline, tCrds] = getContourAndMidline(msk, vis)
 %
 % Input:
-%   msk: binary mask (must be black object, white background)
+%   msk: binary mask (must be black object, white background, facing right-left)
 %   vis: boolean to visualize output
 %
 % Output:
@@ -80,10 +80,9 @@ try
     
     %% Visualize output
     if vis
-        cla;clf;
+        figclr;
         imagesc(skel);
         colormap gray;
-        axis image;
         hold on;
         
         plt(crv, 'b.', 4);
@@ -91,7 +90,8 @@ try
         plt(tCrds, 'g*', 8);
     end
 catch e
-    fprintf(2, '\nError finding midline\n');
+    fprintf(2, '\nError finding midline\n%s\n', e.getReport);
+    skel  = [];
     crv   = [];
     mline = [];
     tCrds = [];

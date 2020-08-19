@@ -3,16 +3,26 @@ function [tTip, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = tipFinderPlus(msk, x
 %
 %
 % Usage:
-%   [tTip, tIdx, mDsk, mSmt, mMsk, mCnt, mCrv , mIdx, mTip, hTip, iTip, rCnt] = ...
+%   [tTip, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = ...
 %       tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds, vis)
-%
 % Input:
-%
+%   msk: binary mask facing left-right
+%   xi: probability distribution bins of curvatures from trained model
+%   yi: probability distribution values of curvatures from trained model
+%   smoothrange: range of integers to iterate curvature smoothing parameter
+%   diskrange: range of integers to iterate disk size parameter
+%   ncrds: number of coordinates to interpolate contour
+%   vis: boolean to visualize output
 %
 % Output:
-%
-%
-%
+%   tTip: coordinates of the tip
+%   tIdx: index from coordinates of the tip
+%   mDsk: maximum value of the disk size parameter
+%   mSmt: maximum value of the smoothing parameter
+%   mTip: tip coordinate from optimal parameters
+%   mCrv: contour from optimal parameters
+%   hTip: tip index from optimal parameters
+%   rCnt: contour region from optimal parameters
 
 %% Set Constants
 CRDSTHRESH = 150;

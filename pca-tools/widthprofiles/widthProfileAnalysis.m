@@ -69,9 +69,18 @@ ttlWids = length(remW);
 fprintf('Removed %d outliers from each dataset...', bakWids - ttlWids);
 fprintf('DONE! [%.02f sec]\n', toc(t));
 
-%% PCA on length-width normalized profiles
+%% PCA on length-width normalized profiles 
+%% [TODO]
 t = tic;
 fprintf('Performing PCA on %d orthonormalized profiles...', ttlWids);
+fprintf('DONE! [%.02f sec]\n', toc(t));
+
+%% Get Curvatures
+t = tic;
+fprintf('Computing curvatures of %d width profiles...', ttlWids);
+
+
+
 fprintf('DONE! [%.02f sec]\n', toc(t));
 
 %% Save Results in a CSV and .mat file
@@ -201,13 +210,13 @@ etnm = sprintf('%s/%s', ddir, estr);
 writetable(etbl, etnm, 'FileType', 'spreadsheet');
 end
 
-function vals = getNameID(FNAMES, id)
-%% getNameID: extract values from an id in a filename
-expr = sprintf('%s_(?<id>.*?)}', id);
-val  = regexpi(FNAMES, expr, 'names');
-vals = cellfun(@(x) char(x.id), val, 'UniformOutput', 0);
+% function vals = getNameID(FNAMES, id)
+% %% getNameID: extract values from an id in a filename
+% expr = sprintf('%s_(?<id>.*?)}', id);
+% val  = regexpi(FNAMES, expr, 'names');
+% vals = cellfun(@(x) char(x.id), val, 'UniformOutput', 0);
 
-end
+% end
 
 % function [nrmL , nrmW] = getNormalization(W)
 % %% getNormalization: determine normalization method used

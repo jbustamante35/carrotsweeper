@@ -70,16 +70,18 @@ if savData || savFigs
     mkdir(mskOut);
     
     % Open figures if none are open
-    nf   = 4;
-    figs = 1 : nf;
-    if isempty(findobj('type', 'figure')) || ...
-            numel(findobj('type', 'figure')) < nf
-        % Generate n figures        
-        for n = 1 : nf
-            figs(n) = figure;
-        end
-        set(figs, 'Color', 'w');
-    end
+    nf            = 4;
+    [figs , fnms] = makeBlankFigures(nf, 1);
+    
+%     figs = 1 : nf;
+%     if isempty(findobj('type', 'figure')) || ...
+%             numel(findobj('type', 'figure')) < nf
+%         % Generate n figures        
+%         for n = 1 : nf
+%             figs(n) = figure;
+%         end
+%         set(figs, 'Color', 'w');
+%     end
     
 end
 
@@ -151,10 +153,10 @@ else
     try        
         fprintf('%s\n', repmat('=', 1, 80));
         fprintf('Processing image %d of %d\n%s', n, tot, fname{n});        
-        fprintf('%s\n', repmat('-', 1, 80));
+        fprintf('\n%s', repmat('-', 1, 80));
         [pmsk{n}, crv{n}, mline{n}, smsk{n}, tcrd{n}, dsts{n}, nrms{n}] = ...
             runStraighteningPipeline(img);
-        fprintf('Pipeline finished in %.02f sec', toc(t));
+        fprintf('Pipeline finished in %.02f sec\n', toc(t));
         fprintf('%s\n', repmat('=', 1, 80));
     catch e
         fprintf(2, 'Error in Carrot Extraction Pipeline\n%s\n', e.getReport);

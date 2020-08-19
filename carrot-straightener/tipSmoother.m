@@ -3,7 +3,8 @@ function [sVec, sCrv, sIdx, sTip, iCnt] = tipSmoother(iCrv, iTip, iCnt, optS, PI
 %
 %
 % Usage:
-%   [sVec, sCrv, sIdx, sTip, iCnt] = tipSmoother(iCrv, iTip, iCnt, optS, PIX, SCL, ALPHA)
+%   [sVec, sCrv, sIdx, sTip, iCnt] = tipSmoother( ...
+%               iCrv, iTip, iCnt, optS, PIX, SCL, ALPHA)
 %
 % Input:
 %   iCrv: array of curvatures from closed contour

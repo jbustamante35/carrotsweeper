@@ -19,12 +19,6 @@ function plotCurvature(skel, k, c, m, smft, excl, sav, fnm, dout, fidx, dstr)
 % Author Julian Bustamante <jbustamante@wisc.edu>
 %
 
-if nargin < 11
-    dstr = 0; % Default to not showing distribution
-    rows = 1;
-    cols = 1;
-end
-
 %% Determine if data is split or unsplit
 if isstruct(k.shoulder)
     splt  = 1;
@@ -38,19 +32,21 @@ else
     tsz  = size(k.tip, 1);
 end
 
-%%
+%% Show contour of regions [whole|shoulder|tip] and sections [upper|lower]
+% Setup for single image or with curvature distributions
 figclr(fidx);
-% lgnc = {'Contour' , 'Shoulders' , 'Tips' , 'Real Tip'};
+if dstr
+	rows = 2;
+    cols = 2;
+    subplot(rows, cols, 1);
+end
 
-% -------------------------------- Whole Mask -------------------------------- %
-rgns  = {'whole' , 'shoulder' , 'tip'};
-clrs  = {'b-' , 'g.' , 'y.'};
-szs   = {3 , 8 , 8};
-
-subplot(rows, cols, 1);
 imagesc(skel);
 hold on;
 
+rgns  = {'whole' , 'shoulder' , 'tip'};
+clrs  = {'b-' , 'g.' , 'y.'};
+szs   = {3 , 8 , 8};
 if splt
     % Plot contours of each region
     cellfun(@(x,y,z) plt(c.(x).upper, y, z), ...
@@ -73,25 +69,22 @@ else
         rgns, mclrs, mszs, 'UniformOutput', 0);
 end
 
-% legend(lgnc, 'Location', 'northeast');
 ttl = sprintf('%s\n[%d columns removed | smooth filter %d]', ...
     fixtitle(fnm, 'carrots'), excl, smft);
 title(ttl, 'FontSize', 10);
 
 %% Plot Curvature Distributions
 if dstr
-    rows = 2;
-    cols = 2;
-    % --------------------------------- Shoulders -------------------------------- %
+    % ------------------------------- Shoulders ------------------------------ %
     subplot(rows, cols, 3);
     histogram(kS, 'EdgeColor', 'none', 'Normalization', 'pdf');
-    ttl = sprintf('Shoulder Distributions [size %d]\nFilter size %d', ssz, smft);
+    ttl = sprintf('Shoulder Distributions [%d crds] | Filter %d', ssz, smft);
     title(ttl, 'FontSize', 10);
     
-    % ----------------------------------- Tips ----------------------------------- %
+    % --------------------------------- Tips --------------------------------- %
     subplot(rows, cols, 4);
     histogram(kT, 'EdgeColor', 'none', 'Normalization', 'pdf');
-    ttl = sprintf('Tip Distributions [size %d]\nFilter size %d', tsz, smft);
+    ttl = sprintf('Tip Distributions [%d crds] | Filter %d', tsz, smft);
     title(ttl, 'FontSize', 10);
 end
 
@@ -99,7 +92,6 @@ end
 if sav
     saveFiguresJB(fidx, {fnm}, 0, 'png', dout);
 end
-
 
 end
 

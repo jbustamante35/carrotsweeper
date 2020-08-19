@@ -1,7 +1,7 @@
 function figclr(fIdx)
 %% figclr: clear figure
 if nargin == 1
-    if ismatrix(fIdx)
+    if numel(fIdx) > 1
         for f = 1 : numel(fIdx)
             set(0, 'CurrentFigure', f);
             cla;clf;

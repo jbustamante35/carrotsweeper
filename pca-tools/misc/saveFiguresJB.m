@@ -30,7 +30,10 @@ if nargin <= 3
     end
 end
 
-% Save figures (create directory if it doesn't exist)
+%% Save figures (create directory if it doesn't exist)
+% TODO: sav_dir changes path string instead of going into and out of directory
+%   1) cell function to append directory path to file names
+%   2) array function instead of for loop
 currDir = pwd;
 if ~isfolder(sav_dir)
     mkdir(sav_dir);

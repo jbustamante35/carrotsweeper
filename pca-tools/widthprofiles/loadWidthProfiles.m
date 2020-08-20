@@ -27,10 +27,12 @@ end
 %%
 PATHS = loadSubDirectories(rootDir, maskDir);
 STORE = imageDatastore(PATHS, 'IncludeSubfolders', 1, 'FileExtensions', '.png');
-IMGS  = cellfun(@(x) x, STORE.readall, 'UniformOutput', 0);
+% IMGS  = cellfun(@(x) x, STORE.readall, 'UniformOutput', 0);
+IMGS = [];
 
 % Width profiles for all de-tipped images
-DSTS = cellfun(@(x) sum(logical(x)), IMGS, 'UniformOutput', 0);
+% DSTS = cellfun(@(x) sum(logical(x)), IMGS, 'UniformOutput', 0);
+DSTS = [];
 
 % Full file paths
 FPATHS = STORE.Files;

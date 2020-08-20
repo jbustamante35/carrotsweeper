@@ -2,7 +2,7 @@ function T = curvatureAnalysis(FPATHS, save_data, save_fig, fidx, par)
 %% curvatureAnalysis: run full pipeline to compute and plot curvatures
 %
 % Usage:
-%   T = curvatureAnalysis(SPATHS, save_data, save_fig, fidx, par)
+%   T = curvatureAnalysis(FPATHS, save_data, save_fig, fidx, par)
 %
 % Input:
 %   FPATHS: cell array of file paths to images
@@ -24,11 +24,12 @@ if nargin < 2
 end
 
 % Default parameters
-SPLIT_REGIONS   = 1;
-EXCLUDE_COLUMNS = 15;
-SMOOTH_FACTOR   = 14;
-SIZE_SHOULDER   = 50;
-SIZE_TIP        = 50;
+SPLIT_REGIONS   = 1;  % Split by upper and lower sections [1]
+EXCLUDE_COLUMNS = 15; % Number of left-most columns to exclude 
+SMOOTH_FACTOR   = 14; % Curvature smoothing factor
+SIZE_SHOULDER   = 50; % Number of coordinates to sample for shoulders
+SIZE_TIP        = 50; % Number of coordinates to sample for tips
+DSTR            = 0;  % Show distribution of curvatures
 K_DIR_NAME      = 'curvature-mask';
 OUT_DIR_NAME    = 'Output';
 
@@ -99,36 +100,44 @@ switch par
         sepA = repmat('=', [1 , 80]);
         sepB = repmat('-', [1 , 80]);
         ellp = @(x) repmat('.', 1, 80 - (length(x) + 13));
+        errorfiles = {};
         for f = 1 : numPaths
-            tAll = tic;
-            fp   = FPATHS{f};
-            nm   = sprintf('%s | %s', GENOTYPE{f}, snms{f});
-            fprintf('%s\n%s:\n%s\n', sepA, nm, sepB);
-            
-            % Extract image from file path
-            t = tic;
-            str  = sprintf('Extracting Image');
-            msks = imcomplement(double(logical(imread(fp))));
-            fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-            
-            % Compute curvatures
-            t   = tic;
-            str = sprintf('Computing Curvatures...');
-            [sk{f} , sc, sm, sskel] = ...
-                computeCurvatures(msks, SPLIT_REGIONS, EXCLUDE_COLUMNS, ...
-                SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP);
-            fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-            
-            % Plot curvatures and save image
-            t   = tic;
-            str = sprintf('Plotting Curvatures...');
-            plotCurvature(sskel, sk{f}, sc, sm, ...
-                SMOOTH_FACTOR, EXCLUDE_COLUMNS, save_fig, snms{f}, K_DIR{f}, fidx);
-            fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-            
-            str = sprintf('Finished %04d of %04d', f, numPaths);
-            fprintf('%s\n%s%s [ %.02f sec ]\n%s] \n', ...
-                sepB, str, ellp(str), toc(tAll), sepA);
+            try
+                tAll = tic;
+                fp   = FPATHS{f};
+                nm   = sprintf('%s | %s', GENOTYPE{f}, snms{f});
+                fprintf('%s\n%s:\n%s\n', sepA, nm, sepB);
+                
+                % Extract image from file path
+                t = tic;
+                str  = sprintf('Extracting Image');
+                msks = imcomplement(double(logical(imread(fp))));
+                fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
+                
+                % Compute curvatures
+                t   = tic;
+                str = sprintf('Computing Curvatures...');
+                [sk{f} , sc, sm, sskel] = ...
+                    computeCurvatures(msks, SPLIT_REGIONS, EXCLUDE_COLUMNS, ...
+                    SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP);
+                fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
+                
+                % Plot curvatures and save image
+                t   = tic;
+                str = sprintf('Plotting Curvatures...');
+                plotCurvature(sskel, sk{f}, sc, sm, ...
+                    SMOOTH_FACTOR, EXCLUDE_COLUMNS, save_fig, snms{f}, K_DIR{f}, fidx, DSTR);
+                fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
+                
+                str = sprintf('Finished %04d of %04d', f, numPaths);
+                fprintf('%s\n%s%s [ %.02f sec ]\n%s] \n', ...
+                    sepB, str, ellp(str), toc(tAll), sepA);
+            catch 
+                % Store filename of error and continue loop                
+                errorfiles{f} = sprintf('%s_%s', GENOTYPE{f}, snms{f});
+                fprintf(2, 'Error with %s\n', errorfiles{f});
+                
+            end
         end
         
     otherwise

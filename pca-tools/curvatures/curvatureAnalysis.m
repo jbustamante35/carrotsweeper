@@ -15,8 +15,8 @@ function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, sa
 %   vis: visualize results or skip (can't visualize if running with parallel)
 %
 % Output:
-%   T: table containing curvature values of each region and section
-%   K: structure containing curvature values
+%   T: table containing curvature values as strings of each region and section
+%   K: structure containing curvature values in numerical format
 %   P: full results from PCA
 %   Q: PCA results with outliers omitted
 %   error_files: cell array of file names that caused errors

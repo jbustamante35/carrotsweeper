@@ -32,10 +32,13 @@ switch nargin
 end
 
 %% Return random index and object
-% If Shuffle function not available
-% rIdxs = randi([1 , length(X)], 1);
-% rx    = X(rIdxs);
-rIdxs = sort(Shuffle(length(X), 'index', n));
+% Check if Shuffle function is available
+if ~isempty(which('Shuffle'))
+    rIdxs = sort(Shuffle(length(X), 'index', n));
+else
+    % No Shuffle function found
+    rIdxs = sort(randi(length(X), [1 , n]));
+end
 rx    = X(rIdxs);
 
 if getrx
@@ -43,5 +46,3 @@ if getrx
 end
 
 end
-
-

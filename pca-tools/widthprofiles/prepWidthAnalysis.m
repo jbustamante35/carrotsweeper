@@ -36,8 +36,9 @@ if args.RootDir
     t = tic;
     fprintf('Loading width profiles from %s/%s...', rootDir, maskDir);
     
-    [DSTS , ~, ~] = loadWidthProfiles(rootDir, maskDir);
-    ttlWids       = numel(DSTS);
+    FOUT    = loadWidthProfiles(rootDir, maskDir, 1);
+    DSTS    = FOUT.profiles;
+    ttlWids = numel(DSTS);
     
     fprintf('DONE! [%.02f sec]\n', toc(t));
     

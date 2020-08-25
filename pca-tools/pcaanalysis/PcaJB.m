@@ -83,17 +83,21 @@ classdef PcaJB
             vals = vals(1:neigs, 1:neigs);
         end
         
-        function [varX, pctN] = VarExplained(obj, pct, neigs)
+        function [varX, pctN] = VarExplained(obj, pct, n)
             %% Variance explained
+            % pct: cutoff percentage (default: 1.0)
+            % n: number of dimensions to return (default: NumberOfPCs)
             if nargin < 2
-                pct   = 1;
-                neigs = obj.NumberOfPCs;
+                pct = 0.999;
+                n   = obj.NumberOfPCs;
             elseif nargin < 3
-                neigs = obj.NumberOfPCs;
+                n = obj.NumberOfPCs;
             end
             
-            eigX         = obj.EigVals(neigs);
-            [varX, pctN] = variance_explained(eigX, pct);
+            eigX         = obj.EigVals(size(obj.InputData,2));
+            [varx, pctN] = variance_explained(eigX, pct);
+            
+            varX = varx(1:n);
         end
         
         function pcaS = PCAScores(obj, ndims, neigs)

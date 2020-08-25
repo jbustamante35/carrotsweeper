@@ -59,8 +59,9 @@ if vis
     if sv
         savename = sprintf('%s_PCA', datestr(now, 'yymmdd'));
         fignm    = sprintf('%s_%s', savename, ttlC);
-        savefig(figC, fignm);
-        saveas(figC, fignm, 'tiffn');
+%         savefig(figC, fignm);
+%         saveas(figC, fignm, 'tiffn');
+        saveFiguresJB(figC, {fignm}, 0, 'png');
     end
     
 end

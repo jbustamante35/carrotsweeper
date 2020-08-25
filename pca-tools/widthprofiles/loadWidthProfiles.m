@@ -1,41 +1,48 @@
-function [DSTS, IMGS, FPATHS] = loadWidthProfiles(rootDir, maskDir)
+function FOUT = loadWidthProfiles(rootDir, maskDir, load_data)
 %% loadWidthProfiles: load raw width profiles from directory path
 % This function flips the widths left-to-right!
 %
+% TODO: 
+% Write a class (perhaps Carrot?)  for these images that have methods to perform
+% all the different  analyses from CarrotSweeper. This script will then create 
+% instances of Carrot objects. 
+%
 % Usage:
-%   [DSTS, IMGS, FNAMES] = loadWidthProfiles(rootDir, maskDir)
+%   [DSTS, IMGS, FNAMES] = loadWidthProfiles(rootDir, maskDir, load_data)
 %
 % Input:
 %   rootDir: path to directory of root folder to straightened masks
 %   maskDir: name of directory
+%   load_data: only return path names [0] or compute images and profiles [1]
 %
 % Output:
-%   DSTS: width profiles of straightened masks
-%   IMGS: straightened masks used for getting width profiles
-%   FNAMES: filenames of images
+%   FOUT: structure of outputs (only file paths if load_data set to 0)
+%       paths: file paths to images
+%       images: straightened masks used for getting width profiles
+%       profiles: width profiles of straightened masks
 %
 
 %%
-if nargin < 1
-    IMGS = '/home/jbustamante/Dropbox/EdgarSpalding/labdata/rawdata/scott_brainard/images';
-    SET  = 'gwas-curated';
-    
-    rootDir = sprintf('%s/%s', IMGS, SET);
-    maskDir = 'straight-masks';
+if nargin < 3
+    load_data = 0; % Default to only return path names
 end
 
 %%
 PATHS = loadSubDirectories(rootDir, maskDir);
 STORE = imageDatastore(PATHS, 'IncludeSubfolders', 1, 'FileExtensions', '.png');
-% IMGS  = cellfun(@(x) x, STORE.readall, 'UniformOutput', 0);
-IMGS = [];
-
-% Width profiles for all de-tipped images
-% DSTS = cellfun(@(x) sum(logical(x)), IMGS, 'UniformOutput', 0);
-DSTS = [];
 
 % Full file paths
-FPATHS = STORE.Files;
+FOUT = STORE.Files;
 
+%% Load images and width profiles
+% NOTE: very heavy in memory with large datasets!
+if load_data
+    FOUT.paths  = FOUT;
+    FOUT.images = cellfun(@(x) x, STORE.readall, 'UniformOutput', 0);
+    
+    % Width profiles for all de-tipped images
+    FOUT.profiles = cellfun(@(x) sum(logical(x)), IMGS, 'UniformOutput', 0);
+    
+end
 end
 

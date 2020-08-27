@@ -12,7 +12,7 @@ function [rIdxs , rx] = pullRandom(X, n, getrx)
 %
 % Output:
 %    rIdxs: random index or indices from distribution
-%    x: random data pulled from distribution
+%    rx: random data pulled from distribution
 %
 % Author Julian Bustamante <jbustamante@wisc.edu>
 %

@@ -183,8 +183,8 @@ sk(echk)    = [];
 
 %% Run PCA on shoulder and tip curvatures
 % Combine upper and lower into same dataset
-K               = cat(1, sk{:});
-[P , Q , s , t] = curvaturePCA(K, num_pcs, out_pct, out_dim);
+K                   = cat(1, sk{:});
+[P , Q , s , t , w] = curvaturePCA(K, num_pcs, out_pct, out_dim);
 
 %% Store curvatures and curvature figures into individual folders
 % Iterate through regions and sections for straightened and binary curvatures
@@ -198,6 +198,7 @@ T = struct2table(S);
 % Split upper-lower sections by left-right, then add to table
 scrss = P.shoulder.PCAScores;
 scrst = P.tip.PCAScores;
+scrsw = P.whole.PCAScores;
 
 % Shoulders
 cnvps = im2colF(scrss(:,1), [2 , 1], [2 , 1])';
@@ -223,6 +224,15 @@ T.tip_lower_pcs = cnvpt(:,2);
 T.tip_lower_sum = sumkt(:,2);
 T.tip_lower_avg = avgkt(:,2);
 
+% Whole
+cnvpw = scrsw(:,1);
+sumkw = sum(w,2);
+avgkw = mean(w,2);
+
+T.whole_pcs = cnvpw(:,1);
+T.whole_sum = sumkw(:,1);
+T.whole_avg = avgkw(:,1);
+
 %% Ouput table into xls file
 if save_data
     if ~isfolder(OUT_DIR)
@@ -236,22 +246,27 @@ if save_data
 end
 end
 
-function [P , Q, s , t] = curvaturePCA(K, num_pcs, out_pct, out_dim)
+function [P , Q , s , t , w] = curvaturePCA(K, num_pcs, out_pct, out_dim)
 %% curvaturePCA: run PCA on curvatures and omit outliers
 s = arrayfun(@(k) [k.shoulder.upper , flipud(k.shoulder.lower)]', ...
     K, 'UniformOutput', 0);
 t = arrayfun(@(k) [k.tip.upper , flipud([k.tip.lower ; 0])]', ...
     K, 'UniformOutput', 0);
+w = arrayfun(@(k) [k.whole.upper ; flipud([k.whole.lower])]', ...
+    K, 'UniformOutput', 0);
 
 s = cat(1, s{:});
 t = cat(1, t{:});
+w = cat(1, w{:});
 
 % Run PCA and omit outliers [store scores before omitting outliers]
 P.shoulder = pcaAnalysis(s, num_pcs, 0, 'shoulders_split', 0);
 P.tip      = pcaAnalysis(t, num_pcs, 0, 'tip_split', 0);
+P.whole    = pcaAnalysis(w, num_pcs, 0, 'whole_split', 0);
 
 % Remove Top and Bottom Outliers
 Q.shoulder = pcaOmitOutliers(P.shoulder, out_pct, out_dim);
 Q.tip      = pcaOmitOutliers(P.tip, out_pct, out_dim);
+Q.whole    = pcaOmitOutliers(P.whole, out_pct, out_dim);
 
 end

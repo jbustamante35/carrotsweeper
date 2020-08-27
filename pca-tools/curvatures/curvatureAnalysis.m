@@ -183,8 +183,8 @@ sk(echk)    = [];
 
 %% Run PCA on shoulder and tip curvatures
 % Combine upper and lower into same dataset
-K       = cat(1, sk{:});
-[P , Q] = curvaturePCA(K, num_pcs, out_pct, out_dim);
+K               = cat(1, sk{:});
+[P , Q , s , t] = curvaturePCA(K, num_pcs, out_pct, out_dim);
 
 %% Store curvatures and curvature figures into individual folders
 % Iterate through regions and sections for straightened and binary curvatures
@@ -236,7 +236,7 @@ if save_data
 end
 end
 
-function [P , Q] = curvaturePCA(K, num_pcs, out_pct, out_dim)
+function [P , Q, s , t] = curvaturePCA(K, num_pcs, out_pct, out_dim)
 %% curvaturePCA: run PCA on curvatures and omit outliers
 s = arrayfun(@(k) [k.shoulder.upper , flipud(k.shoulder.lower)]', ...
     K, 'UniformOutput', 0);

@@ -104,9 +104,10 @@ if nargin < 2
 end
 
 % Other constants
-MASK_THRESH     = 100; % length to extend mask [removed after]
-MIN_THRESH_SIZE = 100; % number of columns to remove from contour [post-process]
-FACE            = 3;   % Re-direct images left-right facing (original 3)
+MASK_THRESH     = 100;  % length to extend mask [removed after]
+MIN_THRESH_SIZE = 100;  % number of columns to remove from contour [post-process]
+FACE            = 3;    % Re-direct images left-right facing (original 3)
+INTERP_SIZE     = 1000; % Number of coordinates to interpolate to 
 
 try
     %% Initial processing of the mask to face left-right and then pad
@@ -136,7 +137,7 @@ catch
 end
 
 %% Post-processing of contour and mask
-crv = getBWContour(skel);
+crv = getBWContour(skel, INTERP_SIZE);
 
 % Remove padded area of mask and curve/midline coordinates
 rmCrv        = crv(:,1) < MIN_THRESH_SIZE;
@@ -145,6 +146,9 @@ crv(rmCrv,:) = [];
 % Remove padded area of mask
 skel(:,1 : MIN_THRESH_SIZE) = [];
 crv(:,1)                    = crv(:,1) - MIN_THRESH_SIZE;
+
+% Re-interpolate contour
+crv = interpolateOutline(crv, INTERP_SIZE);
 
 end
 

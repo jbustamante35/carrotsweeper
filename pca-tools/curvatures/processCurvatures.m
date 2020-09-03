@@ -1,4 +1,4 @@
-function [sK , pK] = processCurvatures(k, fnm, uids, regx, seps, rgns, sect)
+function [sK , pK] = processCurvatures(k, fnm, splt, uids, regx, seps, rgns, sect)
 %% processCurvatures: process curvatures into table format
 % Description
 %
@@ -8,6 +8,7 @@ function [sK , pK] = processCurvatures(k, fnm, uids, regx, seps, rgns, sect)
 % Input:
 %   k: structure of curvatures from all regions and secions
 %   fnm: filename from input
+%   splt: data is split into upper and lower section
 %   uids: metadata to add table columns (default: {UID|Genotype|Replicate})
 %   regx: regular expression to separate curvature (default: \s*)
 %   seps: character to separate curvatures (default: ';')
@@ -20,7 +21,7 @@ function [sK , pK] = processCurvatures(k, fnm, uids, regx, seps, rgns, sect)
 %
 
 %% Default values
-if nargin < 3
+if nargin < 4
     uids = {'UID' , 'Genotype' , 'Replicate'};
     regx = '\s*';
     seps = ';';
@@ -29,22 +30,35 @@ if nargin < 3
 end
 
 %% Convert curvatures to single-line string
-kstr = @(k,r,s) regexprep(num2str(k.(r).(s)'), regx, seps);
-pK   = cellfun(@(r) cellfun(@(s) kstr(k,r,s), sect, 'UniformOutput', 0)', ...
-    rgns, 'UniformOutput', 0)';
-pK   = cell2struct(pK, rgns);
-pK   = structfun(@(r) cell2struct(r, sect), pK, 'UniformOutput', 0);
-
-% Convert to single structure
-S  = cellfun(@(r) cellfun(@(s) kstr(k, r, s), ...
-    sect, 'UniformOutput', 0), rgns, 'UniformOutput', 0);
-F  = cellfun(@(r) cellfun(@(s) sprintf('%s_%s', r, s), ...
-    sect, 'UniformOutput', 0), rgns, 'UniformOutput', 0);
+if splt
+    kstr = @(k,r,s) regexprep(num2str(k.(r).(s)'), regx, seps);
+    pK   = cellfun(@(r) cellfun(@(s) kstr(k,r,s), sect, 'UniformOutput', 0)', ...
+        rgns, 'UniformOutput', 0)';
+    pK   = cell2struct(pK, rgns);
+    pK   = structfun(@(r) cell2struct(r, sect), pK, 'UniformOutput', 0);
+    
+    % Convert to single structure
+    S  = cellfun(@(r) cellfun(@(s) kstr(k, r, s), ...
+        sect, 'UniformOutput', 0), rgns, 'UniformOutput', 0);
+    F  = cellfun(@(r) cellfun(@(s) sprintf('%s_%s', r, s), ...
+        sect, 'UniformOutput', 0), rgns, 'UniformOutput', 0);
+    
+    S = cat(2, S{:});
+    F = cat(2, F{:});
+else
+    kstr = @(k,r,s) regexprep(num2str(k.(r)'), regx, seps);
+    pK   = cellfun(@(r) kstr(k,r), rgns, 'UniformOutput', 0)';
+    pK   = cell2struct(pK, rgns);
+    
+    % Convert to single structure
+    S  = cellfun(@(r) kstr(k, r), rgns, 'UniformOutput', 0);
+    F  = cellfun(@(r) sprintf('%s', r), rgns, 'UniformOutput', 0);
+end
 
 %% Extract information from filename and add columns
 vals = cellfun(@(x) getNameID({fnm},x), uids, 'UniformOutput', 0);
-S    = [vals , cat(2, S{:})]';
-F    = [uids , cat(2, F{:})]';
+S    = [vals , S]';
+F    = [uids , F]';
 sK   = cell2struct(S,F);
 
 end

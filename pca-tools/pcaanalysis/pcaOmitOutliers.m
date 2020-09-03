@@ -28,9 +28,13 @@ pcb = regexpi(P.DataName, '_\dPCs',      'start');
 dnm = P.DataName(pca + 1 : pcb - 1);
 
 % Remove outliers and redo PCA
-[~ , wIdx] = rmoutliers(S(:,pcdim), 'percentiles', outlier_pct);
-remIdx     = find(~wIdx);
-W          = P.InputData(remIdx,:);
-Q          = pcaAnalysis(W, P.NumberOfPCs, 0, dnm, 0);
+[~ , wIdx]  = rmoutliers(S(:,pcdim), 'percentiles', outlier_pct);
+remIdx      = find(~wIdx);
+W           = P.InputData(remIdx,:);
+
+Q           = pcaAnalysis(W, P.NumberOfPCs, 0, dnm, 0, 2);
+Q.InputData = P.InputData;
+Q.PCAScores = pcaProject(Q.InputData, Q.EigVecs, Q.MeanVals, 'sim2scr');
+Q.SimData   = pcaProject(Q.PCAScores, Q.EigVecs, Q.MeanVals, 'scr2sim');
 
 end

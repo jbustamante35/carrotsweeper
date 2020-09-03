@@ -22,8 +22,6 @@ function plotCurvature(skel, k, c, m, smft, excl, sav, fnm, dout, fidx, dstr)
 %% Determine if data is split or unsplit
 if isstruct(k.shoulder)
     splt  = 1;
-    mclrs = {'r.' , 'm.' , 'c.'};
-    mszs  = {1 , 15 , 15};
     ssz   = size(k.shoulder.upper, 1);
     tsz   = size(k.tip.upper, 1);
 else
@@ -36,7 +34,7 @@ end
 % Setup for single image or with curvature distributions
 figclr(fidx);
 if dstr
-	rows = 2;
+    rows = 2;
     cols = 2;
     subplot(rows, cols, 1);
 end
@@ -47,6 +45,8 @@ hold on;
 rgns  = {'whole' , 'shoulder' , 'tip'};
 clrs  = {'b-' , 'g.' , 'y.'};
 szs   = {3 , 8 , 8};
+mclrs = {'r.' , 'm.' , 'c.'};
+mszs  = {1 , 15 , 15};
 if splt
     % Plot contours of each region
     cellfun(@(x,y,z) plt(c.(x).upper, y, z), ...

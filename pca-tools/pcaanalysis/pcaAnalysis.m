@@ -23,11 +23,24 @@ function mypca = pcaAnalysis(rawD, numC, sv, dName, vis, mth)
 %
 
 %% PCA using my custom pca function and MATLAB's built-in pca function
-% Default to Method 1
-if nargin < 6
-    mth = 1;
+% Default to Method 1 and no visualization
+switch nargin
+    case nargin < 4
+        fprintf(2, 'Not enough input arguments [%d]\n', nargin);
+        mypca = [];
+        return;
+    case 4
+        vis = 0;
+        mth = 1;
+    case 5
+        mth = 1;
+    case nargin > 6
+        fprintf(2, 'Too many input arguments [%d]\n', nargin);
+        mypca = [];
+        return;
 end
 
+%% 
 switch mth
     case 1
         % Update that uses a custom class [10.23.2019]
@@ -55,17 +68,13 @@ if vis
     analysis_name = dName; % Just in case I want to change the title formatting
     [figC, ttlC]  = showMyPCA(mypca, analysis_name);
     
-    %% Save figures as .fig and .tiff
+    %% Save figures as png images
     if sv
-        savename = sprintf('%s_PCA', datestr(now, 'yymmdd'));
+        savename = sprintf('%s_PCA', tdate);
         fignm    = sprintf('%s_%s', savename, ttlC);
-%         savefig(figC, fignm);
-%         saveas(figC, fignm, 'tiffn');
         saveFiguresJB(figC, {fignm}, 0, 'png');
     end
     
 end
 
 end
-
-

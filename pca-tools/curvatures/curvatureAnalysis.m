@@ -1,15 +1,16 @@
-function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, save_imgs, par, num_pcs, out_pct, out_dim, fidx, vis)
+function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, save_imgs, par, splt, num_pcs, out_pct, out_dim, fidx, vis)
 %% curvatureAnalysis: run full pipeline to compute and plot curvatures
 %
 % Usage:
 %   [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, save_imgs, ...
-%            par, num_pcs, out_pct, out_dim, fidx, vis)
+%            par, splt, num_pcs, out_pct, out_dim, fidx, vis)
 %
 % Input:
 %   FPATHS: cell array of file paths to images
 %   save_data: boolean to save curvature values and PCA into csv file
 %   save_imgs: boolean to save figures as png images
 %   par: run silently [0], with parallel processing [1], or with verbosity [2]
+%   splt: split by upper and lower sections (default: 0)
 %   out_pct: percentage of outliers to omit from PCA
 %   fidx: figure handle index to plot data onto (default: 1)
 %   vis: visualize results or skip (can't visualize if running with parallel)
@@ -29,13 +30,13 @@ if nargin < 2
     fidx      = 1;
     vis       = 0;
     par       = 0;
+    splt      = 0;
     num_pcs   = 5;
     out_pct   = [5 , 95];
     out_dim   = 1;
 end
 
 % Default parameters
-SPLIT_REGIONS   = 1;  % Split by upper and lower sections [1]
 EXCLUDE_COLUMNS = 15; % Number of left-most columns to exclude
 SMOOTH_FACTOR   = 14; % Curvature smoothing factor
 SIZE_SHOULDER   = 50; % Number of coordinates to sample for shoulders
@@ -90,7 +91,7 @@ switch par
                 % Compute curvatures
                 t   = tic;
                 str = sprintf('Computing Curvatures...');
-                sk{f} = computeCurvatures(msks, SPLIT_REGIONS, EXCLUDE_COLUMNS, ...
+                sk{f} = computeCurvatures(msks, splt, EXCLUDE_COLUMNS, ...
                     SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP);
                 fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
                 
@@ -105,6 +106,7 @@ switch par
                 continue;
             end
         end
+        
     case 2
         %% Run in for loop with verbose output
         sk   = cell(numPaths, 1);
@@ -129,7 +131,7 @@ switch par
                 t   = tic;
                 str = sprintf('Computing Curvatures...');
                 [sk{f} , sc, sm, sskel] = ...
-                    computeCurvatures(msks, SPLIT_REGIONS, EXCLUDE_COLUMNS, ...
+                    computeCurvatures(msks, splt, EXCLUDE_COLUMNS, ...
                     SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP);
                 fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
                 
@@ -162,7 +164,7 @@ switch par
         msks                    = cellfun(@(x) imcomplement(double(logical(imread(x)))), ...
             FPATHS, 'UniformOutput', 0);
         [sk , sc , sm , sskel]  = cellfun(@(x) computeCurvatures(x, ...
-            SPLIT_REGIONS, EXCLUDE_COLUMNS, SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP), ...
+            splt, EXCLUDE_COLUMNS, SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP), ...
             msks, 'UniformOutput', 0);
         
         if vis
@@ -184,11 +186,11 @@ sk(echk)    = [];
 %% Run PCA on shoulder and tip curvatures
 % Combine upper and lower into same dataset
 K                   = cat(1, sk{:});
-[P , Q , s , t , w] = curvaturePCA(K, num_pcs, out_pct, out_dim);
+[P , Q , s , t , w] = curvaturePCA(K, splt, num_pcs, out_pct, out_dim);
 
 %% Store curvatures and curvature figures into individual folders
 % Iterate through regions and sections for straightened and binary curvatures
-sK = cellfun(@(k,n) processCurvatures(k,n), sk, snms, 'UniformOutput', 0);
+sK = cellfun(@(k,n) processCurvatures(k,n, splt), sk, snms, 'UniformOutput', 0);
 
 % Convert to tables
 S = cat(1, sK{:});
@@ -196,33 +198,52 @@ T = struct2table(S);
 
 %% Add PCA Scores and Miscllaneous Curvature Data to table T
 % Split upper-lower sections by left-right, then add to table
-scrss = P.shoulder.PCAScores;
-scrst = P.tip.PCAScores;
-scrsw = P.whole.PCAScores;
+if isempty(Q)
+    scrss = P.shoulder.PCAScores;
+    scrst = P.tip.PCAScores;
+    scrsw = P.whole.PCAScores;
+else
+    scrss = Q.shoulder.PCAScores;
+    scrst = Q.tip.PCAScores;
+    scrsw = Q.whole.PCAScores;
+end
 
-% Shoulders
-cnvps = im2colF(scrss(:,1), [2 , 1], [2 , 1])';
-sumks = im2colF(sum(s,2), [2 , 1], [2 , 1])';
-avgks = im2colF(mean(s,2), [2 , 1], [2 , 1])';
-
-T.shoulder_upper_pcs = cnvps(:,1);
-T.shoulder_upper_sum = sumks(:,1);
-T.shoulder_upper_avg = avgks(:,1);
-T.shoulder_lower_pcs = cnvps(:,2);
-T.shoulder_lower_sum = sumks(:,2);
-T.shoulder_lower_avg = avgks(:,2);
-
-% Tips
-cnvpt = im2colF(scrst(:,1), [2 , 1], [2 , 1])';
-sumkt = im2colF(sum(t,2), [2 , 1], [2 , 1])';
-avgkt = im2colF(mean(t,2), [2 , 1], [2 , 1])';
-
-T.tip_upper_pcs = cnvpt(:,1);
-T.tip_upper_sum = sumkt(:,1);
-T.tip_upper_avg = avgkt(:,1);
-T.tip_lower_pcs = cnvpt(:,2);
-T.tip_lower_sum = sumkt(:,2);
-T.tip_lower_avg = avgkt(:,2);
+if splt
+    % Shoulders
+    cnvps = im2colF(scrss(:,1), [2 , 1], [2 , 1])';
+    sumks = im2colF(sum(s,2), [2 , 1], [2 , 1])';
+    avgks = im2colF(mean(s,2), [2 , 1], [2 , 1])';
+    
+    T.shoulder_upper_pcs = cnvps(:,1);
+    T.shoulder_upper_sum = sumks(:,1);
+    T.shoulder_upper_avg = avgks(:,1);
+    T.shoulder_lower_pcs = cnvps(:,2);
+    T.shoulder_lower_sum = sumks(:,2);
+    T.shoulder_lower_avg = avgks(:,2);
+    
+    % Tips
+    cnvpt = im2colF(scrst(:,1), [2 , 1], [2 , 1])';
+    sumkt = im2colF(sum(t,2), [2 , 1], [2 , 1])';
+    avgkt = im2colF(mean(t,2), [2 , 1], [2 , 1])';
+    
+    T.tip_upper_pcs = cnvpt(:,1);
+    T.tip_upper_sum = sumkt(:,1);
+    T.tip_upper_avg = avgkt(:,1);
+    T.tip_lower_pcs = cnvpt(:,2);
+    T.tip_lower_sum = sumkt(:,2);
+    T.tip_lower_avg = avgkt(:,2);
+    
+else
+    % Shoulders
+    T.shoulder_pcs = scrss(:,1);
+    T.shoulder_sum = sum(s,2);
+    T.shoulder_avg = mean(s,2);
+    
+    % Tips
+    T.tip_pcs = scrst(:,1);
+    T.tip_sum = sum(t,2);
+    T.tip_avg = mean(t,2);
+end
 
 % Whole
 cnvpw = scrsw(:,1);
@@ -233,7 +254,7 @@ T.whole_pcs = cnvpw(:,1);
 T.whole_sum = sumkw(:,1);
 T.whole_avg = avgkw(:,1);
 
-%% Ouput table into xls file
+%% Ouput table into csv/xls file and files that caused errors in csv file
 if save_data
     if ~isfolder(OUT_DIR)
         mkdir(OUT_DIR);
@@ -243,30 +264,48 @@ if save_data
         OUT_DIR, filesep, tdate, numel(S));
     writetable(T, [tnm , '.csv'], 'FileType', 'text');
     writetable(T, tnm, 'FileType', 'spreadsheet');
+    
+    % Error files
+    enm = sprintf('%s%s%s_errorfiles_%04dFiles', ...
+        OUT_DIR, filesep, tdate, numel(error_files));
+    E   = cell2table(error_files);
+    writetable(E, [enm , '.csv'], 'FileType', 'text');
+    
+    
 end
 end
 
-function [P , Q , s , t , w] = curvaturePCA(K, num_pcs, out_pct, out_dim)
+function [P , Q , s , t , w] = curvaturePCA(K, splt, num_pcs, out_pct, out_dim)
 %% curvaturePCA: run PCA on curvatures and omit outliers
-s = arrayfun(@(k) [k.shoulder.upper , flipud(k.shoulder.lower)]', ...
-    K, 'UniformOutput', 0);
-t = arrayfun(@(k) [k.tip.upper , flipud([k.tip.lower ; 0])]', ...
-    K, 'UniformOutput', 0);
-w = arrayfun(@(k) [k.whole.upper ; flipud([k.whole.lower])]', ...
-    K, 'UniformOutput', 0);
+if splt
+    s = arrayfun(@(k) [k.shoulder.upper , flipud(k.shoulder.lower)]', ...
+        K, 'UniformOutput', 0);
+    t = arrayfun(@(k) [k.tip.upper , flipud([k.tip.lower ; 0])]', ...
+        K, 'UniformOutput', 0);
+    w = arrayfun(@(k) [k.whole.upper ; flipud([k.whole.lower])]', ...
+        K, 'UniformOutput', 0);
+else
+    s = arrayfun(@(k) k.shoulder', K, 'UniformOutput', 0);
+    t = arrayfun(@(k) k.tip', K, 'UniformOutput', 0);
+    w = arrayfun(@(k) k.whole', K, 'UniformOutput', 0);
+end
 
 s = cat(1, s{:});
 t = cat(1, t{:});
 w = cat(1, w{:});
 
 % Run PCA and omit outliers [store scores before omitting outliers]
-P.shoulder = pcaAnalysis(s, num_pcs, 0, 'shoulders_split', 0);
-P.tip      = pcaAnalysis(t, num_pcs, 0, 'tip_split', 0);
-P.whole    = pcaAnalysis(w, num_pcs, 0, 'whole_split', 0);
+P.shoulder = pcaAnalysis(s, num_pcs, 0, 'shoulders_split');
+P.tip      = pcaAnalysis(t, num_pcs, 0, 'tip_split');
+P.whole    = pcaAnalysis(w, num_pcs, 0, 'whole_split');
 
 % Remove Top and Bottom Outliers
-Q.shoulder = pcaOmitOutliers(P.shoulder, out_pct, out_dim);
-Q.tip      = pcaOmitOutliers(P.tip, out_pct, out_dim);
-Q.whole    = pcaOmitOutliers(P.whole, out_pct, out_dim);
+if ~isempty(out_pct)
+    Q.shoulder = pcaOmitOutliers(P.shoulder, out_pct, out_dim);
+    Q.tip      = pcaOmitOutliers(P.tip,      out_pct, out_dim);
+    Q.whole    = pcaOmitOutliers(P.whole,    out_pct, out_dim);
+else
+    Q = [];
+end
 
 end

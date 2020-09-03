@@ -96,9 +96,7 @@ S = zeros([numel(SMOOTH) , numel(DISKSIZE)]);
 for e1 = 1 : numel(DISKSIZE)
     % Smooth binary mask and extract contour
     tmpmsk = imopen(msk, strel('disk', DISKSIZE(e1), 0));
-    tmpcnt = extractContour(tmpmsk, NCRDS);
-    tmpcnt.ReindexCoordinates('alt');
-    tmpcnt = tmpcnt.NormalizedOutline;
+    tmpcnt = extractContour(tmpmsk, NCRDS, 'alt', 'default', 'Normalized');
     
     for e2 = 1 : numel(SMOOTH)
         % Compute curvature probabilities
@@ -138,9 +136,7 @@ function [mTip, mIdx, mCnt, mCrv] = getMaxParameters(msk, mDsk, mSmt, ncrds, cwt
 %% Perform operations using optimal parameters
 % Open mask and extract contour
 mMsk = imopen(msk, strel('disk', mDsk, 0));
-mCnt = extractContour(mMsk, ncrds);
-mCnt.ReindexCoordinates('alt');
-mCnt = mCnt.NormalizedOutline;
+mCnt = extractContour(mMsk, ncrds, 'alt', 'default', 'Normalized');
 
 % Smooth contoure and compute curvature
 [~, mCrv] = cwtK(mCnt, mSmt, cwtflt);

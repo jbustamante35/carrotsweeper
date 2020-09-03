@@ -20,7 +20,6 @@ if nargin < 2
     CNTR_LENGTH = 800; % Interpolation size for extracted contour
 end
 
-cntr = extractContour(msk, CNTR_LENGTH);
-crv  = cntr.InterpOutline;
+[crv , cntr] = extractContour(msk, CNTR_LENGTH);
 
 end

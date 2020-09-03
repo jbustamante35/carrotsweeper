@@ -100,7 +100,7 @@ classdef PcaJB
             varX = varx(1:n);
         end
         
-        function pcaS = PCAScores(obj, ndims, neigs)
+        function scrs = PCAScores(obj, ndims, neigs)
             %% Principal component scores
             if nargin < 2
                 ndims = ':';
@@ -112,9 +112,9 @@ classdef PcaJB
             rawD = obj.InputData;
             avgD = obj.MeanVals;
             eigV = obj.EigVecs(neigs);
-            pcaS = pcaProject(rawD, eigV, avgD, 'sim2scr');
+            scrs = pcaProject(rawD, eigV, avgD, 'sim2scr');
             
-            pcaS = pcaS(ndims, :);
+            scrs = scrs(ndims, :);
         end
         
         function simD = SimData(obj, ndims, neigs)

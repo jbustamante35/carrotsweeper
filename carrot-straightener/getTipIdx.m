@@ -59,7 +59,7 @@ try
         fprintf('...Identified tip in %.02f sec\n', toc);
     end
     
-catch
+catch e
     fprintf(2, 'Error with tip finder\n%s\n', e.getReport);
     tCrds = [];
     tIdx  = [];

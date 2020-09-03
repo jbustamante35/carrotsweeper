@@ -42,7 +42,7 @@ end
 
 % Compute curvatures with range of smoothing filter size
 mth      = 'closed';
-[~, kW]  = cwtK(cW, flt, mth);
+[~ , kW] = cwtK(cW, flt, mth);
 [~ , mW] = max(kW);
 
 %% Split curvatures into shoulders and tips
@@ -55,8 +55,8 @@ tCrd       = getTipIdx(skel);
 [~ , tIdx] = min(cell2mat(arrayfun(@(x) pdist2(tCrd, cW(x,:)), ...
     1 : size(cW,1), 'UniformOutput', 0)'));
 
-cT   = cW(tIdx - tip_size : tIdx + shoulder_size, :, :);
-kT   = kW(tIdx - tip_size : tIdx + shoulder_size,:);
+cT = cW(tIdx - tip_size : tIdx + shoulder_size, :, :);
+kT = kW(tIdx - tip_size : tIdx + shoulder_size,:);
 
 %% Split into top and bottom shoulder/tip or combine
 flds = {'shoulder' ; 'tip' ; 'whole'};
@@ -107,7 +107,7 @@ end
 MASK_THRESH     = 100;  % length to extend mask [removed after]
 MIN_THRESH_SIZE = 100;  % number of columns to remove from contour [post-process]
 FACE            = 3;    % Re-direct images left-right facing (original 3)
-INTERP_SIZE     = 1000; % Number of coordinates to interpolate to 
+INTERP_SIZE     = 1000; % Number of coordinates to interpolate to
 
 try
     %% Initial processing of the mask to face left-right and then pad
@@ -178,7 +178,7 @@ switch sz(2)
         y.upper = x(upper_range);
         y.lower = x(lower_range);
         
-        % Get value and index of maximum curvature
+        % Get index of maximum curvature
         [~ , m.upper] = max(y.upper);
         [~ , m.lower] = max(y.lower);
     case 2

@@ -2,8 +2,9 @@ function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, sa
 %% curvatureAnalysis: run full pipeline to compute and plot curvatures
 %
 % Usage:
-%   [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, save_imgs, ...
-%            par, splt, num_pcs, out_pct, out_dim, fidx, vis)
+%   [T , K , P , Q , error_files] = ...
+%           curvatureAnalysis(FPATHS, save_data, save_imgs, par, splt, ...
+%           num_pcs, out_pct, out_dim, fidx, vis)
 %
 % Input:
 %   FPATHS: cell array of file paths to images
@@ -38,7 +39,7 @@ end
 
 % Default parameters
 EXCLUDE_COLUMNS = 15; % Number of left-most columns to exclude
-SMOOTH_FACTOR   = 14; % Curvature smoothing factor
+SMOOTH_FACTOR   = 10; % Curvature smoothing factor
 SIZE_SHOULDER   = 50; % Number of coordinates to sample for shoulders
 SIZE_TIP        = 50; % Number of coordinates to sample for tips
 DSTR            = 0;  % Show distribution of curvatures
@@ -209,50 +210,72 @@ else
 end
 
 if splt
-    % Shoulders
-    cnvps = im2colF(scrss(:,1), [2 , 1], [2 , 1])';
-    sumks = im2colF(sum(s,2), [2 , 1], [2 , 1])';
-    avgks = im2colF(mean(s,2), [2 , 1], [2 , 1])';
+    % Sections are split upper and lower and need to be reshaped from a
+    % 2-dimensional matrix to a 3-dimensional matrix
+    %
+    % [ u11 u12 ... u1p ]    [ u11 l11 ]   [ u12 l12 ]  ...  [ u1p l1p ]
+    % [ l11 l12 ... l1p ]    [ u21 l21 ]   [ u22 l22 ]  ...  [ u2p l2p ]
+    % [ u21 u22 ... u2p ]        ...          ...       ...      ...
+    % [ l21 l22 ... l2p ] => [ un1 ln1 ]   [ un2 ln2 ]  ...  [ unp lnp ]
+    %   ...     ...             PC 1          PC 2      ...     PC p
+    % [ un1 un2 ... unp ]
+    % [ ln1 ln2 ... lnp ]
     
-    T.shoulder_upper_pcs = cnvps(:,1);
+    % Shoulders
+    [cnvps , sumks , avgks] = reshapeSplitCurvatures(scrss, s);
+    
     T.shoulder_upper_sum = sumks(:,1);
     T.shoulder_upper_avg = avgks(:,1);
-    T.shoulder_lower_pcs = cnvps(:,2);
     T.shoulder_lower_sum = sumks(:,2);
     T.shoulder_lower_avg = avgks(:,2);
     
     % Tips
-    cnvpt = im2colF(scrst(:,1), [2 , 1], [2 , 1])';
-    sumkt = im2colF(sum(t,2), [2 , 1], [2 , 1])';
-    avgkt = im2colF(mean(t,2), [2 , 1], [2 , 1])';
+    [cnvpt , sumkt , avgkt] = reshapeSplitCurvatures(scrst, t);
     
-    T.tip_upper_pcs = cnvpt(:,1);
     T.tip_upper_sum = sumkt(:,1);
     T.tip_upper_avg = avgkt(:,1);
-    T.tip_lower_pcs = cnvpt(:,2);
     T.tip_lower_sum = sumkt(:,2);
     T.tip_lower_avg = avgkt(:,2);
     
+    % Whole
+    [cnvpw , sumkw , avgkw] = reshapeSplitCurvatures(scrsw, w);
+    
+    T.whole_upper_sum = sumkw(:,1);
+    T.whole_upper_avg = avgkw(:,1);
+    T.whole_lower_sum = sumkw(:,2);
+    T.whole_lower_avg = avgkw(:,2);
+    
+    for i = 1 : num_pcs
+        T.(sprintf('shoulder_upper_pc%d', i)) = squeeze(cnvps(:,1,i));
+        T.(sprintf('shoulder_lower_pc%d', i)) = squeeze(cnvps(:,2,i));
+        T.(sprintf('tip_upper_pc%d', i))      = squeeze(cnvpt(:,1,i));
+        T.(sprintf('tip_lower_pc%d', i))      = squeeze(cnvpt(:,1,i));
+        T.(sprintf('whole_upper_pc%d', i))    = squeeze(cnvpw(:,1,i));
+        T.(sprintf('whole_lower_pc%d', i))    = squeeze(cnvpw(:,1,i));
+    end
+    
 else
     % Shoulders
-    T.shoulder_pcs = scrss(:,1);
     T.shoulder_sum = sum(s,2);
     T.shoulder_avg = mean(s,2);
     
     % Tips
-    T.tip_pcs = scrst(:,1);
     T.tip_sum = sum(t,2);
     T.tip_avg = mean(t,2);
+    
+    % Whole
+    sumkw = sum(w,2);
+    avgkw = mean(w,2);
+    
+    T.whole_sum = sumkw(:,1);
+    T.whole_avg = avgkw(:,1);
+    
+    for i = 1 : num_pcs
+        T.(sprintf('shoulder_pc%d', i)) = scrss(:,i);
+        T.(sprintf('tip_pc%d', i))      = scrst(:,i);
+        T.(sprintf('whole_pc%d', i))    = scrsw(:,i);
+    end
 end
-
-% Whole
-cnvpw = scrsw(:,1);
-sumkw = sum(w,2);
-avgkw = mean(w,2);
-
-T.whole_pcs = cnvpw(:,1);
-T.whole_sum = sumkw(:,1);
-T.whole_avg = avgkw(:,1);
 
 %% Ouput table into csv/xls file and files that caused errors in csv file
 if save_data
@@ -278,13 +301,17 @@ end
 function [P , Q , s , t , w] = curvaturePCA(K, splt, num_pcs, out_pct, out_dim)
 %% curvaturePCA: run PCA on curvatures and omit outliers
 if splt
-    s = arrayfun(@(k) [k.shoulder.upper , flipud(k.shoulder.lower)]', ...
-        K, 'UniformOutput', 0);
-    t = arrayfun(@(k) [k.tip.upper , flipud([k.tip.lower ; 0])]', ...
-        K, 'UniformOutput', 0);
-    w = arrayfun(@(k) [k.whole.upper ; flipud([k.whole.lower])]', ...
-        K, 'UniformOutput', 0);
+    % Upper and lower sections are spilt such that the upper section data are
+    % the first half of the matrix, and the lower section is the second half
+    s = [arrayfun(@(k) k.shoulder.upper', K, 'UniformOutput', 0) ; ...
+        arrayfun(@(k) flipud(k.shoulder.lower)', K, 'UniformOutput', 0)];
+    t = [arrayfun(@(k) k.tip.upper', K, 'UniformOutput', 0) ; ...
+        arrayfun(@(k) flipud([k.tip.lower ; 0])', K, 'UniformOutput', 0)];
+    w = [arrayfun(@(k) k.whole.upper', K, 'UniformOutput', 0) ; ...
+        arrayfun(@(k) flipud(k.whole.lower)', K, 'UniformOutput', 0)];
+    
 else
+    % Upper and Lower sections are unsplit and stitched together
     s = arrayfun(@(k) k.shoulder', K, 'UniformOutput', 0);
     t = arrayfun(@(k) k.tip', K, 'UniformOutput', 0);
     w = arrayfun(@(k) k.whole', K, 'UniformOutput', 0);
@@ -307,5 +334,13 @@ if ~isempty(out_pct)
 else
     Q = [];
 end
+
+end
+
+function [cnvp , sumk , avgk] = reshapeSplitCurvatures(scrs, k)
+%% reshapeCurvatures: reshape split curvature data from 2D to 3D
+cnvp = reshape(scrs,     [size(scrs,1) / 2 , 2 , size(scrs,2)]);
+sumk = reshape(sum(k,2),  [size(k,1) / 2 , 2]);
+avgk = reshape(mean(k,2), [size(k,1) / 2 , 2]);
 
 end

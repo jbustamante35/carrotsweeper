@@ -203,10 +203,27 @@ if isempty(Q)
     scrss = P.shoulder.PCAScores;
     scrst = P.tip.PCAScores;
     scrsw = P.whole.PCAScores;
+    
+    % Eigenvectors and Means
+    evecs = P.shoulder.EigVecs;
+    evect = P.tip.EigVecs;
+    evecw = P.whole.EigVecs;
+    mnss  = P.shoulder.MeanVals;
+    mnst  = P.tip.MeanVals;
+    mnsw  = P.whole.MeanVals;
+    
 else
     scrss = Q.shoulder.PCAScores;
     scrst = Q.tip.PCAScores;
     scrsw = Q.whole.PCAScores;
+    
+    % Eigenvectors and Means
+    evecs = Q.shoulder.EigVecs;
+    evect = Q.tip.EigVecs;
+    evecw = Q.whole.EigVecs;
+    mnss  = Q.shoulder.MeanVals;
+    mnst  = Q.tip.MeanVals;
+    mnsw  = Q.whole.MeanVals;
 end
 
 if splt
@@ -283,17 +300,37 @@ if save_data
         mkdir(OUT_DIR);
     end
     
+    % Save Curvatures and PC Scores
     tnm = sprintf('%s%s%s_Curvatures_%04dCarrots', ...
         OUT_DIR, filesep, tdate, numel(S));
     writetable(T, [tnm , '.csv'], 'FileType', 'text');
-    writetable(T, tnm, 'FileType', 'spreadsheet');
+    
+    % Save eigenvectors and means
+    estrs = sprintf('%s_Curvatures_ShoulderVectors', tdate);
+    estrt = sprintf('%s_Curvatures_TipVectors', tdate);
+    estrw = sprintf('%s_Curvatures_WholeVectors', tdate);
+    
+    enms = struct('EigVecs', evecs, 'Means', mnss');
+    enmt = struct('EigVecs', evect, 'Means', mnst');
+    enmw = struct('EigVecs', evecw, 'Means', mnsw');
+    
+    etbls = struct2table(enms);
+    etblt = struct2table(enmt);
+    etblw = struct2table(enmw);
+    
+    etnms = sprintf('%s/%s.csv', OUT_DIR, estrs);
+    etnmt = sprintf('%s/%s.csv', OUT_DIR, estrt);
+    etnmw = sprintf('%s/%s.csv', OUT_DIR, estrw);
+    
+    writetable(etbls, etnms, 'FileType', 'text');
+    writetable(etblt, etnmt, 'FileType', 'text');
+    writetable(etblw, etnmw, 'FileType', 'text');
     
     % Error files
     enm = sprintf('%s%s%s_errorfiles_%04dFiles', ...
         OUT_DIR, filesep, tdate, numel(error_files));
     E   = cell2table(error_files);
     writetable(E, [enm , '.csv'], 'FileType', 'text');
-    
     
 end
 end

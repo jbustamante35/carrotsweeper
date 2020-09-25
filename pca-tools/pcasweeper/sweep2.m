@@ -58,8 +58,8 @@ end
 % [scores, eigenvectors, and means]
 if ~isempty(fieldnames(pcaX)) || ~isempty(fieldnames(pcsY))
     mnsD = {pcaX.MeanVals   ; pcaY.MeanVals};
-    eigV = {pcaX.EigVectors ; pcaY.EigVectors};
-    scrD = {pcaX.PCAscores  ; pcaY.PCAscores};
+    eigV = {pcaX.EigVecs    ; pcaY.EigVecs};
+    scrD = {pcaX.PCAScores  ; pcaY.PCAScores};
 else
     mnsD = {meansX  ; meansY};
     eigV = {eigsX   ; eigsY};

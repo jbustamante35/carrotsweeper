@@ -1,4 +1,4 @@
-function [scoresAll, simsAll, figs] = performSweep(varargin)
+function [scoresAll, simsAll] = performSweep(varargin)
 %% performSweep: run pcaSweep through all principal components n times
 % This function performs a sweep through each principal component of 2 sets
 % of PCA structures. The function used to make iterative steps of each PC is
@@ -14,7 +14,7 @@ function [scoresAll, simsAll, figs] = performSweep(varargin)
 % don't need to have an equal number PCs.
 %
 % The up and down functions [upFn|dwnFn] are an anonymous function that takes in
-% as input the PC score (x) and the value to increment by (y): 
+% as input the PC score (x) and the value to increment by (y):
 %    upFn  = @(x,y) x+y;
 %    dwnFn = @(x,y) x-y;
 %
@@ -59,10 +59,10 @@ pcSwp = @(x,y,z) sweep2('pcaX', pcaX, 'pcaY', pcaY, 'dim2chg', x, ...
 stps  = 1 : nsteps; % Number of iterative steps up and down
 
 % Dimensions and PCs to iterate through
-dim = [1 2];
-pcX = 1 : size(pcaX.PCAscores, 2);
-pcY = 1 : size(pcaY.PCAscores, 2);
-pcA = {pcX pcY};
+dim = [1 , 2];
+pcX = 1 : size(pcaX.PCAScores, 2);
+pcY = 1 : size(pcaY.PCAScores, 2);
+P   = {pcX , pcY};
 
 %% Equalize axes limits if you want each plot to have same axes (SET 'eqlax' TO TRUE)
 % You can set these limits to whatever values you want
@@ -71,17 +71,17 @@ pcA = {pcX pcY};
 %     's',[-10 1200 ; -600 2500]);
 
 %% Create 2 sets of figures for x- and y-coordinates
-figs = [1 2];
+fnms                  = cell(1, numel(figs));
+[scoresAll , simsAll] = deal(cell(numel(dim), max(cellfun(@numel, P))));
 for d = dim
-    figs(d) = figure;
-    set(gcf,'color','w');
-    tot = numel(pcA{d});
+    figclr(d);
+    tot = numel(P{d});
     row = 2;
     col = ceil(tot / row);
     for k = 1 : tot
         subplot(row, col, k);
         [scoresAll{d,k}, simsAll{d,k}] = ...
-            arrayfun(@(x) pcSwp(d, pcA{d}(k), x), stps, 'UniformOutput', 0);
+            arrayfun(@(x) pcSwp(d, P{d}(k), x), stps, 'UniformOutput', 0);
         
         % Equalize axes limits if set to TRUE
         %         if isfield(axs, usr) && eqlax
@@ -94,15 +94,15 @@ for d = dim
         % Equalize axes limits
         %         xlim([-2000 0]);
         %         ylim([-1000 1000]);
-        typ = {'pcaX' 'pcaY'};
+        typ = {'pcaX' , 'pcaY'};
     end
     
-    if sv
-        num = numel(pcA{d});
-        fnm = sprintf('%s_PCSweepFull_%s_%dPCs', tdate, typ{d}, num);
-        savefig(figs(d), fnm);
-        saveas(figs(d), fnm, 'tiffn');
-    end
+    num     = numel(P{d});
+    fnms{d} = sprintf('%s_PCSweepFull_%s_%dPCs', tdate, typ{d}, num);   
+end
+
+if sav    
+    saveFiguresJB(figs, fnms, 0);
 end
 
 end
@@ -114,13 +114,14 @@ function args = parseInputs(varargin)
 % pcaX, pcaY, nsteps, sv, usr, eqlax
 
 p = inputParser;
-p.addOptional('pcaX', struct());
-p.addOptional('pcaY', struct());
+p.addOptional('pcaX', PcaJB);
+p.addOptional('pcaY', PcaJB);
 p.addOptional('nsteps', 1);
 p.addOptional('upFn', @(x,y) x+y);
 p.addOptional('dwnFn', @(x,y) x-y);
+p.addOptional('figs', 1:2);
 p.addOptional('f', 0);
-p.addOptional('sv', 0);
+p.addOptional('sav', 0);
 
 % Parse arguments and output into structure
 p.parse(varargin{1}{:});

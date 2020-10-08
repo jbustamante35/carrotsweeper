@@ -60,7 +60,7 @@ fprintf('Determined Normalization Method: [%s | %s lengths | %s widths]\n', ...
 fprintf('Performing PCA on %d widths, shoulders, and tips...', ttlWids);
 pcnm       = sprintf('%slength_%swidth_%s', nrmL, nrmW, rgn);
 
-%% TODO: Replace this with the separate function instead
+%% Run PCA with outliers omitted
 % [PW, remW] = pcaOmitOutliers(W, numC, pcnm, outlier_pct, savpca, pcdim);
 PW         = pcaAnalysis(W, numC, 0, pcnm);
 [PW, remW] = pcaOmitOutliers(PW, outlier_pct, pcdim);

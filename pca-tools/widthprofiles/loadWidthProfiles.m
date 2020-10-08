@@ -23,10 +23,18 @@ function FOUT = loadWidthProfiles(rootDir, maskDir, load_data, img)
 %       profiles: width profiles of straightened masks
 %
 
-%%
-if nargin < 3
-    load_data = 0;      % Default to only return path names
-    img       = '.png'; % Default to search for png images
+%% Parse inputs
+switch nargin
+    case 2
+        load_data = 0;      % Default to only return path names
+        img       = '.png'; % Default to search for png images
+    case 3
+        img       = '.png'; % Default to search for png images
+    case 4
+    otherwise
+        fprintf(2, 'Error with inputs (%d)\n', nargin);
+        FOUT = [];
+        return;
 end
 
 %%

@@ -64,7 +64,6 @@ pcnm       = sprintf('%slength_%swidth_%s', nrmL, nrmW, rgn);
 % [PW, remW] = pcaOmitOutliers(W, numC, pcnm, outlier_pct, savpca, pcdim);
 PW         = pcaAnalysis(W, numC, 0, pcnm);
 [PW, remW] = pcaOmitOutliers(PW, outlier_pct, pcdim);
-% PATHFW     = FPATHS(remW);
 
 %% Refresh some data after removing outliers
 remWids = length(remW);
@@ -90,7 +89,7 @@ if vis
     
     fprintf('Visualizing ranges of PC scores and masks...');
     fnms{1} = showRangeProfiles(PW, rng, widnm, pcdim, nrmL, nrmW, fidxs(1));
-    fnms{2} = showRangeMasks(PW, rng, widnm, PATHFW, pcdim, nrmL, nrmW, fidxs(2));
+    fnms{2} = showRangeMasks(PW, rng, widnm, FPATHS, pcdim, nrmL, nrmW, fidxs(2));
         
     if savcsv
         fprintf('Saving %d figures...', numel(figs));
@@ -148,8 +147,8 @@ end
 function saveCSV(FPATHS, P, dataname, ttlWids, outDir, pcdim)
 %% saveCSV:
 %
-% saveCSV(PATHFW, pw, 'Widths', ttlWids, rootDir)
-%
+% saveCSV(FPATHS, pw, 'Widths', ttlWids, rootDir)
+
 
 %% Get file paths [with outliers removed]
 [FDIRS , FNAMES, ~] = cellfun(@(x) fileparts(x), FPATHS, 'UniformOutput', 0);

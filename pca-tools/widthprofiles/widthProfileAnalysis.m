@@ -64,27 +64,12 @@ pcnm       = sprintf('%slength_%swidth_%s', nrmL, nrmW, rgn);
 % [PW, remW] = pcaOmitOutliers(W, numC, pcnm, outlier_pct, savpca, pcdim);
 PW         = pcaAnalysis(W, numC, 0, pcnm);
 [PW, remW] = pcaOmitOutliers(PW, outlier_pct, pcdim);
-PATHFW     = FPATHS(remW);
+% PATHFW     = FPATHS(remW);
 
 %% Refresh some data after removing outliers
-bakWids = ttlWids;
-ttlWids = length(remW);
+remWids = length(remW);
 
-fprintf('Removed %d outliers from each dataset...', bakWids - ttlWids);
-fprintf('DONE! [%.02f sec]\n', toc(t));
-
-%% PCA on length-width normalized profiles 
-%% [TODO]
-t = tic;
-fprintf('Performing PCA on %d orthonormalized profiles...', ttlWids);
-fprintf('DONE! [%.02f sec]\n', toc(t));
-
-%% Get Curvatures
-t = tic;
-fprintf('Computing curvatures of %d width profiles...', ttlWids);
-
-
-
+fprintf('Removed %d outliers from each dataset...', ttlWids - remWids);
 fprintf('DONE! [%.02f sec]\n', toc(t));
 
 %% Save Results in a CSV and .mat file
@@ -93,7 +78,7 @@ if savcsv
     fprintf('Saving output in .csv and .xls files...');
     datDir = 'Output';
     outDir = sprintf('%s/%s', rootDir, datDir);
-    saveCSV(PATHFW, PW, pcnm, ttlWids, outDir, pcdim);
+    saveCSV(FPATHS, PW, pcnm, ttlWids, outDir, pcdim);
     
     fprintf('...DONE! [%.02f sec]\n', toc(t));
 end

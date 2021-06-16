@@ -104,46 +104,6 @@ fprintf('%s\nFinished Width Profile Analysis [%.02f sec]\n%s\n', ...
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Replaced by pcaOmitOutliers.m function
-% function [p, remIdx] = pcaOmitOutliers(W, pcs, pcnm, outlier_pct, savpca, pcdim)
-% %% pcaOmitOutliers:
-% %
-% %
-% % Usage:
-% %
-% %
-% % Input:
-% %   W: vectorized width profiles
-% %   pcs:
-% %   pcnm:
-% %   outlier_pct:
-% %
-% % Output:
-% %
-%
-% %% Initial PCA, Remove Outliers, Re-Run PCA
-% p           = pcaAnalysis(W, pcs, savpca, pcnm, 0);
-% [W, remIdx] = removeOutliers(W, p.PCAScores, outlier_pct, pcdim);
-% p           = pcaAnalysis(W, pcs, savpca, pcnm, 0);
-%
-% end
-%
-% function [W , remIdx] = removeOutliers(W, scrs, outlier_pct, pcdim)
-% %% removeOutliers: returns width profiles after removing outliers
-% outIdx = isoutlier(scrs(:,pcdim), 'percentiles', ...
-%     100 * [outlier_pct , 1 - outlier_pct]);
-% remIdx = find(~outIdx);
-% W      = W(remIdx,:);
-%
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 function saveCSV(FPATHS, P, dataname, ttlWids, outDir, pcdim)
 %% saveCSV:
 %

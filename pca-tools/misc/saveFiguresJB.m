@@ -17,7 +17,7 @@ function saveFiguresJB(figs, fnms, sav_fig, img_type, sav_dir)
 %% Save them
 % Default to tiffn format (uncompressed tiff)
 switch nargin
-    case 1 
+    case 1
         fnms     = arrayfun(@(x) sprintf('%s_figure%d', tdate, x), ...
             figs, 'UniformOutput', 0);
         sav_fig  = 0;
@@ -32,34 +32,20 @@ switch nargin
         sav_dir  = pwd;
     case 4
         sav_dir  = pwd;
-    case 5        
+    case 5
     otherwise
         fprintf(2, 'Too many input arguments [%d]\n', nargin);
         return;
 end
 
-% if nargin <= 3
-%     switch nargin
-%         case 2
-%             sav_fig  = 1;
-%             img_type = 'tiffn';
-%             sav_dir  = pwd;
-%         case 3
-%             img_type = 'tiffn';
-%             sav_dir  = pwd;
-%         case 4
-%             sav_dir = pwd;
-%     end
-% end
-
 %% Save figures (create directory if it doesn't exist)
 if ~isfolder(sav_dir)
-    mkdir(sav_dir);    
+    mkdir(sav_dir);
 end
 
 fnms = cellfun(@(fnm) sprintf('%s%s%s', sav_dir, filesep, fnm), ...
-        fnms, 'UniformOutput', 0);
-    
+    fnms, 'UniformOutput', 0);
+
 if sav_fig
     arrayfun(@(fig) savefig(figs(fig), fnms{fig}), ...
         1 : numel(figs), 'UniformOutput', 0);

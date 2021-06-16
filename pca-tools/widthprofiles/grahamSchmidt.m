@@ -17,6 +17,7 @@ nbw = bw / norm(bw);
 nbl = bl / norm(bl);
 
 % Decompose NBW into NBL
+% nu = nbw' - (nbl' * nbw)' * nbl'; % is this more correct?
 nu  = nbw - (nbl' * nbw) * nbl;
 nnu = nu / norm(nu);
 

@@ -1,18 +1,18 @@
-function [rIdxs , rx] = pullRandom(X, n, getrx)
+function [rIdxs , val] = pullRandom(X, n, getval)
 %% pullRandom: pull random number(s) from distribution
 % Description
 %
 % Usage:
-%    rIdxs = pullRandom(X, n, getrx)
+%    [rIdxs , val] = pullRandom(X, n, getval)
 %
 % Input:
 %    X: distribution of numbers
 %    n: number of random pulls (optional) [defaults to 1]
-%    getrx: return the actual value instead of the index
+%    getval: return the actual value instead of the index
 %
 % Output:
 %    rIdxs: random index or indices from distribution
-%    rx: random data pulled from distribution
+%    val: random data pulled from distribution
 %
 % Author Julian Bustamante <jbustamante@wisc.edu>
 %
@@ -20,14 +20,14 @@ function [rIdxs , rx] = pullRandom(X, n, getrx)
 %% Default to take 1 sample
 switch nargin
     case 1
-        n     = 1;
-        getrx = 0;
+        n      = 1;
+        getval = 0;
     case 2
-        getrx = 0;
+        getval = 0;
     case 3
     otherwise
         fprintf(2, 'Error with inputs\n');
-        [rIdxs , rx] = deal([]);
+        [rIdxs , val] = deal([]);
         return;
 end
 
@@ -39,10 +39,10 @@ else
     % No Shuffle function found
     rIdxs = sort(randi(length(X), [1 , n]));
 end
-rx    = X(rIdxs);
+val = X(rIdxs);
 
-if getrx
-    rIdxs = rx;
+if getval
+    rIdxs = val;
 end
 
 end

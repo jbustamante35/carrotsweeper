@@ -92,7 +92,7 @@ function [mDsk, mSth] = iterativeSmoothing(msk, xi, yi, SMOOTH, DISKSIZE, NCRDS,
 %% Iterate through ranges for SMOOTH value and DISK size
 S = zeros([numel(SMOOTH) , numel(DISKSIZE)]);
 
-% 
+%
 for e1 = 1 : numel(DISKSIZE)
     % Smooth binary mask and extract contour
     tmpmsk = imopen(msk, strel('disk', DISKSIZE(e1), 0));

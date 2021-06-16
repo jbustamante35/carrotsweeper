@@ -1,0 +1,206 @@
+%% pcaJB: my custom PCA class
+
+% classdef PcaJB < handle
+classdef PcaJB
+    properties (Access = public)
+        %% Main properties
+        DataName
+        InputData
+        NumberOfPCs
+    end
+    
+    properties (Access = protected)
+        %% Private properties
+        % Not sure what I'd put here yet
+    end
+    
+    methods (Access = public)
+        %% Constructor method
+        function obj = PcaJB(varargin)
+        %% Constructor for this object
+        if ~isempty(varargin)
+            % Parse inputs to set properties
+            args = obj.parseConstructorInput(varargin);
+            
+            fn = fieldnames(args);
+            for k = fn'
+                obj.(cell2mat(k)) = args.(cell2mat(k));
+            end
+            
+            % Process Name for savefile
+            appendName   = sprintf('%s_pcaResults_%s_%dPCs', ...
+                tdate, obj.DataName, obj.NumberOfPCs);
+            obj.DataName = appendName;
+        else
+            % Set default properties for empty object
+            obj.DataName = sprintf('%s_pcaResults', tdate);
+        end
+        end
+        
+    end
+    
+    methods (Access = public)
+        %% Primary Methods to get data
+        function inpD = getInput(obj, ndims)
+        %% Get specific rows of the input
+        if nargin < 2
+            ndims = ':';
+        end
+        
+        inpD = obj.InputData(ndims, :);
+        end
+        
+        function avgD = MeanVals(obj, mvals)
+        %% Means of the input data
+        if nargin < 2
+            mvals = size(obj.InputData,2);
+        end
+        
+        avgD = mean(obj.InputData, 1);
+        avgD = avgD(1 : mvals);
+        end
+        
+        function covD = CovVarMatrix(obj)
+        %% Variance-Covariance matrix
+        % The (subD' * subD) calculation takes a very long time for large
+        % datasets (N > 10000). Consider using a faster function.
+        rawD = obj.InputData;
+        avgD = obj.MeanVals;
+        subD = bsxfun(@minus, rawD, avgD);
+        covD = (subD' * subD) / size(subD, 1);
+        end
+        
+        function vecs = EigVecs(obj, neigs)
+        %% Eigenvectors
+        if nargin < 2 || neigs == 0
+            neigs = obj.NumberOfPCs;
+        end
+        
+        vecs = obj.getEigens('vec', neigs);
+        vecs = vecs(:, 1 : neigs);
+        end
+        
+        function vals = EigVals(obj, neigs)
+        %% Eigenvalues
+        if nargin < 2 || neigs == 0
+            neigs = obj.NumberOfPCs;
+        end
+        
+        vals = obj.getEigens('val', neigs);
+        vals = vals(1:neigs, 1:neigs);
+        end
+        
+        function [varX, pctN] = VarExplained(obj, pct, n)
+        %% Variance explained
+        % pct: cutoff percentage (default: 1.0)
+        % n: number of dimensions to return (default: NumberOfPCs)
+        if nargin < 2
+            pct = 0.999;
+            n   = obj.NumberOfPCs;
+        elseif nargin < 3
+            n = obj.NumberOfPCs;
+        end
+        
+        eigX         = obj.EigVals(size(obj.InputData,2));
+        [varx, pctN] = variance_explained(eigX, pct);
+        
+        varX = varx(1:n);
+        end
+        
+        function scrs = PCAScores(obj, nrng, neigs)
+        %% Principal component scores
+        if nargin < 2
+            nrng  = ':';
+            neigs = obj.NumberOfPCs;
+        elseif nargin < 3
+            neigs = obj.NumberOfPCs;
+        end
+        
+        rawD = obj.InputData;
+        avgD = obj.MeanVals;
+        eigV = obj.EigVecs(neigs);
+        scrs = pcaProject(rawD, eigV, avgD, 'sim2scr');
+        
+        scrs = scrs(nrng, :);
+        end
+        
+        function simD = SimData(obj, nrng, neigs)
+        %% Simulated data after projecting data on eigenvectors
+        if nargin < 2
+            nrng  = ':';
+            neigs = obj.NumberOfPCs;
+        elseif nargin < 3
+            neigs = obj.NumberOfPCs;
+        end
+        
+        pcaS = obj.PCAScores(nrng, neigs);
+        eigV = obj.EigVecs(neigs);
+        avgD = obj.MeanVals;
+        simD = pcaProject(pcaS, eigV, avgD, 'scr2sim');
+        end
+        
+        function [z , mu , sig] = ZScoreNorm(obj, ndim)
+            %% Perform Z-Score normalization
+            % To convert normalized dataset 'z' back to the original, multiply
+            % by sig
+            %
+            % Input:
+            %   obj: this PCA object
+            %   ndim: direction to compute on (default 1)
+            %
+            % Output:
+            %   z: Z-Score normalized data
+            %   mu: mean of dataset
+            %   sig: standard deviation of dataset
+            %
+            
+            if nargin < 2
+                ndim = 1;
+            end
+            
+            [z , mu , sig] = zscore(obj.InputData, ndim);
+            
+        end
+        
+    end
+    
+    methods (Access = private)
+        %% Private helper methods
+        function args = parseConstructorInput(varargin)
+        %% Parse input parameters for Constructor method
+        p = inputParser;
+        p.addRequired('InputData');
+        p.addRequired('NumberOfPCs');
+        p.addOptional('DataName', '');
+        
+        % Parse arguments into structure
+        p.parse(varargin{2}{:});
+        args = p.Results;
+        end
+        
+        function eigX = getEigens(obj, req, npcs)
+        %% Get Eigenvectors or Eigenvalues
+        if nargin < 2
+            req  = 'vec';
+            npcs = obj.NumberOfPCs;
+        end
+        
+        covD             = obj.CovVarMatrix;
+        [eigVec, eigVal] = eigs(covD, npcs);
+        
+        switch req
+            case 'vec'
+                eigX = eigVec;
+            case 'val'
+                eigX = eigVal;
+            otherwise
+                fprintf(2, 'Error getting eigen%s\n', req);
+                eigX = [];
+        end
+        
+        end
+        
+    end
+    
+end
+

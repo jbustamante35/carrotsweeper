@@ -21,9 +21,9 @@ switch nargin
         p = plot(D(:,1), D(:,2));
         
     case 2
-        D = force2D(varargin{1});
+        D   = force2D(varargin{1});
         typ = varargin{2};
-        p = plot(D(:,1), D(:,2), typ);
+        p   = plot(D(:,1), D(:,2), typ);
         
     case 3
         D = force2D(varargin{1});
@@ -31,7 +31,14 @@ switch nargin
         sz  = varargin{3};
         
         if contains(typ, '-')
-            p = plot(D(:,1), D(:,2), typ, 'LineWidth', sz);
+            if numel(sz) > 1
+                msz = sz(1);
+                lsz = sz(2);
+                p = plot(D(:,1), D(:,2), typ, ...
+                    'LineWidth', lsz, 'MarkerSize', msz);
+            else
+                p = plot(D(:,1), D(:,2), typ, 'LineWidth', sz);
+            end
         else
             p = plot(D(:,1), D(:,2), typ, 'MarkerSize', sz);
         end

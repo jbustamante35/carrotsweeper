@@ -43,7 +43,7 @@ sCrv      = sCrv .* sVec;
 
 if sum(sCrv < 0) ~= sum(sVec == 1)
     % If no negative curvatures
-    [~ , sIdx] = max(sCrv);    
+    [~ , sIdx] = max(sCrv);
 else
     % Get maximum of negative curvatures if entire region is negative
     fprintf('*');

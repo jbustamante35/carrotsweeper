@@ -1,18 +1,18 @@
-function [b , preD] = pcaRegression(DIN, SCRS, mth)
+function [b , dpre] = pcaRegression(DIN, DOUT, mth)
 %% pcaRegression:
 %
 %
 % Usage:
-%   [b , preD] = pcaRegression(DIN, SCRS, mth)
+%   [b , dpre] = pcaRegression(DIN, DOUT, mth)
 %
 % Input:
-%   DIN: raw data
-%   SCRS: PC Scores
+%   DIN: raw data input
+%   DOUT: target values
 %   mth: method to obtain covariance [pcr|cca]
 %
 % Output:
-%   b:
-%   preD: predicted values given input data
+%   b: regressor
+%   dpre: predicted values given input data
 %
 
 %% Determine  method for regressino
@@ -25,21 +25,21 @@ switch mth
     case 'pcr'
         %% 
         ND   = DIN - mean(DIN);
-        b    = SCRS \ ND;
-        preD = SCRS * b;
+        b    = DOUT \ ND;
+        dpre = DOUT * b;
         
     case 'cca'
         %% 
-        X           = SCRS;
+        X           = DOUT;
         Y           = DIN - mean(DIN);
         [A,B,R,U,V] = canoncorr(X,Y);
         
         b    = A;
-        preD = U / B;
+        dpre = U / B;
         
     otherwise
         fprintf(2, 'Regression Method %s must be [pcr|cca]\n', mth);
-        [b , preD] = deal([]);
+        [b , dpre] = deal([]);
 end
 end
 

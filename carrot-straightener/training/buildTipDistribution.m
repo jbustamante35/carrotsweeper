@@ -64,7 +64,7 @@ try
     xi(end)  = [];
     
     % Sum of -logs of curvature probabilities
-    yi = yi/ sum(yi);
+    yi = yi / sum(yi);
     vi = -log(yi);
     
     %% Store output in a structure and save

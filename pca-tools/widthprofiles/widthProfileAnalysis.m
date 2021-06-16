@@ -12,7 +12,7 @@ function PW = widthProfileAnalysis(F, FPATHS, rootDir, numC, savpca, savcsv, vis
 % Input:
 %   F: structure containing widths prepared from prepWidthAnalysis function
 %   FPATHS: file paths to images
-%   rootDir: root directory to save Output 
+%   rootDir: root directory to save Output
 %   numC: number of PCs to reduce width profiles to
 %   savpca: boolean to save pca output in .mat files
 %   savcsv: boolean to save output in .csv and .xls files
@@ -74,7 +74,7 @@ fprintf('DONE! [%.02f sec]\n', toc(t));
 %% Save Results in a CSV and .mat file
 if savcsv
     t = tic;
-    fprintf('Saving output in .csv and .xls files...');
+    fprintf('Saving output as .csv files...');
     datDir = 'Output';
     outDir = sprintf('%s/%s', rootDir, datDir);
     saveCSV(FPATHS, PW, pcnm, ttlWids, outDir, pcdim);
@@ -90,7 +90,7 @@ if vis
     fprintf('Visualizing ranges of PC scores and masks...');
     fnms{1} = showRangeProfiles(PW, rng, widnm, pcdim, nrmL, nrmW, fidxs(1));
     fnms{2} = showRangeMasks(PW, rng, widnm, FPATHS, pcdim, nrmL, nrmW, fidxs(2));
-        
+    
     if savcsv
         fprintf('Saving %d figures...', numel(figs));
         saveFiguresJB(figs, fnms, 0, 'png', outDir);
@@ -103,46 +103,6 @@ fprintf('%s\nFinished Width Profile Analysis [%.02f sec]\n%s\n', ...
     sprA, toc(tAll), sprB);
 
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Replaced by pcaOmitOutliers.m function
-% function [p, remIdx] = pcaOmitOutliers(W, pcs, pcnm, outlier_pct, savpca, pcdim)
-% %% pcaOmitOutliers:
-% %
-% %
-% % Usage:
-% %
-% %
-% % Input:
-% %   W: vectorized width profiles
-% %   pcs: 
-% %   pcnm:
-% %   outlier_pct: 
-% %
-% % Output:
-% %
-% 
-% %% Initial PCA, Remove Outliers, Re-Run PCA
-% p           = pcaAnalysis(W, pcs, savpca, pcnm, 0);
-% [W, remIdx] = removeOutliers(W, p.PCAScores, outlier_pct, pcdim);
-% p           = pcaAnalysis(W, pcs, savpca, pcnm, 0);
-% 
-% end
-% 
-% function [W , remIdx] = removeOutliers(W, scrs, outlier_pct, pcdim)
-% %% removeOutliers: returns width profiles after removing outliers
-% outIdx = isoutlier(scrs(:,pcdim), 'percentiles', ...
-%     100 * [outlier_pct , 1 - outlier_pct]);
-% remIdx = find(~outIdx);
-% W      = W(remIdx,:);
-% 
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function saveCSV(FPATHS, P, dataname, ttlWids, outDir, pcdim)
 %% saveCSV:
@@ -180,8 +140,8 @@ end
 tnm1 = sprintf('%s/%s.csv', ddir, dout);
 writetable(tbl, tnm1, 'FileType', 'text');
 
-tnm2 = sprintf('%s/%s', ddir, dout);
-writetable(tbl, tnm2, 'FileType', 'spreadsheet');
+% tnm2 = sprintf('%s/%s', ddir, dout);
+% writetable(tbl, tnm2, 'FileType', 'spreadsheet');
 
 %% Save data in xls and csv files
 % Eigenvectors, Means, and Curvatures
@@ -198,39 +158,6 @@ writetable(etbl, etnm, 'FileType', 'text');
 etnm = sprintf('%s/%s', ddir, estr);
 writetable(etbl, etnm, 'FileType', 'spreadsheet');
 end
-
-% function vals = getNameID(FNAMES, id)
-% %% getNameID: extract values from an id in a filename
-% expr = sprintf('%s_(?<id>.*?)}', id);
-% val  = regexpi(FNAMES, expr, 'names');
-% vals = cellfun(@(x) char(x.id), val, 'UniformOutput', 0);
-
-% end
-
-% function [nrmL , nrmW] = getNormalization(W)
-% %% getNormalization: determine normalization method used
-% ZEROTHRESH = 0.2; % fewer than 20% should be 0 in normalized lengths
-% zeroL      = numel(find(W == 0)) / numel(W); % Check if lengths have appended zeros
-% maxW       = max(W, [], 'all'); % Check if width normalized to 1
-% 
-% if zeroL > ZEROTHRESH   
-%     % Lengths have appended zeros [non-normalized]    
-%     nrmL = 'original';
-% else
-%     % Lengths are normalized
-%     nrmL = 'normalized';
-% 
-% end
-% 
-% if maxW > 1
-%     % Widths are non-normalized
-%     nrmW = 'original';
-% else
-%     % Widths are normalized
-%     nrmW = 'normalized';
-% end
-% 
-% end
 
 function fnm = showRangeProfiles(pd, nRng, dnm, pcdim, nrmL, nrmW, fIdx)
 %% showRangeProfiles: show range of profiles after sorting by PC scores

@@ -8,8 +8,8 @@ function [k , c , m , skel]  = computeCurvatures(msk, splt, cols2remove, flt, sh
 % Explanation about splitting into upper and lower regions
 %
 % Usage:
-%   [k , c , m , skel]  = ...
-%        computeCurvatures(msk, splt, cols2remove, flt, shoulder_size, tip_size)
+%   [k , c , m , skel]  = computeCurvatures( ...
+%       msk, splt, cols2remove, flt, shoulder_size, tip_size)
 %
 % Input:
 %    msk: binary mask that can be straightened or unstraightened
@@ -26,7 +26,6 @@ function [k , c , m , skel]  = computeCurvatures(msk, splt, cols2remove, flt, sh
 %    skel: processed mask after excluding columns
 %
 % Author Julian Bustamante <jbustamante@wisc.edu>
-%
 
 %% Default parameters
 if nargin < 2
@@ -63,17 +62,17 @@ flds = {'shoulder' ; 'tip' ; 'whole'};
 if splt
     X       = {kS , kT , kW , cS , cT , cW};
     [Y , M] = cellfun(@(x) splitUpperAndLower(x), X, 'UniformOutput', 0);
-    
+
     % Store regions into structure
     k = cell2struct(Y(1:3)', flds);
     c = cell2struct(Y(4:end)', flds);
     m = cell2struct(M(1:3)', flds);
-    
+
 else
     % Store regions into structure
     k = cell2struct({kS , kT , kW}', flds);
     c = cell2struct({cS , cT , cW}', flds);
-    
+
     % Get max curvatures
     [~ , m.shoulder] = max(kS);
     [~ , m.tip]      = max(kT);
@@ -114,18 +113,18 @@ try
     if size(msk, 3) > 1
         msk = rgb2gray(msk);
     end
-    
+
     % Force flip to left-right [arg = 3]
     %     skel = handleFLIP(msk, []);
     skel = handleFLIP(msk, FACE);
     chk  = ~imbinarize(skel);
-    
+
     % Remove rows that are all empty
     while ~sum(chk(:,1))
         chk(:,1)    = [];
         COLS2REMOVE = COLS2REMOVE  + 1;
     end
-    
+
     if COLS2REMOVE > 0
         skel = skel(:, COLS2REMOVE : end);
     end
@@ -165,7 +164,7 @@ switch mod(sz(1),2)
         % Tips [upper: half + tip | lower: 2nd half]
         upper_range = 1                    : (sz(1) / 2) + 1;
         lower_range = upper_range(end) + 1 : sz(1);
-        
+
     otherwise
         % Something went wrong
         fprintf(2, 'Did something go wrong?\n');
@@ -177,7 +176,7 @@ switch sz(2)
         % Curvatures: single vector
         y.upper = x(upper_range);
         y.lower = x(lower_range);
-        
+
         % Get index of maximum curvature
         [~ , m.upper] = max(y.upper);
         [~ , m.lower] = max(y.lower);

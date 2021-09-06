@@ -11,7 +11,7 @@ end
 
 imagesc(img);
 colormap(clr);
-axis (im);
+axis(im);
 axis(ax);
 
 end

@@ -1,20 +1,28 @@
-function figclr(fIdx)
+function figclr(fidx, toClear)
 %% figclr: clear figure
+%
+% Usage:
+%   figclr(fidx, toClear)
+%
+% Input:
+%   fidx: index or indices to figure handles [default 0]
+%   toClear: clear figure [default 0]
+if nargin < 1; fidx    = 0; end
+if nargin < 2; toClear = 0; end
 
-if nargin == 1
-    if numel(fIdx) > 1
-        for f = 1 : numel(fIdx)
-            set(0, 'CurrentFigure', f);
-            cla;clf;
+if fidx
+    if numel(fidx) > 1
+        for f = 1 : numel(fidx)
+            set(0, 'CurrentFigure', fidx(f));
+            if ~logical(toClear); cla;clf; end
         end
     else
-        set(0, 'CurrentFigure', fIdx);
-        cla;clf;
+        set(0, 'CurrentFigure', fidx);
+        if ~logical(toClear); cla;clf; end
     end
 else
-    cla;clf;
+    if ~logical(toClear); cla;clf; end
 end
 
-drawnow;
-
+% drawnow;
 end

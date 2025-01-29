@@ -3,8 +3,8 @@ function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, sa
 %
 % Usage:
 %   [T , K , P , Q , error_files] = ...
-%           curvatureAnalysis(FPATHS, save_data, save_imgs, par, splt, ...
-%           num_pcs, out_pct, out_dim, fidx, vis)
+%       curvatureAnalysis(FPATHS, save_data, save_imgs, par, splt, ...
+%       num_pcs, out_pct, out_dim, fidx, vis)
 %
 % Input:
 %   FPATHS: cell array of file paths to images
@@ -12,7 +12,9 @@ function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, sa
 %   save_imgs: boolean to save figures as png images
 %   par: run silently [0], with parallel processing [1], or with verbosity [2]
 %   splt: split by upper and lower sections (default: 0)
+%   num_pcs:
 %   out_pct: percentage of outliers to omit from PCA
+%   out_dim:
 %   fidx: figure handle index to plot data onto (default: 1)
 %   vis: visualize results or skip (can't visualize if running with parallel)
 %
@@ -25,17 +27,15 @@ function [T , K , P , Q , error_files] = curvatureAnalysis(FPATHS, save_data, sa
 %
 
 %% Set default parameters and options
-if nargin < 2
-    save_data = 0;
-    save_imgs = 0;
-    fidx      = 1;
-    vis       = 0;
-    par       = 0;
-    splt      = 0;
-    num_pcs   = 5;
-    out_pct   = [5 , 95];
-    out_dim   = 1;
-end
+if nargin < 2;  save_data = 0;        end
+if nargin < 3;  save_imgs = 0;        end
+if nargin < 4;  par       = 0;        end
+if nargin < 5;  splt      = 0;        end
+if nargin < 6;  num_pcs   = 5;        end
+if nargin < 7;  out_pct   = [5 , 95]; end
+if nargin < 8;  out_dim   = 1;        end
+if nargin < 9;  fidx      = 1;        end
+if nargin < 10; vis       = 0;        end
 
 % Default parameters
 EXCLUDE_COLUMNS = 15; % Number of left-most columns to exclude
@@ -66,40 +66,38 @@ switch par
     case 1
         %% Run with parallel processing (be careful with RAM!)
         fprintf('NOTE: Can''t visualize results in parallel mode!');
-        
+
         halfCores = ceil(feature('numcores') / 2);
         setupParpool(halfCores, 0);
-        
+
         sk   = cell(numPaths, 1);
-        sepA = repmat('=', [1 , 80]);
-        sepB = repmat('-', [1 , 80]);
         ellp = @(x) repmat('.', 1, 80 - (length(x) + 13));
-        
+
         % NOTE: Can't visualize result in parallel mode!
         parfor f = 1 : numPaths
             try
                 tAll = tic;
                 fp   = FPATHS{f};
                 nm   = sprintf('%s | %s', GENOTYPE{f}, snms{f});
-                fprintf('%s\n%s:\n%s\n', sepA, nm, sepB);
-                
+                fprintf('%s\n%s:\n%s\n', sprA, nm, sprB);
+
                 % Extract image from file path
                 t = tic;
                 str  = sprintf('Extracting Image');
                 msks = imcomplement(double(logical(imread(fp))));
                 fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-                
+
                 % Compute curvatures
                 t   = tic;
                 str = sprintf('Computing Curvatures...');
                 sk{f} = computeCurvatures(msks, splt, EXCLUDE_COLUMNS, ...
                     SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP);
                 fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-                
+
                 str = sprintf('Finished %04d of %04d', f, numPaths);
                 fprintf('%s\n%s%s [ %.02f sec ]\n%s] \n', ...
-                    sepB, str, ellp(str), toc(tAll), sepA);
-                
+                    sprB, str, ellp(str), toc(tAll), sprA);
+
             catch
                 % Store filename of error and continue loop
                 error_files{f} = sprintf('%s_%s', GENOTYPE{f}, snms{f});
@@ -107,27 +105,25 @@ switch par
                 continue;
             end
         end
-        
+
     case 2
         %% Run in for loop with verbose output
         sk   = cell(numPaths, 1);
-        sepA = repmat('=', [1 , 80]);
-        sepB = repmat('-', [1 , 80]);
         ellp = @(x) repmat('.', 1, 80 - (length(x) + 13));
-        
+
         for f = 1 : numPaths
             try
                 tAll = tic;
                 fp   = FPATHS{f};
                 nm   = sprintf('%s | %s', GENOTYPE{f}, snms{f});
-                fprintf('%s\n%s:\n%s\n', sepA, nm, sepB);
-                
+                fprintf('%s\n%s:\n%s\n', sprA, nm, sprB);
+
                 % Extract image from file path
                 t = tic;
                 str  = sprintf('Extracting Image');
                 msks = imcomplement(double(logical(imread(fp))));
                 fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-                
+
                 % Compute curvatures
                 t   = tic;
                 str = sprintf('Computing Curvatures...');
@@ -135,7 +131,7 @@ switch par
                     computeCurvatures(msks, splt, EXCLUDE_COLUMNS, ...
                     SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP);
                 fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-                
+
                 % Plot curvatures and save image
                 if vis
                     t   = tic;
@@ -143,23 +139,24 @@ switch par
                     plotCurvature(sskel, sk{f}, sc, sm, ...
                         SMOOTH_FACTOR, EXCLUDE_COLUMNS, save_imgs, snms{f}, K_DIR{f}, fidx, DSTR);
                     fprintf('%s%s [ %.02f sec ] \n', str, ellp(str), toc(t));
-                    
+
                 end
-                
+
                 str = sprintf('Finished %04d of %04d', f, numPaths);
                 fprintf('%s\n%s%s [ %.02f sec ]\n%s] \n', ...
-                    sepB, str, ellp(str), toc(tAll), sepA);
-            catch
+                    sprB, str, ellp(str), toc(tAll), sprA);
+            catch err
                 % Store filename of error and continue loop
-                error_files{error_count} = sprintf('%s_%s', GENOTYPE{f}, snms{f});
-                fprintf(2, 'Error with %s | Total Errors: %d\n', ...
-                    error_files{error_count}, error_count);
-                
+                error_files{error_count} = ...
+                    sprintf('%s_%s', GENOTYPE{f}, snms{f});
+                fprintf(2, '\n\n%s\n\nError with %s | Total Errors: %d\n', ...
+                    err.getReport, error_files{error_count}, error_count);
+
                 error_count = error_count + 1;
                 continue;
             end
         end
-        
+
     otherwise
         %% Run silently using cell functions
         msks                    = cellfun(@(x) imcomplement(double(logical(imread(x)))), ...
@@ -167,7 +164,7 @@ switch par
         [sk , sc , sm , sskel]  = cellfun(@(x) computeCurvatures(x, ...
             splt, EXCLUDE_COLUMNS, SMOOTH_FACTOR, SIZE_SHOULDER, SIZE_TIP), ...
             msks, 'UniformOutput', 0);
-        
+
         if vis
             % Plot result
             cellfun(@(s,k,c,m,nm,do) plotCurvature(s, k, c, m, ...
@@ -203,7 +200,7 @@ if isempty(Q)
     scrss = P.shoulder.PCAScores;
     scrst = P.tip.PCAScores;
     scrsw = P.whole.PCAScores;
-    
+
     % Eigenvectors and Means
     evecs = P.shoulder.EigVecs;
     evect = P.tip.EigVecs;
@@ -211,12 +208,12 @@ if isempty(Q)
     mnss  = P.shoulder.MeanVals;
     mnst  = P.tip.MeanVals;
     mnsw  = P.whole.MeanVals;
-    
+
 else
     scrss = Q.shoulder.PCAScores;
     scrst = Q.tip.PCAScores;
     scrsw = Q.whole.PCAScores;
-    
+
     % Eigenvectors and Means
     evecs = Q.shoulder.EigVecs;
     evect = Q.tip.EigVecs;
@@ -237,31 +234,31 @@ if splt
     %   ...     ...             PC 1          PC 2      ...     PC p
     % [ un1 un2 ... unp ]
     % [ ln1 ln2 ... lnp ]
-    
+
     % Shoulders
     [cnvps , sumks , avgks] = reshapeSplitCurvatures(scrss, s);
-    
+
     T.shoulder_upper_sum = sumks(:,1);
     T.shoulder_upper_avg = avgks(:,1);
     T.shoulder_lower_sum = sumks(:,2);
     T.shoulder_lower_avg = avgks(:,2);
-    
+
     % Tips
     [cnvpt , sumkt , avgkt] = reshapeSplitCurvatures(scrst, t);
-    
+
     T.tip_upper_sum = sumkt(:,1);
     T.tip_upper_avg = avgkt(:,1);
     T.tip_lower_sum = sumkt(:,2);
     T.tip_lower_avg = avgkt(:,2);
-    
+
     % Whole
     [cnvpw , sumkw , avgkw] = reshapeSplitCurvatures(scrsw, w);
-    
+
     T.whole_upper_sum = sumkw(:,1);
     T.whole_upper_avg = avgkw(:,1);
     T.whole_lower_sum = sumkw(:,2);
     T.whole_lower_avg = avgkw(:,2);
-    
+
     for i = 1 : num_pcs
         T.(sprintf('shoulder_upper_pc%d', i)) = squeeze(cnvps(:,1,i));
         T.(sprintf('shoulder_lower_pc%d', i)) = squeeze(cnvps(:,2,i));
@@ -270,23 +267,23 @@ if splt
         T.(sprintf('whole_upper_pc%d', i))    = squeeze(cnvpw(:,1,i));
         T.(sprintf('whole_lower_pc%d', i))    = squeeze(cnvpw(:,1,i));
     end
-    
+
 else
     % Shoulders
     T.shoulder_sum = sum(s,2);
     T.shoulder_avg = mean(s,2);
-    
+
     % Tips
     T.tip_sum = sum(t,2);
     T.tip_avg = mean(t,2);
-    
+
     % Whole
     sumkw = sum(w,2);
     avgkw = mean(w,2);
-    
+
     T.whole_sum = sumkw(:,1);
     T.whole_avg = avgkw(:,1);
-    
+
     for i = 1 : num_pcs
         T.(sprintf('shoulder_pc%d', i)) = scrss(:,i);
         T.(sprintf('tip_pc%d', i))      = scrst(:,i);
@@ -296,42 +293,40 @@ end
 
 %% Ouput table into csv/xls file and files that caused errors in csv file
 if save_data
-    if ~isfolder(OUT_DIR)
-        mkdir(OUT_DIR);
-    end
-    
+    if ~isfolder(OUT_DIR); mkdir(OUT_DIR); end
+
     % Save Curvatures and PC Scores
     tnm = sprintf('%s%s%s_Curvatures_%04dCarrots', ...
         OUT_DIR, filesep, tdate, numel(S));
     writetable(T, [tnm , '.csv'], 'FileType', 'text');
-    
+
     % Save eigenvectors and means
     estrs = sprintf('%s_Curvatures_ShoulderVectors', tdate);
     estrt = sprintf('%s_Curvatures_TipVectors', tdate);
     estrw = sprintf('%s_Curvatures_WholeVectors', tdate);
-    
+
     enms = struct('EigVecs', evecs, 'Means', mnss');
     enmt = struct('EigVecs', evect, 'Means', mnst');
     enmw = struct('EigVecs', evecw, 'Means', mnsw');
-    
+
     etbls = struct2table(enms);
     etblt = struct2table(enmt);
     etblw = struct2table(enmw);
-    
+
     etnms = sprintf('%s/%s.csv', OUT_DIR, estrs);
     etnmt = sprintf('%s/%s.csv', OUT_DIR, estrt);
     etnmw = sprintf('%s/%s.csv', OUT_DIR, estrw);
-    
+
     writetable(etbls, etnms, 'FileType', 'text');
     writetable(etblt, etnmt, 'FileType', 'text');
     writetable(etblw, etnmw, 'FileType', 'text');
-    
+
     % Error files
     enm = sprintf('%s%s%s_errorfiles_%04dFiles', ...
         OUT_DIR, filesep, tdate, numel(error_files));
     E   = cell2table(error_files);
     writetable(E, [enm , '.csv'], 'FileType', 'text');
-    
+
 end
 end
 
@@ -346,7 +341,7 @@ if splt
         arrayfun(@(k) flipud([k.tip.lower ; 0])', K, 'UniformOutput', 0)];
     w = [arrayfun(@(k) k.whole.upper', K, 'UniformOutput', 0) ; ...
         arrayfun(@(k) flipud(k.whole.lower)', K, 'UniformOutput', 0)];
-    
+
 else
     % Upper and Lower sections are unsplit and stitched together
     s = arrayfun(@(k) k.shoulder', K, 'UniformOutput', 0);

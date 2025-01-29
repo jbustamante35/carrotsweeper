@@ -1,4 +1,4 @@
-function [tCrds, tIdx, debug_output] = getTipIdx(msk, VIS, DEBUG)
+function [tCrds , tIdx , debug_output] = getTipIdx(msk, VIS, DEBUG)
 %% getTipIdx: identify point of highest curvature on a contour
 % This function computes the curvature around a given contour and identifies the
 % index along the curve representing the highest curvature. Parameters can be
@@ -42,12 +42,10 @@ try
     %% Use TipFindrX method to find optimally-refined tip
     % WTF I need to clean this up further    
     tic;
-    if VIS
-        fprintf('Running TipFindrX...');
-    end
+    if VIS; fprintf('Running TipFindrX...'); end
     
-    [tCrds, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = tipFinderPlus( ...
-        msk, xi, yi, SMOOTHRANGE, DISKRANGE, NCRDS, VIS);
+    [tCrds , tIdx , mDsk , mSmt , mTip , mCrv , hTip , rCnt] = ...
+        tipFinderPlus(msk, xi, yi, SMOOTHRANGE, DISKRANGE, NCRDS, VIS);
     
     if DEBUG
         fnms = {'max_disk_size' , 'max_smooth_size' , 'optimal_tip_coord' , ...
@@ -55,14 +53,11 @@ try
         debug_output = cell2struct({mDsk, mSmt, mTip, mCrv, hTip, rCnt}', fnms);
     end
     
-    if VIS
-        fprintf('...Identified tip in %.02f sec\n', toc);
-    end
+    if VIS; fprintf('...Identified tip in %.02f sec\n', toc); end
     
 catch e
     fprintf(2, 'Error with tip finder\n%s\n', e.getReport);
     tCrds = [];
     tIdx  = [];
 end
-
 end

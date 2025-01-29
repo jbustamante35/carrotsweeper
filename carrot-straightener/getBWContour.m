@@ -1,10 +1,10 @@
-function [crv, cntr] = getBWContour(msk, CNTR_LENGTH)
+function [crv , cntr] = getBWContour(msk, CNTR_LENGTH)
 %% getBWContour: extracts a ContourJB from a binary mask image
 % Wrapper of my method to extract contours from binary mask images. Output is in
 % the form of Nathan's curve structure and my ContourJB object.
 %
 % Usage:
-%   [crv, cntr] = getBWContour(msk)
+%   [crv , cntr] = getBWContour(msk, CNTR_LENGTH)
 %
 % Input:
 %   msk: binary masks image
@@ -15,11 +15,8 @@ function [crv, cntr] = getBWContour(msk, CNTR_LENGTH)
 %   cntr: my custom ContourJB class
 %
 
-%%
-if nargin < 2
-    CNTR_LENGTH = 800; % Interpolation size for extracted contour
-end
+% Interpolation size for extracted contour
+if nargin < 2; CNTR_LENGTH = 800; end
 
 [crv , cntr] = extractContour(msk, CNTR_LENGTH);
-
 end

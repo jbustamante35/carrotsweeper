@@ -89,9 +89,6 @@ if dstr
 end
 
 % Save figure as png image
-if sav
-    saveFiguresJB(fidx, {fnm}, 0, 'png', dout);
-end
-
+if sav; saveFiguresJB(fidx, {fnm}, dout, 0, 'png'); end
 end
 

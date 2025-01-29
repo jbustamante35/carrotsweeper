@@ -1,8 +1,7 @@
 function D = getDim(X, n)
 %% getDim: returns n-dimension of multi-dimensional data
-% This function is basically just a shortcut for concatenating a cell array 
-% and returning the desired dimension. It can also be used for a 
-% multi-dimensional data matrix.
+% This function is basically just a shortcut for concatenating a cell array and returning the
+% desired dimension. It can also be used for a multi-dimensional data matrix
 %
 % This basically only works for 2D data right now.
 %
@@ -16,7 +15,6 @@ function D = getDim(X, n)
 % Output:
 %   D: data from desired dimension defined by n
 %
-if nargin < 2; n = 1; end
 
 try
     if iscell(X)
@@ -28,4 +26,5 @@ try
 catch
     fprintf(2, 'Input should either be cell array or data matrix\n');
 end
+
 end

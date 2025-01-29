@@ -1,5 +1,5 @@
-function [Q, remIdx] = pcaOmitOutliers(P, outlier_pct, pcdim)
-%% pcaOmitOutliers:
+function [Q , remIdx] = pcaOmitOutliers(P, outlier_pct, pcdim)
+%% pcaOmitOutliers: run PCA on dataset using outlier-removed eigenvectors
 %
 %
 % Usage:
@@ -11,14 +11,12 @@ function [Q, remIdx] = pcaOmitOutliers(P, outlier_pct, pcdim)
 %   pcdim: PC score to check for outliers (default: 1)
 %
 % Output:
-%   Q: new PcaJB object with outliers removed
+%   Q: pca data run on full dataset with outliers removed
 %   remIdx: indices of remaining data
 %
 
-if nargin < 2
-    outlier_pct = [5 , 95];
-    pcdim       = 1;
-end
+if nargin < 2; outlier_pct = [5 , 95]; end
+if nargin < 3; pcdim       = 1;        end
 
 %% Initial PCA, Remove Outliers, Re-Run PCA
 % Get PCScores and DataName
@@ -30,11 +28,14 @@ dnm = P.DataName(pca + 1 : pcb - 1);
 % Remove outliers and redo PCA
 [~ , wIdx]  = rmoutliers(S(:,pcdim), 'percentiles', outlier_pct);
 remIdx      = find(~wIdx);
-W           = P.InputData(remIdx,:);
+wx          = P.InputData(remIdx,:);
+W           = pcaAnalysis(wx, P.NumberOfPCs, 0, dnm);
 
-Q           = pcaAnalysis(W, P.NumberOfPCs, 0, dnm, 0, 2);
-Q.InputData = P.InputData;
-Q.PCAScores = pcaProject(Q.InputData, Q.EigVecs, Q.MeanVals, 'sim2scr');
-Q.SimData   = pcaProject(Q.PCAScores, Q.EigVecs, Q.MeanVals, 'scr2sim');
-
+Q.DataName    = W.DataName;
+Q.InputData   = P.InputData;
+Q.NumberOfPCs = W.NumberOfPCs;
+Q.EigVecs     = W.EigVecs;
+Q.MeanVals    = W.MeanVals;
+Q.PCAScores   = pcaProject(Q.InputData, W.EigVecs, W.MeanVals, 'sim2scr');
+Q.SimData     = pcaProject(Q.PCAScores, W.EigVecs, W.MeanVals, 'scr2sim');
 end

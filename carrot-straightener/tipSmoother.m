@@ -26,7 +26,8 @@ function [sVec, sCrv, sIdx, sTip, iCnt] = tipSmoother(iCrv, iTip, iCnt, optS, PI
 % Create initial curvature array and tip index
 if ~isempty(init)
     % Extract contour from original mask
-    iCnt = extractContour(init, length(iCrv), 'alt', 'default', 'Normalized');
+    % iCnt = extractContour(init, length(iCrv), 'alt', 'default', 'Normalized');
+    [~ , iCnt] = extractContour(init, length(iCrv), 'alt', 'Normalize');
 end
 
 % Create window region to smooth and compute curvatures

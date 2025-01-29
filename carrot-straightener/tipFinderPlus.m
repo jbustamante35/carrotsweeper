@@ -1,9 +1,9 @@
-function [tTip, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds, vis)
+function [tTip , tIdx , mDsk , mSmt , mTip , mCrv , hTip , rCnt] = tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds, vis)
 %% tipFinderPlus:
 %
 %
 % Usage:
-%   [tTip, tIdx, mDsk, mSmt, mTip, mCrv, hTip, rCnt] = ...
+%   [tTip , tIdx , mDsk , mSmt , mTip , mCrv , hTip , rCnt] = ...
 %       tipFinderPlus(msk, xi, yi, smoothrange, diskrange, ncrds, vis)
 % Input:
 %   msk: binary mask facing left-right
@@ -34,10 +34,10 @@ PIX2       = 40;
 ALPHA2     = 1;
 
 %% Get optimal parameters by iterating through smooth and disk ranges
-[mDsk, mSmt] = ...
+[mDsk , mSmt] = ...
     iterativeSmoothing(msk, xi, yi, smoothrange, diskrange, ncrds, CWTFLT);
 
-[mTip, mIdx, mCnt, mCrv] = ...
+[mTip , mIdx , mCnt , mCrv] = ...
     getMaxParameters(msk, mDsk, mSmt, ncrds, CWTFLT, CRDSTHRESH);
 
 %% Fix Initial guessed tip by smoothing around half-way region
@@ -48,34 +48,30 @@ L   = cumsum([0 ; dL]);
 SCL = L(end) / ncrds;
 
 % Perform initial smoothing with large range and large smooth value
-initCrv                     = mCrv;
-initIdx                     = mIdx;
-initCnt                     = [];
-[tRgn, tCrv, tIdx, ~, tCnt] = ...
+initCrv = mCrv;
+initIdx = mIdx;
+initCnt = [];
+
+[tRgn , tCrv , tIdx , ~ , tCnt] = ...
     tipSmoother(initCrv, initIdx, initCnt, mSmt, PIX, SCL, ALPHA, msk);
 
-if vis
-    fprintf('|%d', tIdx);
-end
+if vis; fprintf('|%d', tIdx); end
 
 % Decrease PIX range and ALPHA size to refine tip finder
 for n = 1 : NSMOOTH
-    [tRgn, tCrv, tIdx, ~, tCnt] = ...
+    [tRgn , tCrv , tIdx , ~ , tCnt] = ...
         tipSmoother(tCrv, tIdx, tCnt, mSmt, PIX2, SCL, ALPHA2, []);
     
-    if vis
-        fprintf('|%d', tIdx);
-    end
+    if vis; fprintf('|%d', tIdx); end
 end
 
 %% Misc Data
 hTip = tCnt(mIdx,:);        % Optimal tip index in original contour
 rCnt = tCnt(tRgn > 0, :);   % Region to search for refined tip
 tTip = tCnt(tIdx, :);       % Refined tip coordinates
-
 end
 
-function [mDsk, mSth] = iterativeSmoothing(msk, xi, yi, SMOOTH, DISKSIZE, NCRDS, CWTFLT)
+function [mDsk , mSth] = iterativeSmoothing(msk, xi, yi, SMOOTH, DISKSIZE, NCRDS, CWTFLT)
 %% iterativeSmoothing:
 %
 %
@@ -96,7 +92,8 @@ S = zeros([numel(SMOOTH) , numel(DISKSIZE)]);
 for e1 = 1 : numel(DISKSIZE)
     % Smooth binary mask and extract contour
     tmpmsk = imopen(msk, strel('disk', DISKSIZE(e1), 0));
-    tmpcnt = extractContour(tmpmsk, NCRDS, 'alt', 'default', 'Normalized');
+    % tmpcnt = extractContour(tmpmsk, NCRDS, 'alt', 'default', 'Normalized');
+    [~ , tmpcnt] = extractContour_old(tmpmsk, NCRDS, 'alt', 'Normalize');
     
     for e2 = 1 : numel(SMOOTH)
         % Compute curvature probabilities
@@ -116,10 +113,9 @@ end
 [mRow , mCol] = ind2sub(size(S), maxS);
 mDsk          = DISKSIZE(mRow);
 mSth          = SMOOTH(mCol);
-
 end
 
-function [mTip, mIdx, mCnt, mCrv] = getMaxParameters(msk, mDsk, mSmt, ncrds, cwtflt, crdsthresh)
+function [mTip , mIdx , mCnt , kCrv] = getMaxParameters(msk, mDsk, mSmt, ncrds, cwtflt, crdsthresh)
 %% getMaxParameters:
 %
 %
@@ -136,16 +132,17 @@ function [mTip, mIdx, mCnt, mCrv] = getMaxParameters(msk, mDsk, mSmt, ncrds, cwt
 %% Perform operations using optimal parameters
 % Open mask and extract contour
 mMsk = imopen(msk, strel('disk', mDsk, 0));
-mCnt = extractContour(mMsk, ncrds, 'alt', 'default', 'Normalized');
+% mCnt = extractContour(mMsk, ncrds, 'alt', 'default', 'Normalized');
+[~ , mCnt] = extractContour_old(mMsk, ncrds, 'alt', 'Normalize');
 
 % Smooth contoure and compute curvature
-[~, mCrv] = cwtK(mCnt, mSmt, cwtflt);
+[~ , kCrv] = cwtK(mCnt, mSmt, cwtflt);
 
 % Filter out x-coordinates > threshold
 crsdflt = mCnt(:,1) >= crdsthresh;
-mCrv    = mCrv .* crsdflt;
+kCrv    = kCrv .* crsdflt;
 
 % Get index and coordinates from point of maximum curvature
-[~ , mIdx] = max(mCrv);
+[~ , mIdx] = max(kCrv);
 mTip       = mCnt(mIdx, :);
 end

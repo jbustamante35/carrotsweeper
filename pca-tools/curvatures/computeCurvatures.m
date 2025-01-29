@@ -28,12 +28,11 @@ function [k , c , m , skel]  = computeCurvatures(msk, splt, cols2remove, flt, sh
 % Author Julian Bustamante <jbustamante@wisc.edu>
 
 %% Default parameters
-if nargin < 2
-    splt                       = 1;
-    [shoulder_size , tip_size] = deal(50);
-    cols2remove                = 0;
-    flt                        = 12;
-end
+if nargin < 2; splt          = 1;  end
+if nargin < 3; cols2remove   = 0;  end
+if nargin < 4; flt           = 12; end
+if nargin < 5; shoulder_size = 50; end
+if nargin < 6; tip_size      = 50; end
 
 %% Get curvatures and determine filter size and number of columns to remove
 % Process Mask by removing left-most columns
@@ -78,7 +77,6 @@ else
     [~ , m.tip]      = max(kT);
     m.whole          = mW;
 end
-
 end
 
 function [skel , crv] = maskProcessor(msk, COLS2REMOVE)
@@ -98,9 +96,8 @@ function [skel , crv] = maskProcessor(msk, COLS2REMOVE)
 %
 
 %% Set constants for respective algorithms
-if nargin < 2
-    COLS2REMOVE = 15;  % Left-most columns to remove from the mask
-end
+% Left-most columns to remove from the mask
+if nargin < 2; COLS2REMOVE = 15; end
 
 % Other constants
 MASK_THRESH     = 100;  % length to extend mask [removed after]
@@ -110,14 +107,12 @@ INTERP_SIZE     = 1000; % Number of coordinates to interpolate to
 
 try
     %% Initial processing of the mask to face left-right and then pad
-    if size(msk, 3) > 1
-        msk = rgb2gray(msk);
-    end
+    if size(msk, 3) > 1; msk = rgb2gray(msk); end
 
     % Force flip to left-right [arg = 3]
     %     skel = handleFLIP(msk, []);
     skel = handleFLIP(msk, FACE);
-    chk  = ~imbinarize(skel);
+    chk  = ~imbinarize(double(skel));
 
     % Remove rows that are all empty
     while ~sum(chk(:,1))
@@ -125,10 +120,8 @@ try
         COLS2REMOVE = COLS2REMOVE  + 1;
     end
 
-    if COLS2REMOVE > 0
-        skel = skel(:, COLS2REMOVE : end);
-    end
-    skel = ~padarray(skel, [0 MASK_THRESH], 'pre', 'replicate');
+    if COLS2REMOVE > 0; skel = skel(:, COLS2REMOVE : end); end
+    skel = ~padarray(skel, [0 , MASK_THRESH], 'pre', 'replicate');
 catch
     fprintf(2, '\nError with skeletonization\n');
     [skel , crv] = deal([]);
@@ -136,7 +129,7 @@ catch
 end
 
 %% Post-processing of contour and mask
-crv = getBWContour(skel, INTERP_SIZE);
+[~ , crv] = getBWContour(skel, INTERP_SIZE);
 
 % Remove padded area of mask and curve/midline coordinates
 rmCrv        = crv(:,1) < MIN_THRESH_SIZE;
@@ -148,7 +141,6 @@ crv(:,1)                    = crv(:,1) - MIN_THRESH_SIZE;
 
 % Re-interpolate contour
 crv = interpolateOutline(crv, INTERP_SIZE);
-
 end
 
 function [y , m] = splitUpperAndLower(x)
@@ -191,5 +183,4 @@ switch sz(2)
         y = [];
         return;
 end
-
 end

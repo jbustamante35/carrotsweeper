@@ -2,7 +2,7 @@
 Digital image-based phenotyping platform to analyze carrot root shape
 attributes. <br />
 
-**Refer to the publication resulting from this study:** \\
+**Refer to the publication resulting from this study:** <br />
 [A Digital Image-Based Phenotyping Platform for Analyzing Root Shape
 Attributes in Carrot](https://doi.org/10.3389/fpls.2021.690031)
 
